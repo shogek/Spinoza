@@ -1,8 +1,8 @@
-package com.shogek.spinoza
+package com.shogek.spinoza.models
 
 import java.time.LocalDateTime
 
-class DummyConversation(
+class Conversation(
     val sender: String,
     val message: String,
     val isMyMessage: Boolean,

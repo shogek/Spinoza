@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
-import com.shogek.spinoza.activities.ConversationActivity
+import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
 import java.time.LocalDateTime
 
@@ -92,7 +92,7 @@ class ConversationListRecyclerAdapter(
          */
         init {
             itemView.setOnClickListener {
-                val intent = Intent(context, ConversationActivity::class.java)
+                val intent = Intent(context, MessageListActivity::class.java)
                 intent.putExtra("SENDER_ID", this.senderId)
                 context.startActivity(intent)
             }

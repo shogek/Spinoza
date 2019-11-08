@@ -22,6 +22,9 @@ class ConversationListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
 
+        // Change the activity's title
+        title = "Chats"
+
         /*
             RecyclerView
             - Presents a list of data
@@ -122,8 +125,7 @@ class ConversationListActivity : AppCompatActivity() {
                 null
             )
         )
-        my_recycler_view.adapter =
-            ConversationListRecyclerAdapter(this, dummyConversations)
+        my_recycler_view.adapter = ConversationListRecyclerAdapter(this, dummyConversations)
 
         if (!this.getPermissions()) return
         val messages = SmsRepository.getAllSms(this.contentResolver)

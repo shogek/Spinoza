@@ -52,20 +52,23 @@ class ConversationListRecyclerAdapter(
 
         holder.sender.text = conversation.sender
         holder.lastMessage.text =
-            if (conversation.isMyMessage) "You: ${conversation.message}"
-            else                          conversation.message
+            if (conversation.isMyMessage)
+                "You: ${conversation.message}"
+            else
+                conversation.message
+
         if (!conversation.seen) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
         }
-        holder.notification.setImageDrawable(
-            if (conversation.seen) ContextCompat.getDrawable(this.context,
-                R.drawable.ic_circle_gray_15dp
-            )
-            else                   ContextCompat.getDrawable(this.context,
-                R.drawable.ic_circle_green_15dp
-            )
-        )
+
+        val bubble =
+            if (conversation.seen)
+                R.drawable.ic_notification_bubble_inactive_15dp
+            else
+                R.drawable.ic_notification_bubble_active_15dp
+        holder.notification.setImageDrawable(ContextCompat.getDrawable(this.context, bubble))
+
         holder.date.text = getFormattedDate(conversation.date)
         // TODO: holder.senderImage = conversation.image
     }
@@ -93,7 +96,7 @@ class ConversationListRecyclerAdapter(
         init {
             itemView.setOnClickListener {
                 val intent = Intent(context, MessageListActivity::class.java)
-                intent.putExtra("SENDER_ID", this.senderId)
+                intent.putExtra("SENDER_NAME", this.sender.text.toString())
                 context.startActivity(intent)
             }
         }

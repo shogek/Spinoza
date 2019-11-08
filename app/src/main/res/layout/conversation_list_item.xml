@@ -60,7 +60,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_circle_gray_15dp" />
+            app:srcCompat="@drawable/ic_notification_bubble_inactive_15dp" />
 
         <TextView
             android:id="@+id/tv_messageDate"

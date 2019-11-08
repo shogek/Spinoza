@@ -46,6 +46,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/et_messageText"
         app:layout_constraintTop_toBottomOf="@+id/rv_messageList"
-        app:srcCompat="@drawable/ic_arrow_send_green_24dp" />
+        app:srcCompat="@drawable/ic_arrow_send_message_24dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

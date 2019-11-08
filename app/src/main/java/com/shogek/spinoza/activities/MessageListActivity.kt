@@ -1,7 +1,9 @@
 package com.shogek.spinoza.activities
 
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
@@ -13,6 +15,13 @@ class MessageListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
+
+        // Change activity title to display sender's name
+        title = intent.getStringExtra("SENDER_NAME")
+
+        // Change activity title's background color
+        val color = ContextCompat.getColor(this, R.color.colorWhite)
+        actionBar?.setBackgroundDrawable(ColorDrawable(color))
 
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.adapter = MessageListRecyclerAdapter(this, listOf(

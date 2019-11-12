@@ -13,7 +13,7 @@ import com.shogek.spinoza.utils.UnitUtils
 
 class MessageListRecyclerAdapter(
     private val context: Context,
-    private val messages: List<Message>
+    private val messages: Array<Message>
 ): RecyclerView.Adapter<MessageListRecyclerAdapter.ViewHolder>() {
     private val MESSAGE_OURS = 0
     private val MESSAGE_THEIRS = 1
@@ -21,7 +21,7 @@ class MessageListRecyclerAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = this.messages[position]
-        return if (message.sentByUs) MESSAGE_OURS else MESSAGE_THEIRS
+        return if (message.isSentByUs()) MESSAGE_OURS else MESSAGE_THEIRS
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -40,7 +40,7 @@ class MessageListRecyclerAdapter(
 
         // Add an extra top margin if the previous message's sender doesn't match the current one
         val previousMessage = this.messages[position - 1]
-        if (previousMessage.sentByUs != currentMessage.sentByUs) {
+        if (previousMessage.isSentByUs() != currentMessage.isSentByUs()) {
             val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
             layoutParams.setMargins(
                 layoutParams.leftMargin,

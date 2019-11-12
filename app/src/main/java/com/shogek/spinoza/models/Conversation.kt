@@ -1,13 +1,14 @@
 package com.shogek.spinoza.models
 
-import java.time.LocalDateTime
+import android.net.Uri
 
-class Conversation(
-    val sender: String,
-    val message: String,
-    val isMyMessage: Boolean,
-    val seen: Boolean,
-    val date: LocalDateTime,
-    val image: Number?
-) {
+class Conversation {
+    var senderPhone: String = ""
+    var senderName: String? = null
+    var senderId: String? = null
+    var messages: Array<Message> = arrayOf()
+    var photo: Uri? = null
+
+    // TODO: Implement
+    var isMyMessage: Boolean = true
 }

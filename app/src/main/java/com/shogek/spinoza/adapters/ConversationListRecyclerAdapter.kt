@@ -14,11 +14,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
+import com.shogek.spinoza.utils.DateUtils
 import java.time.LocalDateTime
 
 class ConversationListRecyclerAdapter(
     private val context: Context,
-    private val conversations: List<Conversation>
+    private val conversations: Array<Conversation>
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.ViewHolder>() {
     private val layoutInflater = LayoutInflater.from(context)
 
@@ -47,30 +48,33 @@ class ConversationListRecyclerAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val conversation = this.conversations[position]
+        val lastMessage = conversation.messages.last()
 
-        holder.senderId = conversation.sender
-
-        holder.sender.text = conversation.sender
+        holder.sender.text = conversation.senderName ?: conversation.senderPhone
         holder.lastMessage.text =
-            if (conversation.isMyMessage)
-                "You: ${conversation.message}"
+            if (lastMessage.isSentByUs())
+                "You: ${lastMessage.text}"
             else
-                conversation.message
+                lastMessage.text
 
-        if (!conversation.seen) {
+        if (!lastMessage.isSeen) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
         }
 
         val bubble =
-            if (conversation.seen)
+            if (lastMessage.isSeen)
                 R.drawable.ic_notification_bubble_inactive_15dp
             else
                 R.drawable.ic_notification_bubble_active_15dp
         holder.notification.setImageDrawable(ContextCompat.getDrawable(this.context, bubble))
 
-        holder.date.text = getFormattedDate(conversation.date)
-        // TODO: holder.senderImage = conversation.image
+        // TODO: Fix this
+//        holder.date.text = DateUtils.getDateTime(lastMessage.dateSent)
+
+        if (conversation.photo != null) {
+            holder.senderImage.setImageURI(conversation.photo)
+        }
     }
 
     override fun getItemCount(): Int {
@@ -88,7 +92,7 @@ class ConversationListRecyclerAdapter(
         val notification = itemView.findViewById<ImageView>(R.id.iv_notification)
         val date = itemView.findViewById<TextView>(R.id.tv_messageDate)
 
-        var senderId: String? = null
+//        var senderId: String? = null
 
         /**
          *  When a row is clicked - open the corresponding conversation.

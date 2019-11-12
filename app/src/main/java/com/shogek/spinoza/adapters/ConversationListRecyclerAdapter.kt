@@ -14,8 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
-import com.shogek.spinoza.utils.DateUtils
 import java.time.LocalDateTime
+
+
 
 class ConversationListRecyclerAdapter(
     private val context: Context,
@@ -71,10 +72,19 @@ class ConversationListRecyclerAdapter(
 
         // TODO: Fix this
 //        holder.date.text = DateUtils.getDateTime(lastMessage.dateSent)
+        holder.date.text = lastMessage.dateSent.subSequence(0, 10)
 
         if (conversation.photo != null) {
             holder.senderImage.setImageURI(conversation.photo)
+        } else {
+            holder.senderImage.setImageResource(R.drawable.ic_placeholder_face_24dp)
         }
+
+//        if (holder.lastMessage.lineCount > 1) {
+//            val lineEndIndex = holder.lastMessage.layout.getLineEnd(0)
+//            val text = holder.lastMessage.text.subSequence(0, lineEndIndex - 3).toString() + "\u2026"
+//            holder.lastMessage.text = text
+//        }
     }
 
     override fun getItemCount(): Int {

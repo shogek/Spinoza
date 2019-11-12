@@ -11,11 +11,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.R
-import com.shogek.spinoza.models.Conversation
-import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.SmsRepository
 import kotlinx.android.synthetic.main.activity_conversation_list.*
-import java.time.LocalDateTime
 
 class ConversationListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

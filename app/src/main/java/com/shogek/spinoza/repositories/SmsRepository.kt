@@ -35,6 +35,7 @@ object SmsRepository {
         val selectionArgs = null
         val sortOrder = "${Telephony.Sms.DATE} ASC"
 
+        // TODO: [Severe] Why the fuck does it query so long?
         val cursor = resolver.query(
             uri,
             projection,
@@ -123,6 +124,7 @@ object SmsRepository {
         conversations.forEach { conversation -> iterateMessages(conversation) }
     }
 
+    // TODO: [Severe] If a conversation only contains our messages (delete others) - the sender is unknown
     private fun iterateMessages(conversation: Conversation) {
         conversation.messages.forEach { message ->
             if (!message.isSentByUs()) {

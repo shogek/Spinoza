@@ -1,5 +1,6 @@
 package com.shogek.spinoza.models
 
+import android.net.Uri
 import java.time.LocalDateTime
 
 class Conversation(
@@ -8,6 +9,6 @@ class Conversation(
     val isMyMessage: Boolean,
     val seen: Boolean,
     val date: LocalDateTime,
-    val image: Number?
+    val senderImage: Uri?
 ) {
 }

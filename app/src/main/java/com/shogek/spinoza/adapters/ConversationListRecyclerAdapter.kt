@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -71,6 +72,10 @@ class ConversationListRecyclerAdapter(
 
         holder.date.text = getFormattedDate(conversation.date)
         // TODO: holder.senderImage = conversation.image
+        holder.senderImage.setImageURI(Uri.parse("content://com.android.contacts/contacts/1/photo"))
+//        if (conversation.senderImage != null) {
+//            holder.senderImage.setImageURI(conversation.senderImage)
+//        }
     }
 
     override fun getItemCount(): Int {

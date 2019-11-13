@@ -50,17 +50,18 @@ class MessageListRecyclerAdapter(
         if (position == 0) {
             return
         } else {
+            // TODO: Fix this.
             // Add an extra top margin if the previous message's sender doesn't match the current one
-            val previousMessage = this.messages[position - 1]
-            if (previousMessage.isOurs != currentMessage.isOurs) {
-                val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
-                layoutParams.setMargins(
-                    layoutParams.leftMargin,
-                    layoutParams.topMargin + UnitUtils.asPixels(8f, this.context.resources),
-                    layoutParams.rightMargin,
-                    layoutParams.bottomMargin)
-                viewHolder.layoutParams = layoutParams
-            }
+//            val previousMessage = this.messages[position - 1]
+//            if (previousMessage.isOurs != currentMessage.isOurs) {
+//                val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
+//                layoutParams.setMargins(
+//                    layoutParams.leftMargin,
+//                    layoutParams.topMargin + UnitUtils.asPixels(8f, this.context.resources),
+//                    layoutParams.rightMargin,
+//                    layoutParams.bottomMargin)
+//                viewHolder.layoutParams = layoutParams
+//            }
         }
     }
 

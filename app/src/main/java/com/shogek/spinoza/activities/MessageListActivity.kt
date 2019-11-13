@@ -5,7 +5,12 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.shogek.spinoza.CONVERSATION_ID
+import com.shogek.spinoza.NO_CONVERSATION_ID
 import com.shogek.spinoza.R
+import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
+import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.repositories.MessageRepository
 import kotlinx.android.synthetic.main.activity_message_list.*
 
 class MessageListActivity : AppCompatActivity() {
@@ -14,35 +19,20 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        // Change activity title to display sender's name
-        title = intent.getStringExtra("SENDER_NAME")
+        val conversationId = intent.getIntExtra(CONVERSATION_ID, NO_CONVERSATION_ID)
+        val conversation = ConversationRepository.get(conversationId) ?: return
+        if (conversation.messages == null) {
+            conversation.messages = MessageRepository.getMessages(contentResolver ,conversationId)
+        }
 
+        // Change activity title to display sender's name
+        title = conversation.getDisplayName()
         // Change activity title's background color
         val color = ContextCompat.getColor(this, R.color.colorWhite)
         actionBar?.setBackgroundDrawable(ColorDrawable(color))
 
+        val messages = conversation.messages
         rv_messageList.layoutManager = LinearLayoutManager(this)
-        // TODO: Store the loaded values for reuse
-//        val messages
-//        rv_messageList.adapter = SmsRepository.getAllSms(this)
-
-//        val messages = SmsRepository.getAllSms(contentResolver)
-//        rv_messageList.adapter = MessageListRecyclerAdapter(this, messages)
-
-//        rv_messageList.adapter = MessageListRecyclerAdapter(this, listOf(
-//            Message("Hey, you still ready for tomorrow?", false),
-//            Message("They moved the date a bit earlier, by the way, so I'll pick you up sooner. Is that ok? Is that ok? Is that ok? Is that ok?", true),
-//            Message("They moved the date a bit earlier, by the way, so I'll pick you up sooner. Is that ok? Is that ok? Is that ok? Is that ok?", false),
-//            Message("Hey", true),
-//            Message("Yeah, that's fine with me", true),
-//            Message("So let's say 6pm?", false),
-//            Message("Hey, you still ready for tomorrow?", false),
-//            Message("They moved the date a bit earlier, by the way, so I'll pick you up sooner. Is that ok? Is that ok? Is that ok? Is that ok?", true),
-//            Message("They moved the date a bit earlier, by the way, so I'll pick you up sooner. Is that ok? Is that ok? Is that ok? Is that ok?", false),
-//            Message("Hey", true),
-//            Message("Yeah, that's fine with me", true),
-//            Message("So let's say 6pm?", false),
-//            Message("Sure!", true)
-//        ))
+        rv_messageList.adapter = MessageListRecyclerAdapter(this, messages ?: arrayOf())
     }
 }

@@ -1,14 +1,14 @@
 package com.shogek.spinoza.models
 
-import android.net.Uri
-
-class Conversation {
-    var senderPhone: String = ""
-    var senderName: String? = null
-    var senderId: String? = null
-    var messages: Array<Message> = arrayOf()
-    var photo: Uri? = null
-
-    // TODO: Implement
-    var isMyMessage: Boolean = true
+class Conversation(
+    val threadId: Number,
+    val senderPhone: String,
+    var contact: Contact?,
+    var messages: Array<Message>?,
+    var message: String,
+    val dateTimestamp: Long,
+    var wasSeen: Boolean,
+    var isOurs: Boolean
+    ) {
+    fun getDisplayName(): String = contact?.displayName ?: senderPhone
 }

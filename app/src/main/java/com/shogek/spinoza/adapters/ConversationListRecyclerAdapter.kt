@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
@@ -49,22 +51,22 @@ class ConversationListRecyclerAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val conversation = this.conversations[position]
-        val lastMessage = conversation.messages.last()
 
-        holder.sender.text = conversation.senderName ?: conversation.senderPhone
+        holder.conversationId = conversation.threadId
+        holder.sender.text = conversation.getDisplayName()
         holder.lastMessage.text =
-            if (lastMessage.isSentByUs())
-                "You: ${lastMessage.text}"
+            if (conversation.isOurs)
+                "You: ${conversation.message}"
             else
-                lastMessage.text
+                conversation.message
 
-        if (!lastMessage.isSeen) {
+        if (!conversation.wasSeen) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
         }
 
         val bubble =
-            if (lastMessage.isSeen)
+            if (conversation.wasSeen)
                 R.drawable.ic_notification_bubble_inactive_15dp
             else
                 R.drawable.ic_notification_bubble_active_15dp
@@ -72,19 +74,13 @@ class ConversationListRecyclerAdapter(
 
         // TODO: Fix this
 //        holder.date.text = DateUtils.getDateTime(lastMessage.dateSent)
-        holder.date.text = lastMessage.dateSent.subSequence(0, 10)
+//        holder.date.text = conversation.dateTimestamp.toString()
 
-        if (conversation.photo != null) {
-            holder.senderImage.setImageURI(conversation.photo)
+        if (conversation.contact?.photoUri != null) {
+            holder.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
         } else {
             holder.senderImage.setImageResource(R.drawable.ic_placeholder_face_24dp)
         }
-
-//        if (holder.lastMessage.lineCount > 1) {
-//            val lineEndIndex = holder.lastMessage.layout.getLineEnd(0)
-//            val text = holder.lastMessage.text.subSequence(0, lineEndIndex - 3).toString() + "\u2026"
-//            holder.lastMessage.text = text
-//        }
     }
 
     override fun getItemCount(): Int {
@@ -102,15 +98,12 @@ class ConversationListRecyclerAdapter(
         val notification = itemView.findViewById<ImageView>(R.id.iv_notification)
         val date = itemView.findViewById<TextView>(R.id.tv_messageDate)
 
-//        var senderId: String? = null
+        var conversationId: Number? = null
 
-        /**
-         *  When a row is clicked - open the corresponding conversation.
-         */
         init {
             itemView.setOnClickListener {
                 val intent = Intent(context, MessageListActivity::class.java)
-                intent.putExtra("SENDER_NAME", this.sender.text.toString())
+                intent.putExtra(CONVERSATION_ID, this.conversationId)
                 context.startActivity(intent)
             }
         }

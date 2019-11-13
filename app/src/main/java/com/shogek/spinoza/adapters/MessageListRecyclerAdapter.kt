@@ -21,7 +21,7 @@ class MessageListRecyclerAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = this.messages[position]
-        return if (message.isSentByUs()) MESSAGE_OURS else MESSAGE_THEIRS
+        return if (message.isOurs) MESSAGE_OURS else MESSAGE_THEIRS
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -40,7 +40,7 @@ class MessageListRecyclerAdapter(
 
         // Add an extra top margin if the previous message's sender doesn't match the current one
         val previousMessage = this.messages[position - 1]
-        if (previousMessage.isSentByUs() != currentMessage.isSentByUs()) {
+        if (previousMessage.isOurs != currentMessage.isOurs) {
             val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
             layoutParams.setMargins(
                 layoutParams.leftMargin,

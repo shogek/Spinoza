@@ -11,7 +11,10 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.R
-import com.shogek.spinoza.repositories.SmsRepository
+import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.models.Conversation
+import com.shogek.spinoza.repositories.ContactRepository
+import com.shogek.spinoza.repositories.ConversationRepository
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
 class ConversationListActivity : AppCompatActivity() {
@@ -22,32 +25,33 @@ class ConversationListActivity : AppCompatActivity() {
         // Change the activity's title
         title = "Chats"
 
-        /*
-            RecyclerView
-            - Presents a list of data
-
-            LayoutManager
-            - Handles positioning of items
-
-            Adapter
-            - Creates item views
-            - Associates data with item views
-         */
         // TODO: Move it to an intent
         if (!this.getPermissions()) return
 
-        // Display the items in a vertical list.
-        // Alternatives are: custom, GridLayout and StaggeredGridLayout.
-        my_recycler_view.layoutManager = LinearLayoutManager(this)
+        val conversations = ConversationRepository.getConversations(contentResolver)
+        val contacts = ContactRepository.getAllContacts(contentResolver)
+        merge(conversations, contacts)
 
-        val conversations = SmsRepository.getConversations(contentResolver)
-        my_recycler_view.adapter = ConversationListRecyclerAdapter(this, conversations)
+        rv_conversationList.layoutManager = LinearLayoutManager(this)
+        rv_conversationList.adapter = ConversationListRecyclerAdapter(this, conversations)
+    }
+
+    /** Merge by comparing phone numbers. */
+    private fun merge(conversations: Array<Conversation>, contacts: Array<Contact>) {
+        val trim = "\\s".toRegex() // removes all whitespace
+        conversations.forEach { conversation ->
+            contacts.forEach { contact ->
+                if (conversation.senderPhone == contact.number.replace(trim, "")) {
+                    conversation.contact = contact
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         // When we return to the conversation list, make sure we show any changes if there are any.
-        my_recycler_view.adapter?.notifyDataSetChanged()
+        rv_conversationList.adapter?.notifyDataSetChanged()
     }
 
     private fun getPermissions(): Boolean {

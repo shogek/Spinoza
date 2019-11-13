@@ -1,10 +1,10 @@
 package com.shogek.spinoza.models
 
-import android.net.Uri
-
-class Contact {
-    var id: String = ""
-    var name: String = ""
-    var phone: String = ""
-    var photo: Uri? = null
+class Contact(
+    val id: String,
+    val displayName: String,
+    val number: String,
+    val numberE164: String?,
+    var photoUri: String?
+) {
 }

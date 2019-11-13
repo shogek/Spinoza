@@ -33,7 +33,7 @@ class MessageListActivity : AppCompatActivity() {
 
         val messages = conversation.messages ?: return
         rv_messageList.layoutManager = LinearLayoutManager(this)
-        rv_messageList.adapter = MessageListRecyclerAdapter(this, messages)
+        rv_messageList.adapter = MessageListRecyclerAdapter(this, messages, conversation.contact?.photoUri)
         rv_messageList.scrollToPosition(messages.size - 1)
     }
 }

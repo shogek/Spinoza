@@ -1,9 +1,11 @@
 package com.shogek.spinoza.adapters
 
 import android.content.Context
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
@@ -13,7 +15,8 @@ import com.shogek.spinoza.utils.UnitUtils
 
 class MessageListRecyclerAdapter(
     private val context: Context,
-    private val messages: Array<Message>
+    private val messages: Array<Message>,
+    private val senderPhotoUri: String?
 ): RecyclerView.Adapter<MessageListRecyclerAdapter.ViewHolder>() {
     private val MESSAGE_OURS = 0
     private val MESSAGE_THEIRS = 1
@@ -35,19 +38,29 @@ class MessageListRecyclerAdapter(
         val viewHolder = holder.ourMessage ?: holder.theirMessage
         viewHolder.text = currentMessage.text
 
-        // First message of the conversation
-        if (position == 0) return
+        if (holder.senderPhoto != null) {
+            if (this.senderPhotoUri != null) {
+                holder.senderPhoto.setImageURI(Uri.parse(this.senderPhotoUri))
+            } else {
+                holder.senderPhoto.setImageResource(R.drawable.ic_placeholder_face_24dp)
+            }
+        }
 
-        // Add an extra top margin if the previous message's sender doesn't match the current one
-        val previousMessage = this.messages[position - 1]
-        if (previousMessage.isOurs != currentMessage.isOurs) {
-            val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
-            layoutParams.setMargins(
-                layoutParams.leftMargin,
-                layoutParams.topMargin + UnitUtils.asPixels(8f, this.context.resources),
-                layoutParams.rightMargin,
-                layoutParams.bottomMargin)
-            viewHolder.layoutParams = layoutParams
+        // First message of the conversation
+        if (position == 0) {
+            return
+        } else {
+            // Add an extra top margin if the previous message's sender doesn't match the current one
+            val previousMessage = this.messages[position - 1]
+            if (previousMessage.isOurs != currentMessage.isOurs) {
+                val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
+                layoutParams.setMargins(
+                    layoutParams.leftMargin,
+                    layoutParams.topMargin + UnitUtils.asPixels(8f, this.context.resources),
+                    layoutParams.rightMargin,
+                    layoutParams.bottomMargin)
+                viewHolder.layoutParams = layoutParams
+            }
         }
     }
 
@@ -58,5 +71,6 @@ class MessageListRecyclerAdapter(
     inner class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val ourMessage = itemView.findViewById<TextView>(R.id.tv_ourMessageText)
         val theirMessage = itemView.findViewById<TextView>(R.id.tv_theirMessageText)
+        val senderPhoto = itemView.findViewById<ImageView>(R.id.message_list_sender_photo_civ)
     }
 }

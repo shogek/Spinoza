@@ -2,25 +2,36 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:clipToPadding="false"
     android:paddingVertical="1dp"
     android:paddingStart="8dp"
     android:paddingEnd="100dp">
 
-    <View
-        android:id="@+id/view"
-        android:layout_width="34dp"
-        android:layout_height="34dp"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="0dp"
-        android:background="@drawable/circle" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/message_list_sender_photo_cl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/message_list_sender_photo_civ"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/tv_theirMessageText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_toEndOf="@+id/view"
+        android:layout_toEndOf="@+id/message_list_sender_photo_cl"
         android:background="@drawable/message_bubble_theirs"
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp"

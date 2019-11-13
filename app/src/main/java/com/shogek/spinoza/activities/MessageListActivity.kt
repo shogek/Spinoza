@@ -31,8 +31,9 @@ class MessageListActivity : AppCompatActivity() {
         val color = ContextCompat.getColor(this, R.color.colorWhite)
         actionBar?.setBackgroundDrawable(ColorDrawable(color))
 
-        val messages = conversation.messages
+        val messages = conversation.messages ?: return
         rv_messageList.layoutManager = LinearLayoutManager(this)
-        rv_messageList.adapter = MessageListRecyclerAdapter(this, messages ?: arrayOf())
+        rv_messageList.adapter = MessageListRecyclerAdapter(this, messages)
+        rv_messageList.scrollToPosition(messages.size - 1)
     }
 }

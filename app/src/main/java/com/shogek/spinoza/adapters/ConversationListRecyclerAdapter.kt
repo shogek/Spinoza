@@ -16,9 +16,9 @@ import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
-import java.time.LocalDateTime
-
-
+import com.shogek.spinoza.utils.DateUtils
+import java.time.format.DateTimeFormatter
+import java.time.*
 
 class ConversationListRecyclerAdapter(
     private val context: Context,
@@ -29,11 +29,19 @@ class ConversationListRecyclerAdapter(
     private fun getFormattedDate(date: LocalDateTime) : String {
         // TODO: Show short version of day names
         // TODO: Show month and day numbers with zeroes
-        val current = LocalDateTime.now()
+
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")
+        val parsed = date.format(formatter)
+        val parsedDate = parsed.split(" ")[0].split("-")
+        val year = parsedDate[0]
+        val month = parsedDate[1]
+        val day = parsedDate[2]
+
+        val current = LocalDateTime.now(ZoneOffset.UTC)
         // If last year - show day, month and year
-        if (current.year != date.year) return "${date.year}-${date.month.value}-${date.dayOfMonth}"
+        if (current.year != date.year) return "${year}-${month}-${day}"
         // If this month - day and month
-        if (current.month != date.month) return "${date.month.value}-${date.dayOfMonth}"
+        if (current.month != date.month) return "${month}-${day}"
         // If this week - show weekday
         if (current.dayOfWeek != date.dayOfWeek) return date.dayOfWeek.toString()
         // If today - show hour and minute
@@ -54,27 +62,28 @@ class ConversationListRecyclerAdapter(
 
         holder.conversationId = conversation.threadId
         holder.sender.text = conversation.getDisplayName()
+
         holder.lastMessage.text =
             if (conversation.isOurs)
                 "You: ${conversation.message}"
             else
                 conversation.message
 
-        if (!conversation.wasSeen) {
+        if (!conversation.wasRead) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
         }
 
         val bubble =
-            if (conversation.wasSeen)
+            if (conversation.wasRead)
                 R.drawable.ic_notification_bubble_inactive_15dp
             else
                 R.drawable.ic_notification_bubble_active_15dp
         holder.notification.setImageDrawable(ContextCompat.getDrawable(this.context, bubble))
 
-        // TODO: Fix this
-//        holder.date.text = DateUtils.getDateTime(lastMessage.dateSent)
-//        holder.date.text = conversation.dateTimestamp.toString()
+        val date = DateUtils.getUTCLocalDateTime(conversation.dateTimestamp)
+        val properDate = " \u00B7 ${getFormattedDate(date)}"
+        holder.date.text = properDate
 
         if (conversation.contact?.photoUri != null) {
             holder.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))

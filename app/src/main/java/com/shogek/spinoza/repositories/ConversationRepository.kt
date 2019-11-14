@@ -22,7 +22,7 @@ object ConversationRepository {
             Telephony.Sms.Conversations.BODY        + " as " + Telephony.Sms.Conversations.BODY,
             Telephony.Sms.Conversations.DATE        + " as " + Telephony.Sms.Conversations.DATE,
             Telephony.Sms.Conversations.TYPE        + " as " + Telephony.Sms.Conversations.TYPE,
-            Telephony.Sms.Conversations.SEEN        + " as " + Telephony.Sms.Conversations.SEEN,
+            Telephony.Sms.Conversations.READ        + " as " + Telephony.Sms.Conversations.READ,
             Telephony.Sms.Conversations.THREAD_ID   + " as " + Telephony.Sms.Conversations.THREAD_ID
         )
 
@@ -46,7 +46,7 @@ object ConversationRepository {
             val body        = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Conversations.BODY))
             val date        = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Conversations.DATE))
             val type        = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.TYPE))
-            val seen        = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.SEEN))
+            val read        = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.READ))
             val threadId    = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.THREAD_ID))
 
             val conversation = Conversation(
@@ -56,7 +56,7 @@ object ConversationRepository {
                 null,
                 body,
                 date,
-                seen == 1,
+                read == 1,
                 type == Telephony.Sms.Conversations.MESSAGE_TYPE_SENT
             )
 

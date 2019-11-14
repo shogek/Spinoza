@@ -7,7 +7,7 @@ class Conversation(
     var messages: Array<Message>?,
     var message: String,
     val dateTimestamp: Long,
-    var wasSeen: Boolean,
+    var wasRead: Boolean,
     var isOurs: Boolean
     ) {
     fun getDisplayName(): String = contact?.displayName ?: senderPhone

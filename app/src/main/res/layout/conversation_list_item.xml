@@ -32,39 +32,57 @@
         <TextView
             android:id="@+id/tv_sender"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="2dp"
+            android:layout_marginEnd="16dp"
             android:ellipsize="end"
             android:singleLine="true"
             android:text="TextView"
             android:textColor="#D8000000"
             android:textSize="15sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/tv_lastMessage"
-            app:layout_constraintEnd_toStartOf="@+id/tv_messageDate"
+            app:layout_constraintEnd_toStartOf="@+id/iv_notification"
             app:layout_constraintStart_toEndOf="@+id/cl_wrapper_sender"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/tv_lastMessage"
+        <TableLayout
+            android:id="@+id/table"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:text="TextView"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="#8B8B8B"
-            android:textSize="13sp"
+            android:layout_marginEnd="16dp"
+            android:shrinkColumns="0"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/tv_messageDate"
+            app:layout_constraintEnd_toStartOf="@+id/iv_notification"
             app:layout_constraintStart_toEndOf="@+id/cl_wrapper_sender"
-            app:layout_constraintTop_toBottomOf="@+id/tv_sender" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_sender">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/tv_lastMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:text="TextView"
+                    android:textColor="#8B8B8B"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_messageDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="TextView"
+                    android:textSize="12sp"
+                    app:layout_constraintStart_toEndOf="@+id/tv_lastMessage" />
+            </TableRow>
+
+        </TableLayout>
 
         <ImageView
             android:id="@+id/iv_notification"
@@ -74,17 +92,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_notification_bubble_inactive_15dp" />
-
-        <TextView
-            android:id="@+id/tv_messageDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="TextView"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/iv_notification"
-            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

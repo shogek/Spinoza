@@ -1,5 +1,11 @@
 <resources>
 
+    <style name="ConversationListActionBarTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Padding -->
+        <item name="contentInsetStart">0dp</item>
+        <item name="contentInsetEnd">0dp</item>
+    </style>
+
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->

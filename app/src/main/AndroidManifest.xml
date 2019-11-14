@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.shogek.spinoza">
 
+    <!-- Read the phone's SMS messages -->
     <uses-permission android:name="android.permission.READ_SMS" />
+    <!-- Read the phone's contacts to know who sent the messages -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
@@ -14,8 +16,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".activities.MessageListActivity"></activity>
-        <activity android:name=".activities.ConversationListActivity">
+        <activity android:name=".activities.MessageListActivity" />
+        <activity
+            android:name=".activities.ConversationListActivity"
+            android:theme="@style/ConversationListActionBarTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

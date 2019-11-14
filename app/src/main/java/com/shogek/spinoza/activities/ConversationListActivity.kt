@@ -22,8 +22,9 @@ class ConversationListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
 
-        // Change the activity's title
-        title = "Chats"
+        // Show custom action bar
+        setSupportActionBar(findViewById(R.id.conversation_list_toolbar))
+        supportActionBar?.title = "" // otherwise it shows the app's title
 
         // TODO: Move it to an intent
         if (!this.getPermissions()) return

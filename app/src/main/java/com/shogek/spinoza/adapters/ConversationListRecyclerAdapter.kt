@@ -74,15 +74,12 @@ class ConversationListRecyclerAdapter(
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
         }
 
-        val bubble =
-            if (conversation.wasRead)
-                R.drawable.ic_notification_bubble_inactive_15dp
-            else
-                R.drawable.ic_notification_bubble_active_15dp
-        holder.notification.setImageDrawable(ContextCompat.getDrawable(this.context, bubble))
+        if (conversation.wasRead) {
+            holder.notification.visibility = View.INVISIBLE
+        }
 
         val date = DateUtils.getUTCLocalDateTime(conversation.dateTimestamp)
-        val properDate = " \u00B7 ${getFormattedDate(date)}"
+        val properDate = "\u00B7 ${getFormattedDate(date)}"
         holder.date.text = properDate
 
         if (conversation.contact?.photoUri != null) {

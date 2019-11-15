@@ -5,7 +5,11 @@ import android.provider.Telephony
 import com.shogek.spinoza.models.Message
 
 object MessageRepository {
-    fun getLatestSentMessage(resolver: ContentResolver, threadId: Number, textSent: String): Message? {
+    /** [Telephony.Sms.Conversations.THREAD_ID] returns a list of that conversation Messages */
+    private val messages: HashMap<Number, MutableList<Message>?> = HashMap()
+
+    /** Queries for the latest message in the conversationReturns 'Message' if true, else null */
+    fun checkIfMessageSent(resolver: ContentResolver, threadId: Number, textSent: String): Message? {
         val projection = arrayOf(
             Telephony.Sms._ID,
             Telephony.Sms.BODY,
@@ -32,10 +36,20 @@ object MessageRepository {
         val body    = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY))
         val date    = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE))
         val message = Message(id, body, date, true)
+
+        // We have the thread ID but not its messages? Someone (me) fucked up something
+        val messages = this.messages[threadId]
+        messages!!.add(message)
+
         return message
     }
 
-    fun getMessages(resolver: ContentResolver, threadId: Number): Array<Message> {
+    fun get(resolver: ContentResolver, threadId: Number): MutableList<Message>? {
+        val allMessages = this.messages[threadId]
+        if (allMessages != null) {
+            return allMessages
+        }
+
         val projection = arrayOf(
             Telephony.Sms._ID,
             Telephony.Sms.BODY,
@@ -53,28 +67,22 @@ object MessageRepository {
             selection,
             selectionArgs,
             sortOrder
-        )
-            ?: return emptyArray()
+        ) ?: return mutableListOf()
 
-        var messages = arrayOf<Message>()
+        val messages = mutableListOf<Message>()
 
         while (cursor.moveToNext()) {
             val id      = cursor.getString(cursor.getColumnIndex(Telephony.Sms._ID))
             val body    = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY))
             val date    = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE))
             val type    = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE))
+            val message = Message(id, body, date, type == Telephony.Sms.MESSAGE_TYPE_SENT)
 
-            val message = Message(
-                id,
-                body,
-                date,
-                type == Telephony.Sms.MESSAGE_TYPE_SENT
-            )
-
-            messages += message
+            messages.add(message)
         }
         cursor.close()
 
+        this.messages[threadId] = messages
         return messages
     }
 }

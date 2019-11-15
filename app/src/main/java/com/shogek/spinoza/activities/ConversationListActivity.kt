@@ -26,10 +26,11 @@ class ConversationListActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.conversation_list_toolbar))
         supportActionBar?.title = "" // otherwise it shows the app's title
 
-        // TODO: Move it to an intent
+        // TODO: [Task] Create separate Views to ask for permissions
+        // TODO: [Style] Latest messages should appear at the top
         if (!this.getPermissions()) return
 
-        val conversations = ConversationRepository.getConversations(contentResolver)
+        val conversations = ConversationRepository.getAll(contentResolver)
         val contacts = ContactRepository.getAllContacts(contentResolver)
         merge(conversations, contacts)
 

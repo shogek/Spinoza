@@ -8,9 +8,9 @@ object ConversationRepository {
     /** [Telephony.Sms.Conversations.THREAD_ID] returns Conversation */
     private var conversations: HashMap<Int, Conversation>? = null
 
-    fun get(cID: Int): Conversation? = this.conversations?.get(cID)
+    fun get(threadId: Int): Conversation? = this.conversations?.get(threadId)
 
-    fun getConversations(resolver: ContentResolver): Array<Conversation> {
+    fun getAll(resolver: ContentResolver): Array<Conversation> {
         // TODO: Bad practice, easy to break something when reusing like this.
         var convos = this.conversations
         if (convos != null) {

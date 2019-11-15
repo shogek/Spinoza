@@ -65,9 +65,9 @@ class ConversationListRecyclerAdapter(
 
         holder.lastMessage.text =
             if (conversation.isOurs)
-                "You: ${conversation.message}"
+                "You: ${conversation.latestMessageText}"
             else
-                conversation.message
+                conversation.latestMessageText
 
         if (!conversation.wasRead) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
@@ -78,7 +78,7 @@ class ConversationListRecyclerAdapter(
             holder.notification.visibility = View.INVISIBLE
         }
 
-        val date = DateUtils.getUTCLocalDateTime(conversation.dateTimestamp)
+        val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)
         val properDate = "\u00B7 ${getFormattedDate(date)}"
         holder.date.text = properDate
 

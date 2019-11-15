@@ -10,12 +10,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
 import com.shogek.spinoza.models.Message
-import android.widget.RelativeLayout
-import com.shogek.spinoza.utils.UnitUtils
 
 class MessageListRecyclerAdapter(
     private val context: Context,
-    private val messages: Array<Message>,
+    private val messages: MutableList<Message>,
     private val senderPhotoUri: String?
 ): RecyclerView.Adapter<MessageListRecyclerAdapter.ViewHolder>() {
     private val MESSAGE_OURS = 0
@@ -50,7 +48,7 @@ class MessageListRecyclerAdapter(
         if (position == 0) {
             return
         } else {
-            // TODO: Fix this.
+            // TODO: [Style] First message should have top margin
             // Add an extra top margin if the previous message's sender doesn't match the current one
 //            val previousMessage = this.messages[position - 1]
 //            if (previousMessage.isOurs != currentMessage.isOurs) {

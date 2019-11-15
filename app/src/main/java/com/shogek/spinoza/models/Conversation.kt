@@ -4,9 +4,9 @@ class Conversation(
     val threadId: Number,
     val senderPhone: String,
     var contact: Contact?,
-    var messages: Array<Message>?,
-    var message: String,
-    val dateTimestamp: Long,
+    var messages: MutableList<Message>?,
+    var latestMessageText: String,
+    var latestMessageTimestamp: Long,
     var wasRead: Boolean,
     var isOurs: Boolean
     ) {

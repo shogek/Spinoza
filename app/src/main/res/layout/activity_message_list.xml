@@ -13,14 +13,14 @@
         android:layout_height="0dp"
         android:layout_marginBottom="4dp"
         android:background="@color/colorWhite"
-        app:layout_constraintBottom_toTopOf="@+id/et_messageText"
+        app:layout_constraintBottom_toTopOf="@+id/et_sendMessageText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/message_list_item_theirs" />
 
     <EditText
-        android:id="@+id/et_messageText"
+        android:id="@+id/et_sendMessageText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -37,15 +37,16 @@
         android:textCursorDrawable="@drawable/edit_text_cursor"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/iv_sendButton"
+        app:layout_constraintEnd_toStartOf="@+id/iv_sendMessageButton"
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
-        android:id="@+id/iv_sendButton"
+        android:id="@+id/iv_sendMessageButton"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_marginEnd="4dp"
         android:layout_marginBottom="8dp"
+        android:onClick="sendMessage"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_arrow_send_message_24dp" />

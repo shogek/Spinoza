@@ -61,12 +61,19 @@ class ConversationListActivity : AppCompatActivity() {
             this,
             arrayOf(
                 Manifest.permission.READ_SMS,
-                Manifest.permission.READ_CONTACTS),
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_CONTACTS
+            ),
             Build.VERSION.SDK_INT
         )
 
         if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             Log.i("2", "Access to read SMS not granted.")
+            return false
+        }
+
+        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            Log.i("2", "Access to read contacts not granted.")
             return false
         }
 

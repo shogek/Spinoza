@@ -16,11 +16,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".activities.MessageListActivity" />
+        tools:ignore="GoogleAppIndexingWarning" >
+
+        <activity
+            android:name=".activities.MessageListActivity"
+            android:theme="@style/MessengerStyleActionBarTheme"/>
+
         <activity
             android:name=".activities.ConversationListActivity"
-            android:theme="@style/ConversationListActionBarTheme" >
+            android:theme="@style/MessengerStyleActionBarTheme" >
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

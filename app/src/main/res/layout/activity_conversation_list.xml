@@ -13,7 +13,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorWhite"
         android:elevation="1dp"
-        android:theme="@style/ConversationListActionBarTheme"
+        android:theme="@style/MessengerStyleActionBarTheme"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView

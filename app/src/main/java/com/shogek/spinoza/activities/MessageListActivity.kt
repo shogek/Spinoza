@@ -3,6 +3,7 @@ package com.shogek.spinoza.activities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telephony.SmsManager
+import android.net.Uri
 import android.view.View
 import android.widget.EditText
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -38,7 +39,13 @@ class MessageListActivity : AppCompatActivity() {
         val messages = conversation.messages ?: return
         this.messages = messages
 
-        title = conversation.getDisplayName()
+        // Init the custom action bar
+        if (conversation.contact?.photoUri != null) {
+            message_list_toolbar_sender_photo_civ.setImageURI(Uri.parse(conversation.contact?.photoUri))
+        } else {
+            message_list_toolbar_sender_photo_civ.visibility = View.GONE
+        }
+        message_list_toolbar_title_tv.text = conversation.getDisplayName()
 
         // TODO: [Bug] Opening an unread conversation should mark it as read
         // TODO: [Style] Change message list action bar

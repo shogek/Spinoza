@@ -1,6 +1,6 @@
 <resources>
 
-    <style name="ConversationListActionBarTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="MessengerStyleActionBarTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Padding -->
         <item name="contentInsetStart">0dp</item>
         <item name="contentInsetEnd">0dp</item>

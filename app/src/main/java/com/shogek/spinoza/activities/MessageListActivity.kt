@@ -48,28 +48,28 @@ class MessageListActivity : AppCompatActivity() {
         rv_messageList.adapter = adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
-    }
 
-    fun sendMessage(view: View) {
-        val conversation = this.conversation
-        val textToSend = this.sendMessageText.text.toString()
-        if (textToSend.isBlank()) {
-            return
-        }
-        this.sendMessageText.text.clear()
+        // Send the typed message
+        iv_sendMessageButton.setOnClickListener {
+            val textToSend = this.sendMessageText.text.toString()
+            if (textToSend.isBlank()) {
+                return@setOnClickListener
+            }
+            this.sendMessageText.text.clear()
 
-        // Send the message
-        val smsManager = SmsManager.getDefault()
-        smsManager.sendTextMessage(conversation.senderPhone, null, textToSend, null, null)
-        // Check if sent successfully
-        val lastMessage = MessageRepository.checkIfMessageSent(contentResolver, conversation.threadId, textToSend)
-        if (lastMessage != null) {
-            // Update message list
-            this.adapter.notifyDataSetChanged()
-            // Update info in conversation to reflect latest changes
-            // TODO: Bad practice, use something not mutable + we're concerned about logic in another activity
-            this.conversation.latestMessageTimestamp = lastMessage.dateTimestamp
-            this.conversation.latestMessageText = lastMessage.text
+            // Send the message
+            val smsManager = SmsManager.getDefault()
+            smsManager.sendTextMessage(this.conversation.senderPhone, null, textToSend, null, null)
+            // Check if sent successfully
+            val lastMessage = MessageRepository.checkIfMessageSent(contentResolver, this.conversation.threadId, textToSend)
+            if (lastMessage != null) {
+                // Update message list
+                this.adapter.notifyDataSetChanged()
+                // Update info in conversation to reflect latest changes
+                // TODO: Bad practice, use something not mutable + we're concerning ourselves about logic in another activity
+                this.conversation.latestMessageTimestamp = lastMessage.dateTimestamp
+                this.conversation.latestMessageText = lastMessage.text
+            }
         }
     }
 }

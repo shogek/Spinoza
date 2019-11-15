@@ -78,5 +78,8 @@ class MessageListActivity : AppCompatActivity() {
                 this.conversation.latestMessageText = lastMessage.text
             }
         }
+
+        // Return to previous activity on arrow click
+        message_list_toolbar_return_iv.setOnClickListener { finish() }
     }
 }

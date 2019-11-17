@@ -27,10 +27,10 @@ class ConversationListActivity : AppCompatActivity() {
         supportActionBar?.title = "" // otherwise it shows the app's title
 
         // TODO: [Task] Create separate Views to ask for permissions
-        // TODO: [Style] Latest messages should appear at the top
         if (!this.getPermissions()) return
 
         val conversations = ConversationRepository.getAll(contentResolver)
+        conversations.sortByDescending { c -> c.latestMessageTimestamp }
         val contacts = ContactRepository.getAllContacts(contentResolver)
         merge(conversations, contacts)
 

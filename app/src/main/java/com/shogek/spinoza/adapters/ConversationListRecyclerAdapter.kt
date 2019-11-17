@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
@@ -27,8 +26,8 @@ class ConversationListRecyclerAdapter(
     private val layoutInflater = LayoutInflater.from(context)
 
     private fun getFormattedDate(date: LocalDateTime) : String {
-        // TODO: Show short version of day names
-        // TODO: Show month and day numbers with zeroes
+        // TODO: [Style] Show short version of day names
+        // TODO: [Style] Show month and day numbers with zeroes
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")
         val parsed = date.format(formatter)
@@ -38,13 +37,23 @@ class ConversationListRecyclerAdapter(
         val day = parsedDate[2]
 
         val current = LocalDateTime.now(ZoneOffset.UTC)
-        // If last year - show day, month and year
-        if (current.year != date.year) return "${year}-${month}-${day}"
-        // If this month - day and month
-        if (current.month != date.month) return "${month}-${day}"
-        // If this week - show weekday
-        if (current.dayOfWeek != date.dayOfWeek) return date.dayOfWeek.toString()
-        // If today - show hour and minute
+        // Use 6 days instead of 7 to not show the same day.
+        // Ex.: If today is MONDAY, to not show a message from previous week as also MONDAY but instead MM-dd.
+        val lastWeek = current.minusDays(6)
+
+        // If not this year
+        if (current.year != date.year)
+            return "${year}-${month}-${day}"
+        // If not this month
+        if (current.month != date.month)
+            return "${month}-${day}"
+        // If not this week
+        if (date.isBefore(lastWeek))
+            return "${month}-${day}"
+        // If not today
+        if (current.dayOfMonth != date.dayOfMonth)
+            return date.dayOfWeek.toString()
+
         return "${date.hour}:${date.minute}"
     }
 

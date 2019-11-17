@@ -48,7 +48,6 @@ class MessageListActivity : AppCompatActivity() {
         message_list_toolbar_title_tv.text = conversation.getDisplayName()
 
         // TODO: [Bug] Opening an unread conversation should mark it as read
-        // TODO: [Style] Change message list action bar
         // TODO: [Style] Keyboard appears over the conversation thus hiding the bottom portion of the conversation
         val adapter = MessageListRecyclerAdapter(this, messages, conversation.contact?.photoUri)
         this.adapter = adapter

@@ -24,6 +24,7 @@ import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.repositories.MessageRepository
 import kotlinx.android.synthetic.main.activity_message_list.*
+import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 
 class MessageListActivity : AppCompatActivity() {
     private var sentPI: PendingIntent? = null
@@ -51,14 +52,18 @@ class MessageListActivity : AppCompatActivity() {
 
         this.initCustomActionBar(conversation.getDisplayName(), conversation.contact?.photoUri)
 
-
         // TODO: [Bug] Opening an unread conversation should mark it as read
-        // TODO: [Style] Keyboard appears over the conversation thus hiding the bottom portion of the conversation
         val adapter = MessageListRecyclerAdapter(this, messages, conversation.contact?.photoUri)
         this.adapter = adapter
         rv_messageList.adapter = adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
+
+        // Scroll to last message on keyboard appear
+        KeyboardVisibilityEvent.setEventListener(this) { isVisible ->
+            if (isVisible)
+                rv_messageList.scrollToPosition(messages.size - 1)
+        }
 
         // Send the typed message
         iv_sendMessageButton.setOnClickListener {

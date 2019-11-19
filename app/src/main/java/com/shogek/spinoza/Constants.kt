@@ -2,3 +2,4 @@ package com.shogek.spinoza
 
 const val CONVERSATION_ID = "CONVERSATION_ID"
 const val NO_CONVERSATION_ID = -1
+const val SMS_SENT_PENDING_INTENT = "SMS_SENT_PENDING_INTENT"

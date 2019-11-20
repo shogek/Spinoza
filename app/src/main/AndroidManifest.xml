@@ -20,7 +20,8 @@
         tools:ignore="GoogleAppIndexingWarning" >
         <activity
             android:name=".activities.MessageListActivity"
-            android:theme="@style/MessengerStyleActionBarTheme" />
+            android:theme="@style/MessengerStyleActionBarTheme"
+            android:parentActivityName=".activities.ConversationListActivity" />
         <activity
             android:name=".activities.ConversationListActivity"
             android:theme="@style/MessengerStyleActionBarTheme" >

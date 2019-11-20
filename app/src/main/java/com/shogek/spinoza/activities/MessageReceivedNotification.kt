@@ -10,6 +10,9 @@ import android.net.Uri
 import android.provider.MediaStore.Images.Media.getBitmap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.Builder
+import androidx.core.app.TaskStackBuilder
+import androidx.core.content.ContextCompat
+import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
 
 // More information can be found at:
@@ -19,7 +22,7 @@ import com.shogek.spinoza.R
 object MessageReceivedNotification {
     /** The unique ID for this type of notification. */
     private const val NOTIFICATION_TAG = "SPINOZA_NOTIFICATION_TAG"
-    private const val MAIN_CHANNEL = "MAIN_CHANNEL"
+    private const val CHANNEL_NEW_MESSAGES = "CHANNEL_NEW_MESSAGES"
     private var isChannelCreated: Boolean = false
 
     /**
@@ -30,7 +33,16 @@ object MessageReceivedNotification {
      * @param number Show a number. This is useful when stacking notifications of a single type.
      * */
     fun notify(context: Context, title: String, body: String, pictureUri: String?, number: Number) {
-        this.createChannel(context)
+        this.registerNotificationChannel(context)
+
+        // Which activity to open when the notification is clicked
+        val intent = Intent(context, MessageListActivity::class.java)
+        intent.putExtra(CONVERSATION_ID, 2)
+
+        // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
+        val pendingIntent = TaskStackBuilder.create(context)
+            .addNextIntentWithParentStack(intent)
+            .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
 
         // This image is used as the notification's large icon (thumbnail)
         val picture =
@@ -39,7 +51,7 @@ object MessageReceivedNotification {
             else
                 null
 
-        val builder = Builder(context, MAIN_CHANNEL)
+        val builder = Builder(context, CHANNEL_NEW_MESSAGES)
             // Set appropriate default for the notification light, sound and vibration
             .setDefaults(Notification.DEFAULT_ALL)
             // Set required fields
@@ -57,17 +69,16 @@ object MessageReceivedNotification {
             .setNumber(number.toInt())
             // Automatically dismiss the notification when it is touched.
             .setAutoCancel(true)
-            // Remove the words "Now" following the application's name (small icon row)
-            .setShowWhen(false)
+            // Make application name and icon colourised
+            .setColorized(true)
+            .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
             // Set the pending intent to be initiated when the user touches the notification
-            .setContentIntent(
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    Intent(Intent.ACTION_VIEW, Uri.parse("http://www.google.com")),
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
+            .setContentIntent(pendingIntent)
+            // Implement a specific style of possible notifications
+            .setStyle(NotificationCompat.BigTextStyle()
+                .setBigContentTitle("The title")
+                .setSummaryText("New message")
+                .bigText("The expanded text"))
 
         this.createNotification(context, builder.build())
     }
@@ -82,7 +93,7 @@ object MessageReceivedNotification {
         nm.notify(this.NOTIFICATION_TAG, 0, notification)
     }
 
-    private fun createChannel(context: Context) {
+    private fun registerNotificationChannel(context: Context) {
         /*
             A channel is used to separate your notifications into categories
             so that the user can disable what he thinks is not important to him
@@ -93,8 +104,8 @@ object MessageReceivedNotification {
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = NotificationChannel(
-            this.MAIN_CHANNEL,
-            "Channel human readable title",
+            this.CHANNEL_NEW_MESSAGES,
+            "New messages",
             NotificationManager.IMPORTANCE_DEFAULT
         )
         manager.createNotificationChannel(channel)

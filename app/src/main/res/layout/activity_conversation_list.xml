@@ -14,6 +14,8 @@
         android:background="@color/colorWhite"
         android:elevation="1dp"
         android:theme="@style/MessengerStyleActionBarTheme"
+        app:layout_constraintBottom_toTopOf="@+id/rv_conversationList"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
@@ -28,6 +30,17 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/imageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/rv_conversationList"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_notification_24dp"
+            tools:layout_editor_absoluteX="69dp"
+            tools:srcCompat="@drawable/ic_notification_24dp" />
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -40,5 +53,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/conversation_list_toolbar"
         tools:listitem="@layout/conversation_list_item" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

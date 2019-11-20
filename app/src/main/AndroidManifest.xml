@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.shogek.spinoza" >
 
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <!-- Read the phone's contacts to know who sent the messages -->
@@ -17,15 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning" >
-
         <activity
             android:name=".activities.MessageListActivity"
-            android:theme="@style/MessengerStyleActionBarTheme"/>
-
+            android:theme="@style/MessengerStyleActionBarTheme" />
         <activity
             android:name=".activities.ConversationListActivity"
             android:theme="@style/MessengerStyleActionBarTheme" >
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

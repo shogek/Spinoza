@@ -6,6 +6,8 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageButton
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,6 +38,12 @@ class ConversationListActivity : AppCompatActivity() {
 
         rv_conversationList.layoutManager = LinearLayoutManager(this)
         rv_conversationList.adapter = ConversationListRecyclerAdapter(this, conversations)
+
+        // TODO: [Temp] Dummy button to display a dummy notification
+        findViewById<ImageButton>(R.id.imageButton).setOnClickListener {
+            Toast.makeText(this, "Clicked", Toast.LENGTH_SHORT).show()
+            MessageReceivedNotification.notify(this, "Slim Shady", "What's up?", null, 5)
+        }
     }
 
     /** Merge by comparing phone numbers. */

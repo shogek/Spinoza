@@ -6,8 +6,16 @@ import androidx.core.database.getStringOrNull
 import com.shogek.spinoza.models.Contact
 
 object ContactRepository {
+    /** [ContactsContract.CommonDataKinds.Phone.NUMBER] returns Contact */
+    private val contacts: HashMap<String, Contact> = HashMap()
+
     /** This is bad, because it gets every single contact instead of filtering by phone numbers */
-    fun getAllContacts(resolver: ContentResolver): Array<Contact> {
+    fun getAll(resolver: ContentResolver): MutableCollection<Contact> {
+        // TODO: [Refactor] Use state
+        // TODO: [Refactor] Return a read-only collection
+        if (this.contacts.isNotEmpty())
+            return this.contacts.values
+
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone._ID,
             ContactsContract.CommonDataKinds.Phone.NUMBER,
@@ -27,33 +35,26 @@ object ContactRepository {
             selectionArgs,
             sortOrder
         )
-            ?: return emptyArray()
+            ?: return mutableListOf()
 
-        var contact: Contact
-        var contacts = arrayOf<Contact>()
-
+        val regex = "[\\s()]".toRegex() // "784 (54) " -> "78454"
         while (cursor.moveToNext()) {
             val id      = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
             val number  = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
             /*
-                TODO: [Potential] Figure out when it is set and use it instead of comparing 'Phone.NUMBER'
-                To my understand, the 'Phone.NUMBER' is separated to distinct parts,            ex.: "+372 512 4788"
+                TODO: [Refactor] Figure out when it is set and use it instead of comparing 'Phone.NUMBER'
+                To my understanding, the 'Phone.NUMBER' is separated to distinct parts,         ex.: "+372 512 4788"
                 while 'Phone.NORMALIZED_NUMBER' matches what we get from 'Conversations',       ex.: "+3725124788"
              */
             val e164    = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER))
             val name    = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
             val photo   = cursor.getStringOrNull(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI))
+            val strippedPhone = number.replace(regex, "")
 
-            contact = Contact(
-                id,
-                name,
-                number,
-                e164,
-                photo
-            )
-            contacts += contact
+            this.contacts[strippedPhone] = Contact(id, name, strippedPhone, number, e164, photo)
         }
+
         cursor.close()
-        return contacts
+        return this.contacts.values
     }
 }

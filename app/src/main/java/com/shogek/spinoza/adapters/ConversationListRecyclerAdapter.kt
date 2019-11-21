@@ -21,7 +21,7 @@ import java.time.*
 
 class ConversationListRecyclerAdapter(
     private val context: Context,
-    private val conversations: Array<Conversation>
+    private val conversations: MutableList<Conversation>
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.ViewHolder>() {
     private val layoutInflater = LayoutInflater.from(context)
 

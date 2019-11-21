@@ -6,16 +6,16 @@ import com.shogek.spinoza.models.Conversation
 
 object ConversationRepository {
     /** [Telephony.Sms.Conversations.THREAD_ID] returns Conversation */
-    private var conversations: HashMap<Int, Conversation>? = null
+    private val conversations: HashMap<Int, Conversation> = HashMap()
 
-    fun get(threadId: Int): Conversation? = this.conversations?.get(threadId)
+    fun get(threadId: Int): Conversation? = this.conversations.getOrDefault(threadId, null)
 
-    fun getAll(resolver: ContentResolver): Array<Conversation> {
-        // TODO: Bad practice, easy to break something when reusing like this.
-        var convos = this.conversations
-        if (convos != null) {
-            return convos.values.toTypedArray()
-        }
+    fun getAll(resolver: ContentResolver): MutableList<Conversation> {
+        // TODO: [Bug] If we receive an SMS from an unknown number - this caching mechanism will not display the new conversation
+        // TODO: [Refactor] Use state
+        // TODO: [Refactor] Return a read-only collection
+        if (this.conversations.isNotEmpty())
+            return this.conversations.values.toMutableList()
 
         val projection = arrayOf(
             Telephony.Sms.Conversations.ADDRESS     + " as " + Telephony.Sms.Conversations.ADDRESS,
@@ -37,9 +37,7 @@ object ConversationRepository {
             selectionArgs,
             sortOrder
         )
-            ?: return emptyArray()
-
-        convos = HashMap()
+            ?: return mutableListOf()
 
         while (cursor.moveToNext()) {
             val address     = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Conversations.ADDRESS))
@@ -49,21 +47,11 @@ object ConversationRepository {
             val read        = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.READ))
             val threadId    = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.THREAD_ID))
 
-            val conversation = Conversation(
-                threadId,
-                address,
-                null,
-                null,
-                body,
-                date,
-                read == 1,
-                type == Telephony.Sms.Conversations.MESSAGE_TYPE_SENT
-            )
-
-            convos[threadId] = conversation
+            val isOurMessage = type == Telephony.Sms.Conversations.MESSAGE_TYPE_SENT
+            this.conversations[threadId] = Conversation(threadId, address, null, null, body, date, read == 1, isOurMessage)
         }
+
         cursor.close()
-        this.conversations = convos
-        return convos.values.toTypedArray()
+        return this.conversations.values.toMutableList()
     }
 }

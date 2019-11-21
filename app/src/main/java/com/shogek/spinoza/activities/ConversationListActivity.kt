@@ -6,17 +6,14 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.ImageButton
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.R
-import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.helpers.ConversationHelper
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
 class ConversationListActivity : AppCompatActivity() {
@@ -33,29 +30,11 @@ class ConversationListActivity : AppCompatActivity() {
 
         val conversations = ConversationRepository.getAll(contentResolver)
         conversations.sortByDescending { c -> c.latestMessageTimestamp }
-        val contacts = ContactRepository.getAllContacts(contentResolver)
-        merge(conversations, contacts)
+        val contacts = ContactRepository.getAll(contentResolver)
+        ConversationHelper.matchContactsWithConversations(conversations, contacts.toMutableList())
 
         rv_conversationList.layoutManager = LinearLayoutManager(this)
         rv_conversationList.adapter = ConversationListRecyclerAdapter(this, conversations)
-
-        // TODO: [Temp] Dummy button to display a dummy notification
-        findViewById<ImageButton>(R.id.imageButton).setOnClickListener {
-            Toast.makeText(this, "Clicked", Toast.LENGTH_SHORT).show()
-            MessageReceivedNotification.notify(this, "Slim Shady", "What's up?", null, 5)
-        }
-    }
-
-    /** Merge by comparing phone numbers. */
-    private fun merge(conversations: Array<Conversation>, contacts: Array<Contact>) {
-        val trim = "\\s".toRegex() // removes all whitespace
-        conversations.forEach { conversation ->
-            contacts.forEach { contact ->
-                if (conversation.senderPhone == contact.number.replace(trim, "")) {
-                    conversation.contact = contact
-                }
-            }
-        }
     }
 
     override fun onResume() {
@@ -71,6 +50,7 @@ class ConversationListActivity : AppCompatActivity() {
             arrayOf(
                 Manifest.permission.READ_SMS,
                 Manifest.permission.SEND_SMS,
+                Manifest.permission.RECEIVE_SMS,
                 Manifest.permission.READ_CONTACTS
             ),
             Build.VERSION.SDK_INT
@@ -82,7 +62,12 @@ class ConversationListActivity : AppCompatActivity() {
         }
 
         if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("2", "Access to read contacts not granted.")
+            Log.i("2", "Access to send SMS not granted.")
+            return false
+        }
+
+        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            Log.i("2", "Access to receive SMS not granted.")
             return false
         }
 

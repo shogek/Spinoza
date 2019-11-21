@@ -14,6 +14,9 @@ import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
 import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
+import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.repositories.ConversationRepository
+
 
 // More information can be found at:
 // https://developer.android.com/design/patterns/notifications.html
@@ -28,21 +31,25 @@ object MessageReceivedNotification {
     /**
      *  Show a notification when a message is receiver.
      *
-     * @param title The title of the notification.
-     * @param body The body text of the notification.
-     * @param number Show a number. This is useful when stacking notifications of a single type.
+     * @param threadId The ID of a 'Conversation' for getting the correct 'Contact' and setting intent
+     * @param strippedPhone The phone number which sent the SMS message
+     * @param message The content of the SMS message
      * */
-    fun notify(context: Context, title: String, body: String, pictureUri: String?, number: Number) {
+    fun notify(context: Context, threadId: Number?, strippedPhone: String, message: String) {
         this.registerNotificationChannel(context)
 
-        // Which activity to open when the notification is clicked
-        val intent = Intent(context, MessageListActivity::class.java)
-        intent.putExtra(CONVERSATION_ID, 2)
+        var pictureUri: String? = null
+        var contact: Contact? = null
 
-        // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
-        val pendingIntent = TaskStackBuilder.create(context)
-            .addNextIntentWithParentStack(intent)
-            .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        if (threadId != null) {
+            contact = ConversationRepository
+                .getAll(context.contentResolver)
+                .find {c -> c.threadId == threadId}
+                ?.contact
+            pictureUri = contact?.photoUri
+        }
+
+        val notificationTitle = contact?.displayName ?: strippedPhone
 
         // This image is used as the notification's large icon (thumbnail)
         val picture =
@@ -56,29 +63,27 @@ object MessageReceivedNotification {
             .setDefaults(Notification.DEFAULT_ALL)
             // Set required fields
             .setSmallIcon(R.drawable.ic_notification_24dp)
-            .setContentTitle(title)
-            .setContentText(body)
+            .setContentTitle(notificationTitle)
+            .setContentText(message)
             // ----- All fields below this line are optional -----
             // Use a default priority (>= Android 4.1)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             // Provide a large icon, shown with the notification in the notification drawer (>= Android 3.0)
             .setLargeIcon(picture)
             // Set ticker text (preview) information for this notification.
-            .setTicker("$title: $body")
-            // Show a number. This is useful when stacking notifications of a single type.
-            .setNumber(number.toInt())
+            .setTicker("$notificationTitle: $message")
             // Automatically dismiss the notification when it is touched.
             .setAutoCancel(true)
             // Make application name and icon colourised
             .setColorized(true)
             .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
             // Set the pending intent to be initiated when the user touches the notification
-            .setContentIntent(pendingIntent)
+            .setContentIntent(this.getPendingIntent(context, threadId))
             // Implement a specific style of possible notifications
             .setStyle(NotificationCompat.BigTextStyle()
-                .setBigContentTitle("The title")
+                .setBigContentTitle(notificationTitle)
                 .setSummaryText("New message")
-                .bigText("The expanded text"))
+                .bigText(message))
 
         this.createNotification(context, builder.build())
     }
@@ -111,5 +116,24 @@ object MessageReceivedNotification {
         manager.createNotificationChannel(channel)
 
         this.isChannelCreated = true
+    }
+
+    private fun getPendingIntent(context: Context, threadId: Number?): PendingIntent? {
+        if (threadId == null) {
+            return PendingIntent.getActivity(
+                context,
+                1,
+                Intent(context, ConversationListActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } else {
+            val intent = Intent(context, MessageListActivity::class.java)
+            intent.putExtra(CONVERSATION_ID, threadId)
+
+            // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
+            return TaskStackBuilder.create(context)
+                .addNextIntentWithParentStack(intent)
+                .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
     }
 }

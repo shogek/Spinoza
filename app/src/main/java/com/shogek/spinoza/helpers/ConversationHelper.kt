@@ -10,7 +10,7 @@ object ConversationHelper {
     fun matchContactsWithConversations(conversations: List<Conversation>, contacts: List<Contact>) {
         conversations.forEach { conversation ->
             contacts.forEach { contact ->
-                if (conversation.senderPhone == contact.strippedPhone) {
+                if (conversation.senderPhoneStripped == contact.strippedPhone) {
                     conversation.contact = contact
                 }
             }

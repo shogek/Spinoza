@@ -4,16 +4,17 @@ import android.content.ContentResolver
 import android.provider.ContactsContract
 import androidx.core.database.getStringOrNull
 import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.utils.PhoneUtils
 
 object ContactRepository {
     /** [ContactsContract.CommonDataKinds.Phone.NUMBER] returns Contact */
     private val contacts: HashMap<String, Contact> = HashMap()
 
     /** This is bad, because it gets every single contact instead of filtering by phone numbers */
-    fun getAll(resolver: ContentResolver): MutableCollection<Contact> {
+    fun getAll(resolver: ContentResolver, clearCache: Boolean = false): MutableCollection<Contact> {
         // TODO: [Refactor] Use state
         // TODO: [Refactor] Return a read-only collection
-        if (this.contacts.isNotEmpty())
+        if (this.contacts.isNotEmpty() && !clearCache)
             return this.contacts.values
 
         val projection = arrayOf(
@@ -37,7 +38,6 @@ object ContactRepository {
         )
             ?: return mutableListOf()
 
-        val regex = "[\\s()]".toRegex() // "784 (54) " -> "78454"
         while (cursor.moveToNext()) {
             val id      = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
             val number  = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
@@ -49,7 +49,7 @@ object ContactRepository {
             val e164    = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER))
             val name    = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
             val photo   = cursor.getStringOrNull(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI))
-            val strippedPhone = number.replace(regex, "")
+            val strippedPhone = PhoneUtils.getStrippedPhone(number)
 
             this.contacts[strippedPhone] = Contact(id, name, strippedPhone, number, e164, photo)
         }

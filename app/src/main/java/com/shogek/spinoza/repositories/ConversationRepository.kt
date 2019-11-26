@@ -8,13 +8,12 @@ object ConversationRepository {
     /** [Telephony.Sms.Conversations.THREAD_ID] returns Conversation */
     private val conversations: HashMap<Int, Conversation> = HashMap()
 
-    fun get(threadId: Int): Conversation? = this.conversations.getOrDefault(threadId, null)
+    fun get(threadId: Number): Conversation? = this.conversations.getOrDefault(threadId.toInt(), null)
 
-    fun getAll(resolver: ContentResolver): MutableList<Conversation> {
-        // TODO: [Bug] If we receive an SMS from an unknown number - this caching mechanism will not display the new conversation
+    fun getAll(resolver: ContentResolver, clearCache: Boolean = false): MutableList<Conversation> {
         // TODO: [Refactor] Use state
         // TODO: [Refactor] Return a read-only collection
-        if (this.conversations.isNotEmpty())
+        if (this.conversations.isNotEmpty() && !clearCache)
             return this.conversations.values.toMutableList()
 
         val projection = arrayOf(

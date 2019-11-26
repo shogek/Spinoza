@@ -57,7 +57,7 @@ object MessageReceivedNotification {
             // Set appropriate default for the notification light, sound and vibration
             .setDefaults(Notification.DEFAULT_ALL)
             // Set required fields
-            .setSmallIcon(R.drawable.ic_notification_24dp)
+            .setSmallIcon(R.drawable.ic_chat_black_24dp)
             .setContentTitle(notificationTitle)
             .setContentText(message)
             // ----- All fields below this line are optional -----

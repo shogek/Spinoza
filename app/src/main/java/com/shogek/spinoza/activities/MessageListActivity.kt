@@ -75,7 +75,7 @@ class MessageListActivity : AppCompatActivity() {
             this.textSent = textToSend
 
             val smsManager = SmsManager.getDefault()
-            smsManager.sendTextMessage(this.conversation.senderPhone, null, textToSend, this.getSmsIntent(), null)
+            smsManager.sendTextMessage(this.conversation.senderPhoneStripped, null, textToSend, this.getSmsIntent(), null)
         }
 
         // Return to previous activity on arrow click

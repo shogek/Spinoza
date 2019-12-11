@@ -4,10 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore.Images.Media.getBitmap
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.Builder
 import androidx.core.app.TaskStackBuilder
@@ -15,6 +17,7 @@ import androidx.core.content.ContextCompat
 import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
 import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 
 
@@ -23,38 +26,30 @@ import com.shogek.spinoza.repositories.ConversationRepository
 
 /** Helper class for showing and canceling message received notifications. */
 object MessageReceivedNotification {
+    private val TAG = MessageReceivedNotification::class.java.simpleName
+
     /** The unique ID for this type of notification. */
     private const val NOTIFICATION_TAG = "SPINOZA_NOTIFICATION_TAG"
     private const val CHANNEL_NEW_MESSAGES = "CHANNEL_NEW_MESSAGES"
     private var isChannelCreated: Boolean = false
 
     /**
-     *  Show a notification when a message is receiver.
+     *  Show a notification when a message is received.
      *
      * @param threadId The ID of a 'Conversation' for getting the correct 'Contact' and setting intent
      * @param strippedPhone The phone number which sent the SMS message
      * @param message The content of the SMS message
      * */
-    fun notify(context: Context, threadId: Number?, strippedPhone: String, message: String) {
+    fun notify(context: Context, threadId: Number, strippedPhone: String, message: String) {
         this.registerNotificationChannel(context)
 
-        var pictureUri: String? = null
-        var contact: Contact? = null
-
-        if (threadId != null) {
-            contact = ConversationRepository
-                .getAll(context.contentResolver)
-                .find {c -> c.threadId == threadId}
-                ?.contact
-            pictureUri = contact?.photoUri
-        }
-
+        val contact = this.tryGetContact(threadId, strippedPhone, context.contentResolver)
         val notificationTitle = contact?.displayName ?: strippedPhone
 
         // This image is used as the notification's large icon (thumbnail)
         val picture =
-            if (pictureUri != null)
-                getBitmap(context.contentResolver, Uri.parse(pictureUri))
+            if (contact?.photoUri != null)
+                getBitmap(context.contentResolver, Uri.parse(contact.photoUri))
             else
                 null
 
@@ -62,7 +57,7 @@ object MessageReceivedNotification {
             // Set appropriate default for the notification light, sound and vibration
             .setDefaults(Notification.DEFAULT_ALL)
             // Set required fields
-            .setSmallIcon(R.drawable.ic_notification_24dp)
+            .setSmallIcon(R.drawable.ic_chat_black_24dp)
             .setContentTitle(notificationTitle)
             .setContentText(message)
             // ----- All fields below this line are optional -----
@@ -118,22 +113,28 @@ object MessageReceivedNotification {
         this.isChannelCreated = true
     }
 
-    private fun getPendingIntent(context: Context, threadId: Number?): PendingIntent? {
-        if (threadId == null) {
-            return PendingIntent.getActivity(
-                context,
-                1,
-                Intent(context, ConversationListActivity::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
-        } else {
-            val intent = Intent(context, MessageListActivity::class.java)
-            intent.putExtra(CONVERSATION_ID, threadId)
+    private fun getPendingIntent(context: Context, threadId: Number): PendingIntent? {
+        val intent = Intent(context, MessageListActivity::class.java)
+        intent.putExtra(CONVERSATION_ID, threadId)
 
-            // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
-            return TaskStackBuilder.create(context)
-                .addNextIntentWithParentStack(intent)
-                .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
+        return TaskStackBuilder.create(context)
+            .addNextIntentWithParentStack(intent)
+            .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
+    private fun tryGetContact(threadId: Number, strippedPhone: String, cr: ContentResolver): Contact? {
+        val contact = ConversationRepository.get(threadId)?.contact
+        if (contact != null)
+            return contact
+
+        // Maybe a new 'Contact' record was created while our app was opened (cached)?
+        val newContacts = ContactRepository.getAll(cr, true)
+        val newContact = newContacts.find { c -> c.strippedPhone ==  strippedPhone }
+        if (newContact == null ) {
+            Log.i(this.TAG, "'Contact' record not found.")
         }
+
+        return newContact
     }
 }

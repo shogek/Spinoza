@@ -4,11 +4,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.SmsMessage
-import com.shogek.spinoza.repositories.ContactRepository
+import android.util.Log
 import com.shogek.spinoza.repositories.ConversationRepository
-import com.shogek.spinoza.helpers.ConversationHelper
 
 class MessageBroadcastReceiver: BroadcastReceiver() {
+    companion object {
+        val TAG = MessageBroadcastReceiver::class.java.simpleName
+    }
+
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) {
             return
@@ -24,11 +27,21 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
 
         val text = pdus.fold("") { acc, bytes -> acc + SmsMessage.createFromPdu(bytes, format).displayMessageBody }
 
-        val tempConversations = ConversationRepository.getAll(context.contentResolver) // load conversations
-        val tempContacts = ContactRepository.getAll(context.contentResolver) // load contacts
-        ConversationHelper.matchContactsWithConversations(tempConversations, tempContacts.toMutableList())
-        val threadId = tempConversations.find { c -> c.contact?.strippedPhone == senderPhone }?.threadId
+        val conversations = ConversationRepository.getAll(context.contentResolver)
+        val conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
+        if (conversationId != null) {
+            MessageReceivedNotification.notify(context, conversationId, senderPhone, text)
+            return
+        }
 
-        MessageReceivedNotification.notify(context, threadId, senderPhone, text)
+        // If we didn't find a 'Conversation' - it means it was cached by the repository.
+        val newConversations = ConversationRepository.getAll(context.contentResolver, true)
+        val newConversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
+        if (newConversationId == null) {
+            Log.e(TAG, "ConversationID not found.")
+            return
+        }
+
+        MessageReceivedNotification.notify(context, newConversationId, senderPhone, text)
     }
 }

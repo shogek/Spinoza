@@ -1,6 +1,8 @@
 package com.shogek.spinoza.activities
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -9,14 +11,18 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
-import com.shogek.spinoza.R
 import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.helpers.ConversationHelper
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
 class ConversationListActivity : AppCompatActivity() {
+    companion object {
+        const val REQUEST_PICK_CONTACT = 0
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
@@ -35,6 +41,33 @@ class ConversationListActivity : AppCompatActivity() {
 
         rv_conversationList.layoutManager = LinearLayoutManager(this)
         rv_conversationList.adapter = ConversationListRecyclerAdapter(this, conversations)
+
+        createNewMessage.setOnClickListener {
+            val intent = Intent(this, ContactListActivity::class.java)
+            startActivityForResult(intent, REQUEST_PICK_CONTACT)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Wrong request - no idea how that's possible
+        if (requestCode != REQUEST_PICK_CONTACT)
+            return
+
+        // Unsuccessful request - the user backed out of the operation
+        if (resultCode != Activity.RESULT_OK)
+            return
+
+        val contactId = data!!.extras!![PARAM_PICK_CONTACT]
+        val conversationId = ConversationRepository
+            .getAll(contentResolver)
+            .find { c -> c.contact?.id == contactId }
+            ?.threadId ?: NEW_CONVERSATION_ID
+
+        val intent = Intent(this, MessageListActivity::class.java)
+        intent.putExtra(CONVERSATION_ID, conversationId)
+        startActivity(intent)
     }
 
     override fun onResume() {

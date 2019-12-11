@@ -14,10 +14,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.shogek.spinoza.CONVERSATION_ID
-import com.shogek.spinoza.NO_CONVERSATION_ID
-import com.shogek.spinoza.R
-import com.shogek.spinoza.SMS_SENT_PENDING_INTENT
+import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
@@ -42,6 +39,11 @@ class MessageListActivity : AppCompatActivity() {
         this.initActivity()
 
         val conversationId = intent.getIntExtra(CONVERSATION_ID, NO_CONVERSATION_ID)
+
+        // TODO: [Bug] Contact exists without a conversation (we're writing the first message)
+        if (conversationId == NEW_CONVERSATION_ID) {
+            return
+        }
         val conversation = ConversationRepository.get(conversationId) ?: return
         this.conversation = conversation
         if (conversation.messages == null)

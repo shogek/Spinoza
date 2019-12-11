@@ -18,6 +18,9 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning" >
         <activity
+            android:name=".activities.ContactListActivity"
+            android:theme="@style/MessengerStyleActionBarTheme" />
+        <activity
             android:name=".activities.MessageListActivity"
             android:parentActivityName=".activities.ConversationListActivity"
             android:theme="@style/MessengerStyleActionBarTheme" />

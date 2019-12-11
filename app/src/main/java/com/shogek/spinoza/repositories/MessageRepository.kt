@@ -85,4 +85,16 @@ object MessageRepository {
         this.messages[threadId] = messages
         return messages
     }
+
+    /** Will only work if the app is set as the default messaging application */
+    fun delete(resolver: ContentResolver, id: String): Number {
+        val selection = "${Telephony.Sms._ID} = ?"
+        val selectionArgs = arrayOf(id)
+
+        return resolver.delete(
+            Telephony.Sms.CONTENT_URI,
+            selection,
+            selectionArgs
+        )
+    }
 }

@@ -19,15 +19,17 @@ class ContactListRecyclerAdapter(
     private val contacts: MutableList<Contact>
 ) : RecyclerView.Adapter<ContactListRecyclerAdapter.ViewHolder>() {
 
+    private val filteredContacts: MutableList<Contact> = mutableListOf<Contact>().apply { addAll(contacts) } // copy the list
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val itemView = LayoutInflater.from(context).inflate(R.layout.contact_list_item, parent, false)
         return ViewHolder(itemView)
     }
 
-    override fun getItemCount(): Int = this.contacts.size
+    override fun getItemCount(): Int = this.filteredContacts.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val contact = this.contacts[position]
+        val contact = this.filteredContacts[position]
         holder.contactId = contact.id
         holder.contactName.text = contact.displayName
 
@@ -35,6 +37,22 @@ class ContactListRecyclerAdapter(
             holder.contactPhoto.setImageURI(Uri.parse(contact.photoUri))
         else
             holder.contactPhoto.setImageResource(R.drawable.ic_placeholder_face_24dp)
+    }
+
+    fun filter(phrase: String) {
+        this.filteredContacts.clear()
+
+        if (phrase.isEmpty()) {
+            // No filter - show all contacts
+            this.filteredContacts.addAll(this.contacts)
+        } else {
+            // Apply filter
+            val lowerCasePhrase = phrase.toLowerCase()
+            val filtered = this.contacts.filter { c -> c.displayName.toLowerCase().contains(lowerCasePhrase) }
+            this.filteredContacts.addAll(filtered)
+        }
+
+        notifyDataSetChanged()
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

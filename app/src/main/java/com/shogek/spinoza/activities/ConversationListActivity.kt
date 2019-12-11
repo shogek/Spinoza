@@ -31,6 +31,8 @@ class ConversationListActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.conversation_list_toolbar))
         supportActionBar?.title = "" // otherwise it shows the app's title
 
+        // TODO: [Style] Toolbar should lose elevation when at the top
+
         // TODO: [Task] Create separate Views to ask for permissions
         if (!this.getPermissions()) return
 

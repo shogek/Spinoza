@@ -17,20 +17,34 @@ class ContactListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list)
 
-        val contacts = ContactRepository.getAll(contentResolver, true)
-        val adapter = ContactListRecyclerAdapter(this, contacts.toMutableList())
+        val sortedContacts = ContactRepository
+            .getAll(contentResolver, true)
+            .sortedBy { c -> c.displayName }
+            .toMutableList()
+        val adapter = ContactListRecyclerAdapter(this, sortedContacts)
         rv_contactList.adapter = adapter
         rv_contactList.layoutManager = LinearLayoutManager(this)
         rv_contactList.adapter
 
-        // TODO: [Style] Toolbar should lose elevation when at the top
+        this.enableReturnButton()
+        this.enableContactFiltering(adapter)
+        this.focusOnSearchBox()
+    }
+
+    private fun focusOnSearchBox() {
+        et_filterContacts.isFocusableInTouchMode = true
+        et_filterContacts.requestFocus()
+    }
+
+    private fun enableContactFiltering(adapter: ContactListRecyclerAdapter) {
         et_filterContacts.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = adapter.filter(s.toString())
         })
+    }
 
-        // Return to previous activity on arrow click
+    private fun enableReturnButton() {
         contact_list_toolbar_return_iv.setOnClickListener {
             setResult(Activity.RESULT_CANCELED)
             finish()

@@ -24,6 +24,7 @@ import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 
 class MessageListActivity : AppCompatActivity() {
+
     private var sentPI: PendingIntent? = null
     /** Last sent SMS message's text is stored here to be used in intent */
     private lateinit var textSent: String
@@ -80,6 +81,7 @@ class MessageListActivity : AppCompatActivity() {
             smsManager.sendTextMessage(this.conversation.senderPhoneStripped, null, textToSend, this.getSmsIntent(), null)
         }
 
+        // TODO: [Style] Add elevation to message box when not at bottom.
         // Return to previous activity on arrow click
         message_list_toolbar_return_iv.setOnClickListener { finish() }
     }

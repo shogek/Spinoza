@@ -1,9 +1,12 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="MessengerStyleActionBarTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Padding -->
         <item name="contentInsetStart">0dp</item>
         <item name="contentInsetEnd">0dp</item>
+
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor" tools:targetApi="lollipop" >@color/colorWhite</item>
     </style>
 
     <!-- Base application theme. -->

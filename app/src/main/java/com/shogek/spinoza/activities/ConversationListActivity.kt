@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.repositories.ContactRepository
@@ -21,6 +22,7 @@ import kotlinx.android.synthetic.main.activity_conversation_list.*
 class ConversationListActivity : AppCompatActivity() {
     companion object {
         const val REQUEST_PICK_CONTACT = 0
+        const val DIRECTION_UP = -1
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +50,15 @@ class ConversationListActivity : AppCompatActivity() {
             val intent = Intent(this, ContactListActivity::class.java)
             startActivityForResult(intent, REQUEST_PICK_CONTACT)
         }
+
+        rv_conversationList.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                // TODO: [Style] Use 'dp' instead of pixels
+                val canScrollUp = recyclerView.canScrollVertically(DIRECTION_UP)
+                conversation_list_toolbar.elevation = if (canScrollUp) 8f else 0f
+            }
+        })
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

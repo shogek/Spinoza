@@ -1,4 +1,4 @@
-package com.shogek.spinoza.activities
+package com.shogek.spinoza.helpers
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -16,6 +16,7 @@ import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
 import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
+import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
@@ -25,8 +26,8 @@ import com.shogek.spinoza.repositories.ConversationRepository
 // https://developer.android.com/design/patterns/notifications.html
 
 /** Helper class for showing and canceling message received notifications. */
-object MessageReceivedNotification {
-    private val TAG = MessageReceivedNotification::class.java.simpleName
+object MessageNotificationHelper {
+    private val TAG = MessageNotificationHelper::class.java.simpleName
 
     /** The unique ID for this type of notification. */
     private const val NOTIFICATION_TAG = "SPINOZA_NOTIFICATION_TAG"

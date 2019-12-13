@@ -1,10 +1,11 @@
-package com.shogek.spinoza.activities
+package com.shogek.spinoza.receivers
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.SmsMessage
 import android.util.Log
+import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.repositories.ConversationRepository
 
 class MessageBroadcastReceiver: BroadcastReceiver() {
@@ -30,7 +31,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
         val conversations = ConversationRepository.getAll(context.contentResolver)
         val conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
         if (conversationId != null) {
-            MessageReceivedNotification.notify(context, conversationId, senderPhone, text)
+            MessageNotificationHelper.notify(context, conversationId, senderPhone, text)
             return
         }
 
@@ -42,6 +43,11 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
             return
         }
 
-        MessageReceivedNotification.notify(context, newConversationId, senderPhone, text)
+        MessageNotificationHelper.notify(
+            context,
+            newConversationId,
+            senderPhone,
+            text
+        )
     }
 }

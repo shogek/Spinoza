@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.MediaStore.Images.Media.getBitmap
 import android.util.Log
@@ -18,8 +20,8 @@ import com.shogek.spinoza.CONVERSATION_ID
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.repositories.ContactRepository
-import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.caches.ContactCache
+import com.shogek.spinoza.caches.ConversationCache
 
 
 // More information can be found at:
@@ -41,18 +43,18 @@ object MessageNotificationHelper {
      * @param strippedPhone The phone number which sent the SMS message
      * @param message The content of the SMS message
      * */
-    fun notify(context: Context, threadId: Number, strippedPhone: String, message: String) {
+    fun notify(context: Context,
+               threadId: Number,
+               strippedPhone: String,
+               message: String
+    ) {
         this.registerNotificationChannel(context)
 
         val contact = this.tryGetContact(threadId, strippedPhone, context.contentResolver)
         val notificationTitle = contact?.displayName ?: strippedPhone
 
         // This image is used as the notification's large icon (thumbnail)
-        val picture =
-            if (contact?.photoUri != null)
-                getBitmap(context.contentResolver, Uri.parse(contact.photoUri))
-            else
-                null
+        val picture = this.getContactPhotoAsBitmap(context.contentResolver, contact?.photoUri)
 
         val builder = Builder(context, CHANNEL_NEW_MESSAGES)
             // Set appropriate default for the notification light, sound and vibration
@@ -89,9 +91,30 @@ object MessageNotificationHelper {
         nm.cancel(this.NOTIFICATION_TAG, 0)
     }
 
-    private fun createNotification(context: Context, notification: Notification) {
+    private fun createNotification(context: Context,
+                                   notification: Notification
+    ) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(this.NOTIFICATION_TAG, 0, notification)
+    }
+
+    private fun getContactPhotoAsBitmap(resolver: ContentResolver,
+                                        uri: String?
+    ) : Bitmap? {
+        if (uri == null) {
+            return null
+        }
+
+        val imageUri = Uri.parse(uri)
+
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            val source = ImageDecoder.createSource(resolver, imageUri)
+            return ImageDecoder.decodeBitmap(source)
+        } else {
+            // Use older version
+            @Suppress("DEPRECATION")
+            return getBitmap(resolver, imageUri)
+        }
     }
 
     private fun registerNotificationChannel(context: Context) {
@@ -114,7 +137,9 @@ object MessageNotificationHelper {
         this.isChannelCreated = true
     }
 
-    private fun getPendingIntent(context: Context, threadId: Number): PendingIntent? {
+    private fun getPendingIntent(context: Context,
+                                 threadId: Number
+    ): PendingIntent? {
         val intent = Intent(context, MessageListActivity::class.java)
         intent.putExtra(CONVERSATION_ID, threadId)
 
@@ -124,13 +149,16 @@ object MessageNotificationHelper {
             .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    private fun tryGetContact(threadId: Number, strippedPhone: String, cr: ContentResolver): Contact? {
-        val contact = ConversationRepository.get(threadId)?.contact
+    private fun tryGetContact(threadId: Number,
+                              strippedPhone: String,
+                              cr: ContentResolver
+    ): Contact? {
+        val contact = ConversationCache.get(threadId)?.contact
         if (contact != null)
             return contact
 
         // Maybe a new 'Contact' record was created while our app was opened (cached)?
-        val newContacts = ContactRepository.getAll(cr, true)
+        val newContacts = ContactCache.getAll(cr, true)
         val newContact = newContacts.find { c -> c.strippedPhone ==  strippedPhone }
         if (newContact == null ) {
             Log.i(this.TAG, "'Contact' record not found.")

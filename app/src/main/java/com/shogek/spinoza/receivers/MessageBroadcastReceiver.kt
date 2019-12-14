@@ -6,7 +6,7 @@ import android.content.Intent
 import android.telephony.SmsMessage
 import android.util.Log
 import com.shogek.spinoza.helpers.MessageNotificationHelper
-import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.caches.ConversationCache
 
 class MessageBroadcastReceiver: BroadcastReceiver() {
     companion object {
@@ -28,7 +28,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
 
         val text = pdus.fold("") { acc, bytes -> acc + SmsMessage.createFromPdu(bytes, format).displayMessageBody }
 
-        val conversations = ConversationRepository.getAll(context.contentResolver)
+        val conversations = ConversationCache.getAll(context.contentResolver)
         val conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
         if (conversationId != null) {
             MessageNotificationHelper.notify(context, conversationId, senderPhone, text)
@@ -36,7 +36,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
         }
 
         // If we didn't find a 'Conversation' - it means it was cached by the repository.
-        val newConversations = ConversationRepository.getAll(context.contentResolver, true)
+        val newConversations = ConversationCache.getAll(context.contentResolver, true)
         val newConversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
         if (newConversationId == null) {
             Log.e(TAG, "ConversationID not found.")

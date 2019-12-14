@@ -5,51 +5,10 @@ import android.provider.Telephony
 import com.shogek.spinoza.models.Message
 
 object MessageRepository {
-    /** [Telephony.Sms.Conversations.THREAD_ID] returns a list of that conversation Messages */
-    private val messages: HashMap<Number, MutableList<Message>?> = HashMap()
 
-    /** Queries for the latest message in the conversationReturns 'Message' if true, else null */
-    fun checkIfMessageSent(resolver: ContentResolver, threadId: Number, textSent: String): Message? {
-        val projection = arrayOf(
-            Telephony.Sms._ID,
-            Telephony.Sms.BODY,
-            Telephony.Sms.DATE
-        )
-
-        val selection = "${Telephony.Sms.THREAD_ID} = ? AND ${Telephony.Sms.BODY} = ?"
-        val selectionArgs = arrayOf(threadId.toString(), textSent)
-        val sortOrder = "${Telephony.Sms.DATE} DESC LIMIT 1"
-
-        val cursor = resolver.query(
-            Telephony.Sms.CONTENT_URI,
-            projection,
-            selection,
-            selectionArgs,
-            sortOrder
-        ) ?: return null
-
-        if (!cursor.moveToFirst()) {
-            return null
-        }
-
-        val id      = cursor.getString(cursor.getColumnIndex(Telephony.Sms._ID))
-        val body    = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY))
-        val date    = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE))
-        val message = Message(id, body, date, true)
-
-        // We have the thread ID but not its messages? Someone (me) fucked up something
-        val messages = this.messages[threadId]
-        messages!!.add(message)
-
-        return message
-    }
-
-    fun get(resolver: ContentResolver, threadId: Number): MutableList<Message>? {
-        val allMessages = this.messages[threadId]
-        if (allMessages != null) {
-            return allMessages
-        }
-
+    fun getAll(resolver: ContentResolver,
+               threadId: Number
+    ) : Array<Message> {
         val projection = arrayOf(
             Telephony.Sms._ID,
             Telephony.Sms.BODY,
@@ -67,7 +26,7 @@ object MessageRepository {
             selection,
             selectionArgs,
             sortOrder
-        ) ?: return mutableListOf()
+        ) ?: return arrayOf()
 
         val messages = mutableListOf<Message>()
 
@@ -82,12 +41,13 @@ object MessageRepository {
         }
         cursor.close()
 
-        this.messages[threadId] = messages
-        return messages
+        return messages.toTypedArray()
     }
 
     /** Will only work if the app is set as the default messaging application */
-    fun delete(resolver: ContentResolver, id: String): Number {
+    fun delete(resolver: ContentResolver,
+               id: String
+    ): Number {
         val selection = "${Telephony.Sms._ID} = ?"
         val selectionArgs = arrayOf(id)
 

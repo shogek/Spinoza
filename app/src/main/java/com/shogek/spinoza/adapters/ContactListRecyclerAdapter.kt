@@ -16,7 +16,7 @@ import com.shogek.spinoza.models.Contact
 
 class ContactListRecyclerAdapter(
     private val context: AppCompatActivity,
-    private val contacts: MutableList<Contact>
+    private val contacts: Array<Contact>
 ) : RecyclerView.Adapter<ContactListRecyclerAdapter.ViewHolder>() {
 
     private val filteredContacts: MutableList<Contact> = mutableListOf<Contact>().apply { addAll(contacts) } // copy the list

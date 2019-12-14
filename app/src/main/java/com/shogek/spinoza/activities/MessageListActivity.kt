@@ -16,10 +16,12 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
+import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
-import com.shogek.spinoza.repositories.ConversationRepository
-import com.shogek.spinoza.repositories.MessageRepository
+import com.shogek.spinoza.caches.ConversationCache
+import com.shogek.spinoza.caches.MessageCache
+import com.shogek.spinoza.models.Contact
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 
@@ -27,10 +29,10 @@ class MessageListActivity : AppCompatActivity() {
 
     private var sentPI: PendingIntent? = null
     /** Last sent SMS message's text is stored here to be used in intent */
-    private lateinit var textSent: String
     private lateinit var messages: MutableList<Message>
+    private var conversation: Conversation? = null
+    private var contact: Contact? = null
     private lateinit var adapter: MessageListRecyclerAdapter
-    private lateinit var conversation: Conversation
     private lateinit var sendMessageText: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,47 +44,60 @@ class MessageListActivity : AppCompatActivity() {
         val conversationId = intent.getIntExtra(CONVERSATION_ID, NO_CONVERSATION_ID)
 
         // TODO: [Bug] Contact exists without a conversation (we're writing the first message)
-        if (conversationId == NEW_CONVERSATION_ID) {
-            return
+        if (conversationId == NO_CONVERSATION_ID) {
+            val contactId = intent.getStringExtra(CONTACT_ID)
+            this.contact = ContactCache.get(contentResolver, contactId!!)
+            this.messages = mutableListOf()
+        } else {
+            this.conversation = ConversationCache.get(conversationId)
+            this.messages = MessageCache
+                .getAll(contentResolver, conversationId)
+                .toMutableList()
         }
-        val conversation = ConversationRepository.get(conversationId) ?: return
-        this.conversation = conversation
-        if (conversation.messages == null)
-            conversation.messages = MessageRepository.get(contentResolver, conversationId)
 
-        val messages = conversation.messages ?: return
-        this.messages = messages
-
-        this.initCustomActionBar(conversation.getDisplayName(), conversation.contact?.photoUri)
+        val contactName = this.conversation?.getDisplayName() ?: this.contact!!.displayName
+        val contactPhotoUri = this.conversation?.contact?.photoUri ?: this.contact?.photoUri
 
         // TODO: [Bug] Opening an unread conversation should mark it as read
-        val adapter = MessageListRecyclerAdapter(this, messages, conversation.contact?.photoUri)
-        this.adapter = adapter
-        rv_messageList.adapter = adapter
+        this.adapter = MessageListRecyclerAdapter(this, messages, contactPhotoUri)
+        rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
 
-        // Scroll to last message on keyboard appear
-        KeyboardVisibilityEvent.setEventListener(this) { isVisible ->
-            if (isVisible)
-                rv_messageList.scrollToPosition(messages.size - 1)
-        }
+        this.initScrollDownWhenKeyboardAppears(messages.size)
+        this.initButtonReturn()
+        this.initButtonSendMessage()
+        this.setToolbarInformation(contactName, contactPhotoUri)
+        // TODO: [Style] Add elevation to message box when not at bottom.
+    }
 
+    private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {
+        KeyboardVisibilityEvent.setEventListener(this) { isVisible ->
+            if (isVisible) {
+                rv_messageList.scrollToPosition(messageCount - 1)
+            }
+        }
+    }
+
+    private fun initButtonSendMessage() {
         // Send the typed message
         iv_sendMessageButton.setOnClickListener {
-            val textToSend = this.sendMessageText.text.toString()
-            if (textToSend.isBlank()) {
+            val message = this.sendMessageText.text.toString()
+            if (message.isBlank()) {
                 return@setOnClickListener
             }
+
             this.sendMessageText.text.clear()
-            this.textSent = textToSend
 
-            val smsManager = SmsManager.getDefault()
-            smsManager.sendTextMessage(this.conversation.senderPhoneStripped, null, textToSend, this.getSmsIntent(), null)
+            val recipient = this.conversation?.senderPhoneStripped ?: this.contact!!.strippedPhone
+
+            SmsManager
+                .getDefault()
+                .sendTextMessage(recipient, null, message, this.getSmsIntent(), null)
         }
+    }
 
-        // TODO: [Style] Add elevation to message box when not at bottom.
-        // Return to previous activity on arrow click
+    private fun initButtonReturn() {
         message_list_toolbar_return_iv.setOnClickListener { finish() }
     }
 
@@ -90,7 +105,9 @@ class MessageListActivity : AppCompatActivity() {
         this.sendMessageText = findViewById(R.id.et_sendMessageText)
     }
 
-    private fun initCustomActionBar(title: String, contactPhotoUri: String?) {
+    private fun setToolbarInformation(title: String,
+                                      contactPhotoUri: String?
+    ) {
         message_list_toolbar_title_tv.text = title
 
         // Show the contact photo or hide the bubble completely
@@ -116,17 +133,12 @@ class MessageListActivity : AppCompatActivity() {
                     return
                 }
 
-                // TODO: Bad practice, use something not mutable + we're concerning ourselves about logic in another activity
+                // TODO: [Style] If we're here, it means message was sent - make speech bubble darker
                 val parent = arg0 as MessageListActivity
-                val lastMessage = MessageRepository.checkIfMessageSent(contentResolver, parent.conversation.threadId, parent.textSent)
-                if (lastMessage == null) {
-                    Toast.makeText(baseContext, "Failed to send message", Toast.LENGTH_SHORT).show()
-                    return
-                }
                 parent.adapter.notifyDataSetChanged()
-                rv_messageList.scrollToPosition(parent.messages.size - 1)
-                parent.conversation.latestMessageTimestamp = lastMessage.dateTimestamp
-                parent.conversation.latestMessageText = lastMessage.text
+                rv_messageList.scrollToPosition(parent.messages.size)
+
+                // TODO: [Bug] Conversation list isn't updated with newest messages if any were sent
             }
         }
 

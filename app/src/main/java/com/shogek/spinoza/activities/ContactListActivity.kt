@@ -8,7 +8,7 @@ import android.text.TextWatcher
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ContactListRecyclerAdapter
-import com.shogek.spinoza.repositories.ContactRepository
+import com.shogek.spinoza.caches.ContactCache
 import kotlinx.android.synthetic.main.activity_contact_list.*
 
 class ContactListActivity : AppCompatActivity() {
@@ -17,10 +17,10 @@ class ContactListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list)
 
-        val sortedContacts = ContactRepository
+        val sortedContacts = ContactCache
             .getAll(contentResolver, true)
             .sortedBy { c -> c.displayName }
-            .toMutableList()
+            .toTypedArray()
         val adapter = ContactListRecyclerAdapter(this, sortedContacts)
         rv_contactList.adapter = adapter
         rv_contactList.layoutManager = LinearLayoutManager(this)

@@ -7,7 +7,9 @@ object ConversationHelper {
     /**
      * Assign 'Contact' records to appropriate 'Conversation' records by matching phone numbers.
      */
-    fun matchContactsWithConversations(conversations: List<Conversation>, contacts: List<Contact>) {
+    fun matchContactsWithConversations(conversations: Array<Conversation>,
+                                       contacts: Array<Contact>
+    ) {
         conversations.forEach { conversation ->
             contacts.forEach { contact ->
                 if (conversation.senderPhoneStripped == contact.strippedPhone) {

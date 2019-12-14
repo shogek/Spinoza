@@ -21,7 +21,7 @@ import java.time.*
 
 class ConversationListRecyclerAdapter(
     private val context: Context,
-    private val conversations: MutableList<Conversation>
+    private val conversations: Array<Conversation>
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.ViewHolder>() {
     private val layoutInflater = LayoutInflater.from(context)
 
@@ -107,11 +107,11 @@ class ConversationListRecyclerAdapter(
     *   Class is marked as 'inner' so we could the pass the constructor's context to an intent.
     */
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val sender = itemView.findViewById<TextView>(R.id.tv_sender)
-        val lastMessage = itemView.findViewById<TextView>(R.id.tv_lastMessage)
-        val senderImage = itemView.findViewById<ImageView>(R.id.iv_sender)
-        val notification = itemView.findViewById<ImageView>(R.id.iv_notification)
-        val date = itemView.findViewById<TextView>(R.id.tv_messageDate)
+        val sender: TextView = itemView.findViewById(R.id.tv_sender)
+        val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
+        val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
+        val notification: ImageView = itemView.findViewById(R.id.iv_notification)
+        val date: TextView = itemView.findViewById(R.id.tv_messageDate)
 
         var conversationId: Number? = null
 

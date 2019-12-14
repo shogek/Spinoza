@@ -5,17 +5,8 @@ import android.provider.Telephony
 import com.shogek.spinoza.models.Conversation
 
 object ConversationRepository {
-    /** [Telephony.Sms.Conversations.THREAD_ID] returns Conversation */
-    private val conversations: HashMap<Int, Conversation> = HashMap()
 
-    fun get(threadId: Number): Conversation? = this.conversations.getOrDefault(threadId.toInt(), null)
-
-    fun getAll(resolver: ContentResolver, clearCache: Boolean = false): MutableList<Conversation> {
-        // TODO: [Refactor] Use state
-        // TODO: [Refactor] Return a read-only collection
-        if (this.conversations.isNotEmpty() && !clearCache)
-            return this.conversations.values.toMutableList()
-
+    fun getAll(resolver: ContentResolver): Array<Conversation> {
         val projection = arrayOf(
             Telephony.Sms.Conversations.ADDRESS     + " as " + Telephony.Sms.Conversations.ADDRESS,
             Telephony.Sms.Conversations.BODY        + " as " + Telephony.Sms.Conversations.BODY,
@@ -25,18 +16,16 @@ object ConversationRepository {
             Telephony.Sms.Conversations.THREAD_ID   + " as " + Telephony.Sms.Conversations.THREAD_ID
         )
 
-        val selection = null
-        val selectionArgs = null
-        val sortOrder = null
-
         val cursor = resolver.query(
             Telephony.Sms.Conversations.CONTENT_URI,
             projection,
-            selection,
-            selectionArgs,
-            sortOrder
+            null,
+            null,
+            null
         )
-            ?: return mutableListOf()
+            ?: return arrayOf()
+
+        val conversations = mutableListOf<Conversation>()
 
         while (cursor.moveToNext()) {
             val address     = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Conversations.ADDRESS))
@@ -47,10 +36,12 @@ object ConversationRepository {
             val threadId    = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.THREAD_ID))
 
             val isOurMessage = type == Telephony.Sms.Conversations.MESSAGE_TYPE_SENT
-            this.conversations[threadId] = Conversation(threadId, address, null, null, body, date, read == 1, isOurMessage)
+
+            val conversation = Conversation(threadId, address, null, null, body, date, read == 1, isOurMessage)
+            conversations.add(conversation)
         }
 
         cursor.close()
-        return this.conversations.values.toMutableList()
+        return conversations.toTypedArray()
     }
 }

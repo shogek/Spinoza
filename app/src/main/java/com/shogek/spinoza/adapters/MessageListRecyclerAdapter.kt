@@ -7,17 +7,25 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
+import com.shogek.spinoza.cores.MessageListCore
 import com.shogek.spinoza.models.Message
 
 class MessageListRecyclerAdapter(
     private val context: Context,
+    private val core: MessageListCore,
     private val messages: MutableList<Message>,
     private val senderPhotoUri: String?
 ): RecyclerView.Adapter<MessageListRecyclerAdapter.ViewHolder>() {
-    private val MESSAGE_OURS = 0
-    private val MESSAGE_THEIRS = 1
+
+    companion object {
+        // Used to differentiate view holders
+        const val MESSAGE_OURS = 0
+        const val MESSAGE_THEIRS = 1
+    }
+
     private val layoutInflater = LayoutInflater.from(context)
 
     override fun getItemViewType(position: Int): Int {
@@ -26,13 +34,19 @@ class MessageListRecyclerAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = if (viewType == MESSAGE_OURS) R.layout.message_list_item_ours else R.layout.message_list_item_theirs
+        val view = if (viewType == MESSAGE_OURS)
+            R.layout.message_list_item_ours
+        else
+            R.layout.message_list_item_theirs
+
         val itemView = this.layoutInflater.inflate(view, parent, false)
         return ViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val currentMessage = this.messages[position]
+        holder.message = currentMessage
+
         val viewHolder = holder.ourMessage ?: holder.theirMessage
         viewHolder.text = currentMessage.text
 
@@ -68,8 +82,21 @@ class MessageListRecyclerAdapter(
     }
 
     inner class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+        lateinit var message: Message
+
         val ourMessage = itemView.findViewById<TextView>(R.id.tv_ourMessageText)
         val theirMessage = itemView.findViewById<TextView>(R.id.tv_theirMessageText)
         val senderPhoto = itemView.findViewById<ImageView>(R.id.message_list_sender_photo_civ)
+
+        init {
+            itemView.setOnLongClickListener {
+                core.onLongClickMessage(this.message)
+                true
+            }
+
+            itemView.setOnClickListener {
+                core.onClickMessage()
+            }
+        }
     }
 }

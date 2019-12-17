@@ -2,10 +2,7 @@ package com.shogek.spinoza.activities
 
 import android.app.Activity
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telephony.SmsManager
@@ -21,54 +18,64 @@ import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
+import com.shogek.spinoza.cores.MessageListCore
 import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.services.MessageService
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 
 class MessageListActivity : AppCompatActivity() {
 
     private var sentPI: PendingIntent? = null
-    /** Last sent SMS message's text is stored here to be used in intent */
     private lateinit var messages: MutableList<Message>
-    private var conversation: Conversation? = null
-    private var contact: Contact? = null
-    private lateinit var adapter: MessageListRecyclerAdapter
     private lateinit var sendMessageText: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        this.initActivity()
+        val core = MessageListCore(
+            this,
+            getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager,
+            findViewById(R.id.cl_sendMessageRow),
+            findViewById(R.id.cl_messageActionsRow)
+        )
 
         val conversationId = intent.getIntExtra(CONVERSATION_ID, NO_CONVERSATION_ID)
 
-        // TODO: [Bug] Contact exists without a conversation (we're writing the first message)
+        val contact: Contact
+        val conversation: Conversation
+        val adapter: MessageListRecyclerAdapter
+
+        // Contact exists without a conversation (we're writing the first message)
         if (conversationId == NO_CONVERSATION_ID) {
             val contactId = intent.getStringExtra(CONTACT_ID)
-            this.contact = ContactCache.get(contentResolver, contactId!!)
+            contact = ContactCache.get(contentResolver, contactId!!)
             this.messages = mutableListOf()
         } else {
-            this.conversation = ConversationCache.get(conversationId)
+            conversation = ConversationCache.get(conversationId)!!
+            contact = ContactCache
+                .getAll(contentResolver)
+                .find { c -> c.strippedPhone == conversation.senderPhoneStripped }!!
             this.messages = MessageCache
                 .getAll(contentResolver, conversationId)
                 .toMutableList()
         }
 
-        val contactName = this.conversation?.getDisplayName() ?: this.contact!!.displayName
-        val contactPhotoUri = this.conversation?.contact?.photoUri ?: this.contact?.photoUri
-
         // TODO: [Bug] Opening an unread conversation should mark it as read
-        this.adapter = MessageListRecyclerAdapter(this, messages, contactPhotoUri)
-        rv_messageList.adapter = this.adapter
+        adapter = MessageListRecyclerAdapter(this, core, messages, contact.photoUri)
+        rv_messageList.adapter = adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
 
         this.initScrollDownWhenKeyboardAppears(messages.size)
         this.initButtonReturn()
-        this.initButtonSendMessage()
-        this.setToolbarInformation(contactName, contactPhotoUri)
+        this.initButtonSendMessage(contact.strippedPhone, adapter)
+        this.initRowButtonActions(core)
+        this.setToolbarInformation(contact.displayName, contact.photoUri)
+        this.sendMessageText = findViewById(R.id.et_sendMessageText)
         // TODO: [Style] Add elevation to message box when not at bottom.
+        // TODO: [Style] On long click RecyclerView jumps to bottom
     }
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {
@@ -79,7 +86,16 @@ class MessageListActivity : AppCompatActivity() {
         }
     }
 
-    private fun initButtonSendMessage() {
+    private fun initRowButtonActions(core: MessageListCore) {
+        cl_copyMessageColumn.setOnClickListener { core.onClickCopy() }
+        cl_forwardMessageColumn.setOnClickListener { core.onClickForwardMessage() }
+        cl_removeMessageColumn.setOnClickListener { core.onClickRemoveMessage() }
+    }
+
+    private fun initButtonSendMessage(
+        recipientNumber: String,
+        adapter: MessageListRecyclerAdapter
+    ) {
         // Send the typed message
         iv_sendMessageButton.setOnClickListener {
             val message = this.sendMessageText.text.toString()
@@ -88,12 +104,7 @@ class MessageListActivity : AppCompatActivity() {
             }
 
             this.sendMessageText.text.clear()
-
-            val recipient = this.conversation?.senderPhoneStripped ?: this.contact!!.strippedPhone
-
-            SmsManager
-                .getDefault()
-                .sendTextMessage(recipient, null, message, this.getSmsIntent(), null)
+            MessageService.send(recipientNumber, message, this.getSmsIntent(adapter), null)
         }
     }
 
@@ -101,23 +112,19 @@ class MessageListActivity : AppCompatActivity() {
         message_list_toolbar_return_iv.setOnClickListener { finish() }
     }
 
-    private fun initActivity() {
-        this.sendMessageText = findViewById(R.id.et_sendMessageText)
-    }
-
-    private fun setToolbarInformation(title: String,
-                                      contactPhotoUri: String?
+    private fun setToolbarInformation(
+        title: String,
+        contactPhotoUri: String?
     ) {
         message_list_toolbar_title_tv.text = title
 
-        // Show the contact photo or hide the bubble completely
         if (contactPhotoUri != null)
             message_list_toolbar_sender_photo_civ.setImageURI(Uri.parse(contactPhotoUri))
         else
             message_list_toolbar_sender_photo_civ.visibility = View.GONE
     }
 
-    private fun getSmsIntent(): PendingIntent {
+    private fun getSmsIntent(adapter: MessageListRecyclerAdapter): PendingIntent {
         val smsIntent = this.sentPI
         if (smsIntent != null)
             return smsIntent
@@ -135,10 +142,11 @@ class MessageListActivity : AppCompatActivity() {
 
                 // TODO: [Style] If we're here, it means message was sent - make speech bubble darker
                 val parent = arg0 as MessageListActivity
-                parent.adapter.notifyDataSetChanged()
+                adapter.notifyDataSetChanged()
                 rv_messageList.scrollToPosition(parent.messages.size)
 
                 // TODO: [Bug] Conversation list isn't updated with newest messages if any were sent
+                // TODO: [Bug] Message list isn't updated with new messages
             }
         }
 

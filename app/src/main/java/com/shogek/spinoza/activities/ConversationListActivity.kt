@@ -22,6 +22,7 @@ import com.shogek.spinoza.utils.UnitUtils
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
 class ConversationListActivity : AppCompatActivity() {
+
     companion object {
         const val REQUEST_PICK_CONTACT = 0
         const val DIRECTION_UP = -1
@@ -75,20 +76,17 @@ class ConversationListActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int,
-                                  resultCode: Int,
-                                  data: Intent?
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
     ) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode != REQUEST_PICK_CONTACT) {
-            return
-        }
+        if (requestCode != REQUEST_PICK_CONTACT) return
 
         // Unsuccessful request - the user backed out of the operation
-        if (resultCode != Activity.RESULT_OK) {
-            return
-        }
+        if (resultCode != Activity.RESULT_OK) return
 
         // User picked a contact - open the corresponding conversation
         val intent = Intent(this, MessageListActivity::class.java)

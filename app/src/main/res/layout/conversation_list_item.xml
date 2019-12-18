@@ -40,7 +40,7 @@
             android:singleLine="true"
             android:text="TextView"
             android:textColor="#D8000000"
-            android:textSize="15sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/iv_notification"
             app:layout_constraintStart_toEndOf="@+id/cl_wrapper_sender"
@@ -70,7 +70,7 @@
                     android:singleLine="true"
                     android:text="TextView"
                     android:textColor="#8B8B8B"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tv_messageDate"
@@ -78,7 +78,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:text="TextView"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     app:layout_constraintStart_toEndOf="@+id/tv_lastMessage" />
             </TableRow>
 

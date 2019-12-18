@@ -14,7 +14,7 @@ import com.shogek.spinoza.services.MessageService
 
 class MessageListCore(
     private val context: Context,
-    private val contactId: String,
+    private val contactId: String?, // unknown number sent the message
     private val clipboard: ClipboardManager,
     private val rowMessageActions: ConstraintLayout
 ) {

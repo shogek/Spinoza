@@ -37,9 +37,8 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        val contact: Contact
-        val conversation: Conversation
-        val adapter: MessageListRecyclerAdapter
+        var contact: Contact? = null
+        var conversation: Conversation? = null
 
         // Did we come from "create new message" or "open conversation"
         var conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
@@ -56,7 +55,7 @@ class MessageListActivity : AppCompatActivity() {
             conversation = ConversationCache.get(conversationId)!!
             contact = ContactCache
                 .getAll(contentResolver)
-                .find { c -> c.strippedPhone == conversation.senderPhoneStripped }!!
+                .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
             this.messages = MessageCache
                 .getAll(contentResolver, conversationId)
                 .toMutableList()
@@ -64,22 +63,25 @@ class MessageListActivity : AppCompatActivity() {
 
         val core = MessageListCore(
             this,
-            contact.id,
+            contact?.id,
             getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager,
             findViewById(R.id.cl_messageActionsRow)
         )
 
+        val contactName = contact?.displayName ?: conversation!!.getDisplayName()
+        val contactPhone = contact?.strippedPhone ?: conversation!!.senderPhoneStripped
+
         // TODO: [Bug] Opening an unread conversation should mark it as read
-        adapter = MessageListRecyclerAdapter(this, core, messages, contact.photoUri)
+        val adapter = MessageListRecyclerAdapter(this, core, messages, contact?.photoUri)
         rv_messageList.adapter = adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
 
         this.initScrollDownWhenKeyboardAppears(messages.size)
         this.initButtonReturn()
-        this.initButtonSendMessage(contact.strippedPhone, adapter)
+        this.initButtonSendMessage(contactPhone, adapter)
         this.initRowButtonActions(core)
-        this.setToolbarInformation(contact.displayName, contact.photoUri)
+        this.setToolbarInformation(contactName, contact?.photoUri)
         this.sendMessageText = findViewById(R.id.et_sendMessageText)
         // TODO: [Style] Add elevation to message box when not at bottom.
     }

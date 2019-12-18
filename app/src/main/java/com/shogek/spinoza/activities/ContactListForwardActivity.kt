@@ -22,7 +22,7 @@ class ContactListForwardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_contact_list_forward)
 
         val messageToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE)!!
-        val originatingContactId = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.CONTACT_ID)!!
+        val originatingContactId = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.CONTACT_ID)
 
         this.core = ContactListForwardCore(contentResolver, messageToForward)
 

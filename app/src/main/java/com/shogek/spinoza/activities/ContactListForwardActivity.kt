@@ -20,13 +20,15 @@ class ContactListForwardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list_forward)
-        // TODO: [Bug] You can forward a message to the same person who you copied it from
+
         val messageToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.MESSAGE)!!
+        val originatingContactId = intent.getStringExtra(Extra.MessageList.ContactListForward.CONTACT_ID)!!
 
         this.core = ContactListForwardCore(contentResolver, messageToForward)
 
         val sortedContacts = ContactCache
             .getAll(contentResolver, true)
+            .filter { c -> c.id != originatingContactId }
             .sortedBy { c -> c.displayName }
             .toTypedArray()
         val adapter = ContactListForwardRecyclerAdapter(this, this.core, sortedContacts)

@@ -10,6 +10,7 @@ object Extra {
     object MessageList {
         object ContactListForward {
             const val MESSAGE = "MESSAGE"
+            const val CONTACT_ID = "CONTACT_ID"
         }
     }
 }

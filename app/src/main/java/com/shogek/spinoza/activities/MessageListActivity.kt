@@ -34,12 +34,6 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        val core = MessageListCore(
-            this,
-            getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager,
-            findViewById(R.id.cl_messageActionsRow)
-        )
-
         val conversationId = intent.getIntExtra(CONVERSATION_ID, NO_CONVERSATION_ID)
 
         val contact: Contact
@@ -60,6 +54,13 @@ class MessageListActivity : AppCompatActivity() {
                 .getAll(contentResolver, conversationId)
                 .toMutableList()
         }
+
+        val core = MessageListCore(
+            this,
+            contact.id,
+            getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager,
+            findViewById(R.id.cl_messageActionsRow)
+        )
 
         // TODO: [Bug] Opening an unread conversation should mark it as read
         adapter = MessageListRecyclerAdapter(this, core, messages, contact.photoUri)

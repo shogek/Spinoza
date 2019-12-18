@@ -14,6 +14,7 @@ import com.shogek.spinoza.services.MessageService
 
 class MessageListCore(
     private val context: Context,
+    private val contactId: String,
     private val clipboard: ClipboardManager,
     private val rowMessageActions: ConstraintLayout
 ) {
@@ -42,6 +43,7 @@ class MessageListCore(
 
         val intent = Intent(this.context, ContactListForwardActivity::class.java)
         intent.putExtra(Extra.MessageList.ContactListForward.MESSAGE, message.text)
+        intent.putExtra(Extra.MessageList.ContactListForward.CONTACT_ID, this.contactId)
         this.context.startActivity(intent)
 
         this.hideActions()

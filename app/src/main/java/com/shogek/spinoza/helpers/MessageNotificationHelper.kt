@@ -16,7 +16,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.Builder
 import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
-import com.shogek.spinoza.CONVERSATION_ID
+import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Contact
@@ -141,7 +141,7 @@ object MessageNotificationHelper {
                                  threadId: Number
     ): PendingIntent? {
         val intent = Intent(context, MessageListActivity::class.java)
-        intent.putExtra(CONVERSATION_ID, threadId)
+        intent.putExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, threadId)
 
         // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
         return TaskStackBuilder.create(context)

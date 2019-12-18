@@ -11,7 +11,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.shogek.spinoza.CONVERSATION_ID
+import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
@@ -118,7 +118,7 @@ class ConversationListRecyclerAdapter(
         init {
             itemView.setOnClickListener {
                 val intent = Intent(context, MessageListActivity::class.java)
-                intent.putExtra(CONVERSATION_ID, this.conversationId)
+                intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, this.conversationId)
                 context.startActivity(intent)
             }
         }

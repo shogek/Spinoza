@@ -91,16 +91,16 @@ class ConversationListActivity : AppCompatActivity() {
         // User picked a contact - open the corresponding conversation
         val intent = Intent(this, MessageListActivity::class.java)
 
-        val contactId = data!!.extras!![PARAM_PICK_CONTACT] as String
+        val contactId = data!!.extras!![Extra.ContactList.ConversationList.PickContact.CONTACT_ID] as String
         val conversationId = ConversationCache
             .getAll(contentResolver)
             .find { c -> c.contact?.id == contactId }
             ?.threadId
 
         if (conversationId == null) {
-            intent.putExtra(CONTACT_ID, contactId)
+            intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, contactId)
         } else {
-            intent.putExtra(CONVERSATION_ID, conversationId)
+            intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, conversationId)
         }
 
         startActivity(intent)

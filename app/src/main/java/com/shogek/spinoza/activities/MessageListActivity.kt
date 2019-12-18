@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.telephony.SmsManager
 import android.net.Uri
 import android.view.View
 import android.widget.EditText
@@ -26,6 +25,10 @@ import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 
 class MessageListActivity : AppCompatActivity() {
 
+    companion object {
+        const val NO_CONVERSATION_ID = -1
+    }
+
     private var sentPI: PendingIntent? = null
     private lateinit var messages: MutableList<Message>
     private lateinit var sendMessageText: EditText
@@ -34,17 +37,21 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        val conversationId = intent.getIntExtra(CONVERSATION_ID, NO_CONVERSATION_ID)
-
         val contact: Contact
         val conversation: Conversation
         val adapter: MessageListRecyclerAdapter
 
-        // Contact exists without a conversation (we're writing the first message)
+        // Did we come from "create new message" or "open conversation"
+        var conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
         if (conversationId == NO_CONVERSATION_ID) {
-            val contactId = intent.getStringExtra(CONTACT_ID)
-            contact = ContactCache.get(contentResolver, contactId!!)
+            conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
+        }
+
+        if (conversationId == NO_CONVERSATION_ID) {
+            // Contact exists without a conversation (we're writing the first message)
             this.messages = mutableListOf()
+            val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)
+            contact = ContactCache.get(contentResolver, contactId!!)
         } else {
             conversation = ConversationCache.get(conversationId)!!
             contact = ContactCache

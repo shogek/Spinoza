@@ -42,8 +42,8 @@ class MessageListCore(
         val message = this.selectedMessage ?: return
 
         val intent = Intent(this.context, ContactListForwardActivity::class.java)
-        intent.putExtra(Extra.MessageList.ContactListForward.MESSAGE, message.text)
-        intent.putExtra(Extra.MessageList.ContactListForward.CONTACT_ID, this.contactId)
+        intent.putExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE, message.text)
+        intent.putExtra(Extra.MessageList.ContactListForward.ForwardMessage.CONTACT_ID, this.contactId)
         this.context.startActivity(intent)
 
         this.hideActions()

@@ -10,7 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
-import com.shogek.spinoza.PARAM_PICK_CONTACT
+import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.models.Contact
 
@@ -64,7 +64,7 @@ class ContactListRecyclerAdapter(
             // Return ID of selected 'Contact' record
             itemView.setOnClickListener {
                 val returnIntent = Intent()
-                returnIntent.putExtra(PARAM_PICK_CONTACT, contactId)
+                returnIntent.putExtra(Extra.ContactList.ConversationList.PickContact.CONTACT_ID, contactId)
                 context.setResult(Activity.RESULT_OK, returnIntent)
                 context.finish()
             }

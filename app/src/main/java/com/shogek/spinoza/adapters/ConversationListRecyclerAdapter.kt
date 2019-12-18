@@ -81,10 +81,7 @@ class ConversationListRecyclerAdapter(
         if (!conversation.wasRead) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
-        }
-
-        if (conversation.wasRead) {
-            holder.notification.visibility = View.INVISIBLE
+            holder.notification.visibility = View.VISIBLE
         }
 
         val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)

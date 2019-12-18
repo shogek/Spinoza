@@ -37,7 +37,6 @@ class MessageListActivity : AppCompatActivity() {
         val core = MessageListCore(
             this,
             getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager,
-            findViewById(R.id.cl_sendMessageRow),
             findViewById(R.id.cl_messageActionsRow)
         )
 
@@ -75,7 +74,6 @@ class MessageListActivity : AppCompatActivity() {
         this.setToolbarInformation(contact.displayName, contact.photoUri)
         this.sendMessageText = findViewById(R.id.et_sendMessageText)
         // TODO: [Style] Add elevation to message box when not at bottom.
-        // TODO: [Style] On long click RecyclerView jumps to bottom
     }
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {

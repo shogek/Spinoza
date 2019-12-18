@@ -9,21 +9,18 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.activities.ContactListForwardActivity
-import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.services.MessageService
 
 class MessageListCore(
     private val context: Context,
     private val clipboard: ClipboardManager,
-    private val rowSendMessage: ConstraintLayout,
     private val rowMessageActions: ConstraintLayout
 ) {
-    var selectedMessage: Message? = null
+    private var selectedMessage: Message? = null
 
     fun onLongClickMessage(message: Message) {
         this.selectedMessage = message
-        this.rowSendMessage.visibility = View.GONE
         this.rowMessageActions.visibility = View.VISIBLE
     }
 
@@ -60,7 +57,6 @@ class MessageListCore(
 
     private fun hideActions() {
         this.selectedMessage = null
-        this.rowSendMessage.visibility = View.VISIBLE
         this.rowMessageActions.visibility = View.GONE
     }
 }

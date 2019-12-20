@@ -40,17 +40,29 @@ class MessageListActivity : AppCompatActivity() {
         var contact: Contact? = null
         var conversation: Conversation? = null
 
-        // Did we come from "create new message" or "open conversation"
+        // TODO: [Refactor] Too complicated, use a switch statement or something to make it more readable
+
+        // Opened a conversation from 'ConversationList'
         var conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
+
+        // Chose a contact to write a message to
         if (conversationId == NO_CONVERSATION_ID) {
             conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
+        }
+
+        // Clicked on the notification when a message was received
+        if (conversationId == NO_CONVERSATION_ID) {
+            conversationId = intent.getIntExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
         }
 
         if (conversationId == NO_CONVERSATION_ID) {
             // Contact exists without a conversation (we're writing the first message)
             this.messages = mutableListOf()
             val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)
-            contact = ContactCache.get(contentResolver, contactId!!)
+            // Check if an unknown number just sent a message (came through notification)
+            if (contactId != null) {
+                contact = ContactCache.get(contentResolver, contactId)
+            }
         } else {
             conversation = ConversationCache.get(conversationId)!!
             contact = ContactCache

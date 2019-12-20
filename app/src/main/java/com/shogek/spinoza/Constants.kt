@@ -3,6 +3,8 @@ package com.shogek.spinoza
 const val SMS_SENT_PENDING_INTENT = "SMS_SENT_PENDING_INTENT"
 
 object Extra {
+    const val GOAL = "GOAL"
+
     object MessageList {
         object ContactListForward {
             object ForwardMessage {
@@ -15,9 +17,11 @@ object Extra {
     object ConversationList {
         object MessageList {
             object OpenConversation {
+                const val GOAL = "ConversationList - MessageList - OpenConversation - GOAL"
                 const val CONVERSATION_ID = "ConversationList - MessageList - OpenConversation - CONVERSATION_ID"
             }
             object NewMessage {
+                const val GOAL = "ConversationList - MessageList - NewMessage - INTENTION"
                 const val CONVERSATION_ID = "ConversationList - MessageList - NewMessage - CONVERSATION_ID"
                 const val CONTACT_ID = "ConversationList - MessageList - NewMessage - CONTACT_ID"
             }
@@ -36,6 +40,7 @@ object Extra {
     object MessageNotification {
         object MessageList {
             object MessageReceived {
+                const val GOAL = "MessageNotification - MessageList - MessageReceived - INTENTION"
                 const val CONVERSATION_ID = "MessageNotification - MessageList - MessageReceived - CONVERSATION_ID"
             }
         }

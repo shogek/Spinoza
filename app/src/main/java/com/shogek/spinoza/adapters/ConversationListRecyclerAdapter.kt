@@ -115,6 +115,7 @@ class ConversationListRecyclerAdapter(
         init {
             itemView.setOnClickListener {
                 val intent = Intent(context, MessageListActivity::class.java)
+                intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
                 intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, this.conversationId)
                 context.startActivity(intent)
             }

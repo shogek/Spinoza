@@ -91,15 +91,17 @@ object MessageNotificationHelper {
         nm.cancel(this.NOTIFICATION_TAG, 0)
     }
 
-    private fun createNotification(context: Context,
-                                   notification: Notification
+    private fun createNotification(
+        context: Context,
+        notification: Notification
     ) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(this.NOTIFICATION_TAG, 0, notification)
     }
 
-    private fun getContactPhotoAsBitmap(resolver: ContentResolver,
-                                        uri: String?
+    private fun getContactPhotoAsBitmap(
+        resolver: ContentResolver,
+        uri: String?
     ) : Bitmap? {
         if (uri == null) {
             return null
@@ -137,10 +139,12 @@ object MessageNotificationHelper {
         this.isChannelCreated = true
     }
 
-    private fun getPendingIntent(context: Context,
-                                 threadId: Number
+    private fun getPendingIntent(
+        context: Context,
+        threadId: Number
     ): PendingIntent? {
         val intent = Intent(context, MessageListActivity::class.java)
+        intent.putExtra(Extra.GOAL, Extra.MessageNotification.MessageList.MessageReceived.GOAL)
         intent.putExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, threadId)
 
         // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
@@ -149,16 +153,17 @@ object MessageNotificationHelper {
             .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    private fun tryGetContact(threadId: Number,
-                              strippedPhone: String,
-                              cr: ContentResolver
+    private fun tryGetContact(
+        threadId: Number,
+        strippedPhone: String,
+        resolver: ContentResolver
     ): Contact? {
         val contact = ConversationCache.get(threadId)?.contact
         if (contact != null)
             return contact
 
         // Maybe a new 'Contact' record was created while our app was opened (cached)?
-        val newContacts = ContactCache.getAll(cr, true)
+        val newContacts = ContactCache.getAll(resolver, true)
         val newContact = newContacts.find { c -> c.strippedPhone ==  strippedPhone }
         if (newContact == null ) {
             Log.i(this.TAG, "'Contact' record not found.")

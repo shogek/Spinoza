@@ -29,6 +29,9 @@ class MessageListActivity : AppCompatActivity() {
         const val NO_CONVERSATION_ID = -1
     }
 
+    private var contact: Contact? = null
+    private var conversation: Conversation? = null
+
     private var sentPI: PendingIntent? = null
     private lateinit var messages: MutableList<Message>
     private lateinit var sendMessageText: EditText
@@ -37,40 +40,10 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        var contact: Contact? = null
-        var conversation: Conversation? = null
-
-        // TODO: [Refactor] Too complicated, use a switch statement or something to make it more readable
-
-        // Opened a conversation from 'ConversationList'
-        var conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-
-        // Chose a contact to write a message to
-        if (conversationId == NO_CONVERSATION_ID) {
-            conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
-        }
-
-        // Clicked on the notification when a message was received
-        if (conversationId == NO_CONVERSATION_ID) {
-            conversationId = intent.getIntExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
-        }
-
-        if (conversationId == NO_CONVERSATION_ID) {
-            // Contact exists without a conversation (we're writing the first message)
-            this.messages = mutableListOf()
-            val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)
-            // Check if an unknown number just sent a message (came through notification)
-            if (contactId != null) {
-                contact = ContactCache.get(contentResolver, contactId)
-            }
-        } else {
-            conversation = ConversationCache.get(conversationId)!!
-            contact = ContactCache
-                .getAll(contentResolver)
-                .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
-            this.messages = MessageCache
-                .getAll(contentResolver, conversationId)
-                .toMutableList()
+        when (intent.getStringExtra(Extra.GOAL)) {
+            Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage()
+            Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
+            Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
         }
 
         val core = MessageListCore(
@@ -96,6 +69,47 @@ class MessageListActivity : AppCompatActivity() {
         this.setToolbarInformation(contactName, contact?.photoUri)
         this.sendMessageText = findViewById(R.id.et_sendMessageText)
         // TODO: [Style] Add elevation to message box when not at bottom.
+    }
+
+    private fun cameFromOpenConversation() {
+        val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
+        val conversation = ConversationCache.get(conversationId)!!
+
+        this.conversation = conversation
+        this.messages = MessageCache
+            .getAll(contentResolver, conversationId)
+            .toMutableList()
+        this.contact = ContactCache
+            .getAll(contentResolver)
+            .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
+    }
+
+    private fun cameFromWriteNewMessage() {
+        val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
+        val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)!!
+
+        this.contact = ContactCache.get(contentResolver, contactId)
+
+        if (conversationId != NO_CONVERSATION_ID) {
+            this.conversation = ConversationCache.get(conversationId)
+            this.messages = MessageCache
+                .getAll(contentResolver, conversationId)
+                .toMutableList()
+        } else {
+            // Never exchanged messages with this contact before
+            this.messages = mutableListOf()
+        }
+    }
+
+    private fun cameFromReceivedMessage() {
+        val conversationId = intent.getIntExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
+        this.conversation = ConversationCache.get(conversationId)
+        this.contact = ContactCache
+            .getAll(contentResolver)
+            .find { c -> c.strippedPhone == conversation!!.senderPhoneStripped }
+        this.messages = MessageCache
+            .getAll(contentResolver, conversationId)
+            .toMutableList()
     }
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {

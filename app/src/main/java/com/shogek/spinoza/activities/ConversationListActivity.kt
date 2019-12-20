@@ -97,9 +97,11 @@ class ConversationListActivity : AppCompatActivity() {
             .find { c -> c.contact?.id == contactId }
             ?.threadId
 
-        if (conversationId == null) {
-            intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, contactId)
-        } else {
+        intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.NewMessage.GOAL)
+        intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, contactId)
+
+        if (conversationId != null) {
+            // Check if exchanged messages with the contact before
             intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, conversationId)
         }
 

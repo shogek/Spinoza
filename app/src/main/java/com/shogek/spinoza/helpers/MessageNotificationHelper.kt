@@ -22,6 +22,7 @@ import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
+import com.shogek.spinoza.caches.MessageCache
 
 
 // More information can be found at:
@@ -43,12 +44,14 @@ object MessageNotificationHelper {
      * @param strippedPhone The phone number which sent the SMS message
      * @param message The content of the SMS message
      * */
-    fun notify(context: Context,
-               threadId: Number,
-               strippedPhone: String,
-               message: String
+    fun notify(
+        context: Context,
+        threadId: Number,
+        strippedPhone: String,
+        message: String
     ) {
         this.registerNotificationChannel(context)
+        this.propagateMessage(context.contentResolver, threadId, message)
 
         val contact = this.tryGetContact(threadId, strippedPhone, context.contentResolver)
         val notificationTitle = contact?.displayName ?: strippedPhone
@@ -90,6 +93,16 @@ object MessageNotificationHelper {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.cancel(this.NOTIFICATION_TAG, 0)
     }
+
+    private fun propagateMessage(
+        resolver: ContentResolver,
+        conversationId: Number,
+        message: String
+    ) {
+        val realMessage = MessageCache.notifyMessageReceived(resolver, conversationId, message)
+        ConversationCache.notifyMessageReceived(conversationId, realMessage)
+    }
+
 
     private fun createNotification(
         context: Context,

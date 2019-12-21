@@ -8,8 +8,26 @@ object MessageCache {
     /** Telephony.Sms.Conversations.THREAD_ID returns a list of that conversation Messages */
     private val cache: HashMap<Number, Array<Message>> = HashMap()
 
-    fun getAll(resolver: ContentResolver,
-               threadId: Number
+    fun notifyMessageReceived(
+        resolver: ContentResolver,
+        threadId: Number,
+        message: String
+    ) : Message {
+        val newMessage = MessageRepository.getLatest(resolver, threadId, message)
+
+        if (this.cache.containsKey(threadId)) {
+            val messages = this.cache[threadId]!!
+            this.cache[threadId] = arrayOf(*messages, newMessage)
+        } else {
+            this.getAll(resolver, threadId)
+        }
+
+        return newMessage
+    }
+
+    fun getAll(
+        resolver: ContentResolver,
+        threadId: Number
     ) : Array<Message> {
         // Return cached result if possible
         if (this.cache.containsKey(threadId)) {

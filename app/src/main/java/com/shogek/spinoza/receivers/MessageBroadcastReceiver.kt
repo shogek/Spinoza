@@ -28,26 +28,15 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
 
         val text = pdus.fold("") { acc, bytes -> acc + SmsMessage.createFromPdu(bytes, format).displayMessageBody }
 
+        var conversationId: Number?
         val conversations = ConversationCache.getAll(context.contentResolver)
-        val conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
-        if (conversationId != null) {
-            MessageNotificationHelper.notify(context, conversationId, senderPhone, text)
-            return
+        conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
+        if (conversationId == null) {
+            // If we didn't find a 'Conversation' - it means it was cached by the repository.
+            val newConversations = ConversationCache.getAll(context.contentResolver, true)
+            conversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
         }
 
-        // If we didn't find a 'Conversation' - it means it was cached by the repository.
-        val newConversations = ConversationCache.getAll(context.contentResolver, true)
-        val newConversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
-        if (newConversationId == null) {
-            Log.e(TAG, "ConversationID not found.")
-            return
-        }
-
-        MessageNotificationHelper.notify(
-            context,
-            newConversationId,
-            senderPhone,
-            text
-        )
+        MessageNotificationHelper.notify(context, conversationId!!, senderPhone, text)
     }
 }

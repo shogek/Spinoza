@@ -54,7 +54,7 @@ class MessageListRecyclerAdapter(
             if (this.senderPhotoUri != null) {
                 holder.senderPhoto.setImageURI(Uri.parse(this.senderPhotoUri))
             } else {
-                holder.senderPhoto.setImageResource(R.drawable.ic_placeholder_face_24dp)
+                holder.senderPhoto.setImageResource(R.drawable.unknown_contact)
             }
         }
 

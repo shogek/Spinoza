@@ -91,7 +91,7 @@ class ConversationListRecyclerAdapter(
         if (conversation.contact?.photoUri != null) {
             holder.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
         } else {
-            holder.senderImage.setImageResource(R.drawable.ic_placeholder_face_24dp)
+            holder.senderImage.setImageResource(R.drawable.unknown_contact)
         }
     }
 

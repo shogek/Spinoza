@@ -6,9 +6,8 @@ import android.content.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.net.Uri
+import android.telephony.SmsManager
 import android.view.View
-import android.widget.EditText
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
@@ -19,7 +18,6 @@ import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
 import com.shogek.spinoza.cores.MessageListCore
 import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.services.MessageService
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 
@@ -27,14 +25,28 @@ class MessageListActivity : AppCompatActivity() {
 
     companion object {
         const val NO_CONVERSATION_ID = -1
+        const val PENDING_MESSAGE_INTENT = "PENDING_MESSAGE_INTENT"
+        const val PENDING_MESSAGE_BODY = "PENDING_MESSAGE_BODY"
+        const val PENDING_MESSAGE_THREAD = "PENDING_MESSAGE_THREAD"
     }
 
+    private var messageIndex = 0
     private var contact: Contact? = null
     private var conversation: Conversation? = null
-
-    private var sentPI: PendingIntent? = null
     private lateinit var messages: MutableList<Message>
-    private lateinit var sendMessageText: EditText
+    private lateinit var adapter: MessageListRecyclerAdapter
+
+    private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(arg0: Context?, arg1: Intent?) {
+            if (resultCode == Activity.RESULT_OK) {
+                val messageText = arg1!!.extras!!.getString(PENDING_MESSAGE_BODY)!!
+                val conversationId = arg1.extras!!.getInt(PENDING_MESSAGE_THREAD)
+                onMessageSentSuccess(conversationId, messageText)
+            } else {
+                onMessageSentError()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,18 +69,45 @@ class MessageListActivity : AppCompatActivity() {
         val contactPhone = contact?.strippedPhone ?: conversation!!.senderPhoneStripped
 
         // TODO: [Bug] Opening an unread conversation should mark it as read
-        val adapter = MessageListRecyclerAdapter(this, core, messages, contact?.photoUri)
-        rv_messageList.adapter = adapter
+        this.adapter = MessageListRecyclerAdapter(this, core, messages, contact?.photoUri)
+        rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
 
         this.initScrollDownWhenKeyboardAppears(messages.size)
         this.initButtonReturn()
-        this.initButtonSendMessage(contactPhone, adapter)
+        // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
+        this.initButtonSendMessage(contactPhone, conversation!!.threadId)
         this.initRowButtonActions(core)
         this.setToolbarInformation(contactName, contact?.photoUri)
-        this.sendMessageText = findViewById(R.id.et_sendMessageText)
         // TODO: [Style] Add elevation to message box when not at bottom.
+    }
+
+    private fun onMessageSentSuccess(
+        threadId: Number,
+        messageBody: String
+    ) {
+        // TODO: [Style] If we're here, it means message was sent - make speech bubble darker
+        // TODO: [Style] Scroll to bottom when message sent
+        val sentMessage = MessageCache.notifyMessageSent(contentResolver, threadId, messageBody)
+        ConversationCache.notifyMessageSent(threadId, sentMessage)
+
+        this.messages.add(sentMessage)
+        this.adapter.notifyDataSetChanged()
+        rv_messageList.scrollToPosition(this.messages.size)
+    }
+
+    private fun onMessageSentError() {
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(this.messageReceiver, IntentFilter(PENDING_MESSAGE_INTENT))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(this.messageReceiver)
     }
 
     private fun cameFromOpenConversation() {
@@ -128,17 +167,28 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun initButtonSendMessage(
         recipientNumber: String,
-        adapter: MessageListRecyclerAdapter
+        conversationId: Number
     ) {
-        // Send the typed message
         iv_sendMessageButton.setOnClickListener {
-            val message = this.sendMessageText.text.toString()
+            val message = et_sendMessageText.text.toString()
             if (message.isBlank()) {
                 return@setOnClickListener
             }
 
-            this.sendMessageText.text.clear()
-            MessageService.send(recipientNumber, message, this.getSmsIntent(adapter), null)
+            et_sendMessageText.text.clear()
+
+            val intent = Intent(PENDING_MESSAGE_INTENT)
+            intent.putExtra(PENDING_MESSAGE_BODY, message)
+            intent.putExtra(PENDING_MESSAGE_THREAD, conversationId)
+            val pendingIntent = PendingIntent.getBroadcast(
+                this,
+                this.getMessageCode() as Int,
+                intent,
+                0
+            )
+            SmsManager
+                .getDefault()
+                .sendTextMessage(recipientNumber, null, message, pendingIntent, null)
         }
     }
 
@@ -158,36 +208,10 @@ class MessageListActivity : AppCompatActivity() {
             message_list_toolbar_sender_photo_civ.visibility = View.GONE
     }
 
-    private fun getSmsIntent(adapter: MessageListRecyclerAdapter): PendingIntent {
-        val smsIntent = this.sentPI
-        if (smsIntent != null)
-            return smsIntent
-
-        // STEP 1 - create intent
-        val sentPI = PendingIntent.getBroadcast(this, 0, Intent(SMS_SENT_PENDING_INTENT), 0)
-
-        // STEP 2 - create BroadcastReceiver
-        val sendSMS: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(arg0: Context?, arg1: Intent?) {
-                if (resultCode != Activity.RESULT_OK) {
-                    Toast.makeText(baseContext, "Failed to send message", Toast.LENGTH_SHORT).show()
-                    return
-                }
-
-                // TODO: [Style] If we're here, it means message was sent - make speech bubble darker
-                val parent = arg0 as MessageListActivity
-                adapter.notifyDataSetChanged()
-                rv_messageList.scrollToPosition(parent.messages.size)
-
-                // TODO: [Bug] Conversation list isn't updated with newest messages if any were sent
-                // TODO: [Bug] Message list isn't updated with new messages
-            }
-        }
-
-        // STEP 3 - Associate intent with broadcast receiver
-        registerReceiver(sendSMS, IntentFilter(SMS_SENT_PENDING_INTENT))
-
-        this.sentPI = sentPI
-        return sentPI
+    /** Simply to differentiate between broadcast's pending intents - otherwise it returns the same one */
+    private fun getMessageCode() : Number {
+        val number = this.messageIndex
+        this.messageIndex++
+        return number
     }
 }

@@ -13,6 +13,15 @@ object ConversationCache {
         return this.cache.getOrDefault(threadId.toInt(), null)
     }
 
+    fun notifyMessageSent(
+        threadId: Number,
+        message: Message
+    ) {
+        val conversation = this.cache[threadId]!!
+        conversation.latestMessageTimestamp = message.dateTimestamp
+        conversation.latestMessageText = message.text
+    }
+
     fun notifyMessageReceived(
         threadId: Number,
         message: Message

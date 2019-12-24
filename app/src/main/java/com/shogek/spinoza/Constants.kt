@@ -1,7 +1,5 @@
 package com.shogek.spinoza
 
-const val SMS_SENT_PENDING_INTENT = "SMS_SENT_PENDING_INTENT"
-
 object Extra {
     const val GOAL = "GOAL"
 

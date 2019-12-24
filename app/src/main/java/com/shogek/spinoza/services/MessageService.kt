@@ -1,21 +1,19 @@
 package com.shogek.spinoza.services
 
-import android.app.PendingIntent
-import android.content.ContentResolver
+import android.content.*
 import android.telephony.SmsManager
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.repositories.MessageRepository
 
 object MessageService {
 
-    fun send(recipient: String,
-             message: String,
-             sentIntent: PendingIntent? = null,
-             deliveryIntent: PendingIntent? = null
+    fun send(
+        recipient: String,
+        message: String
     ) {
         SmsManager
             .getDefault()
-            .sendTextMessage(recipient, null, message, sentIntent, deliveryIntent)
+            .sendTextMessage(recipient, null, message, null, null)
     }
 
     fun delete(resolver: ContentResolver, message: Message) {

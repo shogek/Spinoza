@@ -36,7 +36,7 @@ class ContactListRecyclerAdapter(
         if (contact.photoUri != null)
             holder.contactPhoto.setImageURI(Uri.parse(contact.photoUri))
         else
-            holder.contactPhoto.setImageResource(R.drawable.ic_placeholder_face_24dp)
+            holder.contactPhoto.setImageResource(R.drawable.unknown_contact)
     }
 
     fun filter(phrase: String) {

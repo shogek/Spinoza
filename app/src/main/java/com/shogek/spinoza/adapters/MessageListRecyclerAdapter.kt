@@ -33,6 +33,8 @@ class MessageListRecyclerAdapter(
         return if (message.isOurs) MESSAGE_OURS else MESSAGE_THEIRS
     }
 
+    override fun getItemCount(): Int = this.messages.size
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = if (viewType == MESSAGE_OURS)
             R.layout.message_list_item_ours
@@ -50,7 +52,9 @@ class MessageListRecyclerAdapter(
         val viewHolder = holder.ourMessage ?: holder.theirMessage
         viewHolder.text = currentMessage.text
 
-        if (holder.senderPhoto != null) {
+        if (!currentMessage.isOurs && this.shouldHideSenderImage(position)) {
+            holder.senderPhoto.visibility = View.INVISIBLE
+        } else if (holder.senderPhoto != null) {
             if (this.senderPhotoUri != null) {
                 holder.senderPhoto.setImageURI(Uri.parse(this.senderPhotoUri))
             } else {
@@ -77,8 +81,18 @@ class MessageListRecyclerAdapter(
         }
     }
 
-    override fun getItemCount(): Int {
-        return this.messages.size
+    private fun shouldHideSenderImage(position: Int) : Boolean {
+        // Last message in conversation
+        if (this.messages.size - 1 == position) {
+            return false
+        }
+
+        val nextMessage = this.messages[position + 1]
+        if (nextMessage.isOurs) {
+            return false
+        }
+
+        return true
     }
 
     inner class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {

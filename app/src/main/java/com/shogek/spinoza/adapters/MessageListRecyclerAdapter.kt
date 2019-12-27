@@ -52,6 +52,8 @@ class MessageListRecyclerAdapter(
         val viewHolder = holder.ourMessage ?: holder.theirMessage
         viewHolder.text = currentMessage.text
 
+        // TODO: [Bug] RecyclerView reuses ViewHolders that have the sender's image hidden.
+        // That means that in places, where the image should be visible, it isn't, because the logic is not reevaluated
         if (!currentMessage.isOurs && this.shouldHideSenderImage(position)) {
             holder.senderPhoto.visibility = View.INVISIBLE
         } else if (holder.senderPhoto != null) {

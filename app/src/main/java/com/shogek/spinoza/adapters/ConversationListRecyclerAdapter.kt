@@ -49,12 +49,15 @@ class ConversationListRecyclerAdapter(
         // If not this year
         if (current.year != date.year)
             return "${year}-${month}-${day}"
+
         // If not this month
         if (current.month != date.month)
-            return "${month}-${day}"
-        // If not this week
+            return "$day ${date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+
+        // If not this week (used to avoid confusion - check definition of 'lastWeek')
         if (date.isBefore(lastWeek))
-            return "${month}-${day}"
+            return "$day ${date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+
         // If not today
         if (current.dayOfMonth != date.dayOfMonth)
             return date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())

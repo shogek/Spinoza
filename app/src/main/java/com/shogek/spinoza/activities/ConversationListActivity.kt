@@ -2,24 +2,24 @@ package com.shogek.spinoza.activities
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.shogek.spinoza.*
+import com.shogek.spinoza.Extra
+import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.caches.ContactCache
+import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.helpers.ConversationHelper
 import com.shogek.spinoza.models.Conversation
-import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.utils.UnitUtils
 import kotlinx.android.synthetic.main.activity_conversation_list.*
+
 
 class ConversationListActivity : AppCompatActivity() {
 
@@ -27,15 +27,49 @@ class ConversationListActivity : AppCompatActivity() {
         const val REQUEST_PICK_CONTACT = 0
         const val DIRECTION_UP = -1
         const val TOOLBAR_ELEVATION_DIP: Float = 4f
+
+        const val PERMISSIONS_ALL = 1
+        val PERMISSIONS_REQUIRED = arrayOf(
+            Manifest.permission.READ_SMS,
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.RECEIVE_SMS,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_PHONE_STATE
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
+        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
+    }
 
-        // TODO: [Task] Create separate Views to ask for permissions
-        if (!this.getPermissions()) return
+    private fun ensurePermissionsGranted(permissions: Array<String>) {
+        if (!hasPermissions(this, permissions)) {
+            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_ALL)
+        }
+    }
 
+    private fun hasPermissions(
+        context: Context,
+        permissions: Array<String>
+    ) : Boolean = permissions.all {
+        ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        val permissionsMissing = grantResults.any { gr -> gr == PackageManager.PERMISSION_DENIED }
+        if (permissionsMissing)
+            this.requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_ALL)
+        else
+            this.initApp()
+    }
+
+    private fun initApp() {
         rv_conversationList.layoutManager = LinearLayoutManager(this)
         rv_conversationList.adapter = ConversationListRecyclerAdapter(this, this.getConversations())
 
@@ -112,47 +146,5 @@ class ConversationListActivity : AppCompatActivity() {
         super.onResume()
         // When we return to the conversation list, make sure we show any changes if there are any.
         rv_conversationList.adapter?.notifyDataSetChanged()
-    }
-
-    private fun getPermissions(): Boolean {
-        // Show a modal asking for permissions
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.READ_SMS,
-                Manifest.permission.SEND_SMS,
-                Manifest.permission.RECEIVE_SMS,
-                Manifest.permission.READ_CONTACTS,
-                Manifest.permission.READ_PHONE_STATE
-            ),
-            Build.VERSION.SDK_INT
-        )
-
-        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("2", "Access to read SMS not granted.")
-            return false
-        }
-
-        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("2", "Access to send SMS not granted.")
-            return false
-        }
-
-        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("2", "Access to receive SMS not granted.")
-            return false
-        }
-
-        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("2", "Access to read contacts not granted.")
-            return false
-        }
-
-        if (ContextCompat.checkSelfPermission(baseContext, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("2", "Access to read phone state not granted.")
-            return false
-        }
-
-        return true
     }
 }

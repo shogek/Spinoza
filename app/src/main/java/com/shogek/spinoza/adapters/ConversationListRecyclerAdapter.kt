@@ -18,6 +18,8 @@ import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.utils.DateUtils
 import java.time.format.DateTimeFormatter
 import java.time.*
+import java.time.format.TextStyle
+import java.util.*
 
 class ConversationListRecyclerAdapter(
     private val context: Context,
@@ -26,15 +28,18 @@ class ConversationListRecyclerAdapter(
     private val layoutInflater = LayoutInflater.from(context)
 
     private fun getFormattedDate(date: LocalDateTime) : String {
-        // TODO: [Style] Show short version of day names
-        // TODO: [Style] Show month and day numbers with zeroes
-
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm")
         val parsed = date.format(formatter)
-        val parsedDate = parsed.split(" ")[0].split("-")
+        val parsedDateAndTime = parsed.split(" ")
+
+        val parsedDate = parsedDateAndTime[0].split("-")
         val year = parsedDate[0]
         val month = parsedDate[1]
         val day = parsedDate[2]
+
+        val parsedTime = parsedDateAndTime[1].split(":")
+        val hour = parsedTime[0]
+        val minute = parsedTime[1]
 
         val current = LocalDateTime.now(ZoneOffset.UTC)
         // Use 6 days instead of 7 to not show the same day.
@@ -52,9 +57,9 @@ class ConversationListRecyclerAdapter(
             return "${month}-${day}"
         // If not today
         if (current.dayOfMonth != date.dayOfMonth)
-            return date.dayOfWeek.toString()
+            return date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
 
-        return "${date.hour}:${date.minute}"
+        return "$hour:$minute"
     }
 
     /**

@@ -45,9 +45,10 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun ensurePermissionsGranted(permissions: Array<String>) {
-        if (!hasPermissions(this, permissions)) {
+        if (!hasPermissions(this, permissions))
             ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_ALL)
-        }
+        else
+            this.initApp()
     }
 
     private fun hasPermissions(

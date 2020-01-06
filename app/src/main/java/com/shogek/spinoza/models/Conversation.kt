@@ -9,7 +9,7 @@ class Conversation(
     var latestMessageText: String,
     var latestMessageTimestamp: Long,
     var wasRead: Boolean,
-    var isOurs: Boolean
+    var latestMessageIsOurs: Boolean
     ) {
     fun getDisplayName(): String = contact?.displayName ?: senderPhoneStripped
 }

@@ -81,7 +81,7 @@ class ConversationListRecyclerAdapter(
         holder.sender.text = conversation.getDisplayName()
 
         holder.lastMessage.text =
-            if (conversation.isOurs)
+            if (conversation.latestMessageIsOurs)
                 "You: ${conversation.latestMessageText}"
             else
                 conversation.latestMessageText
@@ -89,6 +89,7 @@ class ConversationListRecyclerAdapter(
         if (!conversation.wasRead) {
             holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
             holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
+            // TODO: [Bug] RecyclerView reuses items - so this may be invisible when it shouldn't
             holder.notification.visibility = View.VISIBLE
         }
 

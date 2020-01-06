@@ -1,10 +1,28 @@
 package com.shogek.spinoza.repositories
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.provider.Telephony
 import com.shogek.spinoza.models.Message
 
 object MessageRepository {
+
+    fun markAsRead(
+        resolver: ContentResolver,
+        threadId: Number
+    ) : Number {
+        val contentValues = ContentValues()
+        contentValues.put(Telephony.Sms.READ, 1)
+
+        val where = "${Telephony.Sms.READ}=0 AND ${Telephony.Sms.Conversations.THREAD_ID}=${threadId}"
+
+        return resolver.update(
+            Telephony.Sms.Inbox.CONTENT_URI,
+            contentValues,
+            where,
+            null
+        )
+    }
 
     fun getAll(
         resolver: ContentResolver,

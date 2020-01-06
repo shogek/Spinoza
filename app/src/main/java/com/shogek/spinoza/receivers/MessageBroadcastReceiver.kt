@@ -4,14 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.SmsMessage
-import android.util.Log
 import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.caches.ConversationCache
 
 class MessageBroadcastReceiver: BroadcastReceiver() {
-    companion object {
-        val TAG = MessageBroadcastReceiver::class.java.simpleName
-    }
 
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) {
@@ -32,6 +28,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
         val conversations = ConversationCache.getAll(context.contentResolver)
         conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
         if (conversationId == null) {
+            // TODO: [Bug] Being the default SMS messaging app means we need to create the conversation for unknown numbers
             // If we didn't find a 'Conversation' - it means it was cached by the repository.
             val newConversations = ConversationCache.getAll(context.contentResolver, true)
             conversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId

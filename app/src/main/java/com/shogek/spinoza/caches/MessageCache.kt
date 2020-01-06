@@ -8,6 +8,13 @@ object MessageCache {
     /** Telephony.Sms.Conversations.THREAD_ID returns a list of that conversation Messages */
     private val cache: HashMap<Number, Array<Message>> = HashMap()
 
+    fun markMessagesAsRead(
+        resolver: ContentResolver,
+        threadId: Number
+    ) {
+        MessageRepository.markAsRead(resolver, threadId)
+    }
+
     fun notifyMessageSent(
         resolver: ContentResolver,
         threadId: Number,

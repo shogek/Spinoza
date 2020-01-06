@@ -1,6 +1,7 @@
 package com.shogek.spinoza.repositories
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.provider.Telephony
 import com.shogek.spinoza.models.Conversation
 
@@ -43,5 +44,22 @@ object ConversationRepository {
 
         cursor.close()
         return conversations.toTypedArray()
+    }
+
+    fun markAsRead(
+        resolver: ContentResolver,
+        threadId: Int
+    ) : Number {
+        val contentValues = ContentValues()
+        contentValues.put(Telephony.Sms.Conversations.READ, 1)
+
+        val where = "${Telephony.Sms.Conversations._ID}=${threadId} AND ${Telephony.Sms.Conversations.READ}=0"
+
+        return resolver.update(
+            Telephony.Sms.Conversations.CONTENT_URI,
+            contentValues,
+            where,
+            null
+        )
     }
 }

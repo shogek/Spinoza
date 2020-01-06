@@ -9,6 +9,16 @@ object ConversationCache {
     /** Telephony.Sms.Conversations.THREAD_ID returns Conversation */
     private val cache: HashMap<Number, Conversation> = HashMap()
 
+    fun markConversationAsRead(
+        resolver: ContentResolver,
+        conversationId: Int
+    ) {
+        ConversationRepository.markAsRead(resolver, conversationId)
+
+        val conversation = this.cache[conversationId]!!
+        conversation.wasRead = true
+    }
+
     fun get(threadId: Number) : Conversation? {
         return this.cache.getOrDefault(threadId.toInt(), null)
     }

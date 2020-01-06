@@ -68,7 +68,6 @@ class MessageListActivity : AppCompatActivity() {
         val contactName = contact?.displayName ?: conversation!!.getDisplayName()
         val contactPhone = contact?.strippedPhone ?: conversation!!.senderPhoneStripped
 
-        // TODO: [Bug] Opening an unread conversation should mark it as read
         this.adapter = MessageListRecyclerAdapter(this, core, messages, contact?.photoUri)
         rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
@@ -113,8 +112,13 @@ class MessageListActivity : AppCompatActivity() {
     private fun cameFromOpenConversation() {
         val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
         val conversation = ConversationCache.get(conversationId)!!
-
         this.conversation = conversation
+
+        if (!conversation.wasRead) {
+            MessageCache.markMessagesAsRead(contentResolver, conversationId)
+            ConversationCache.markConversationAsRead(contentResolver, conversationId)
+        }
+
         this.messages = MessageCache
             .getAll(contentResolver, conversationId)
             .toMutableList()

@@ -26,7 +26,6 @@
                 android:id="@+id/action_bar_conversation_list_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
                 android:text="Chats"
                 android:textColor="@color/colorBlack"
                 android:textSize="25sp"
@@ -56,5 +55,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/conversation_list_toolbar"
-        tools:listitem="@layout/conversation_list_item" />
+        tools:listitem="@layout/conversation_list_item_read" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -8,6 +8,7 @@ import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,7 @@ import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.utils.DateUtils
+import java.lang.IllegalArgumentException
 import java.time.format.DateTimeFormatter
 import java.time.*
 import java.time.format.TextStyle
@@ -24,8 +26,64 @@ import java.util.*
 class ConversationListRecyclerAdapter(
     private val context: Context,
     private val conversations: Array<Conversation>
-) : RecyclerView.Adapter<ConversationListRecyclerAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
+
+    abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        abstract fun bind(conversation: Conversation)
+    }
+
+    companion object {
+        const val TYPE_HEADER = 0
+        const val TYPE_CONVERSATION_READ = 1
+        const val TYPE_CONVERSATION_UNREAD = 2
+    }
+
     private val layoutInflater = LayoutInflater.from(context)
+
+    override fun getItemViewType(position: Int) : Int {
+        // TODO: [Bug] First conversation item is hidden because of header
+        if (position == 0)
+            return TYPE_HEADER
+
+        val conversation = this.conversations[position]
+        return if  (conversation.wasRead)
+            TYPE_CONVERSATION_READ
+        else
+            TYPE_CONVERSATION_UNREAD
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+        return when (viewType) {
+            TYPE_HEADER -> {
+                val itemView = this.layoutInflater.inflate(R.layout.conversation_list_header, parent, false)
+                HeaderViewHolder(itemView)
+            }
+            TYPE_CONVERSATION_READ -> {
+                val itemView = this.layoutInflater.inflate(R.layout.conversation_list_item_read, parent, false)
+                ReadConversationViewHolder(itemView)
+            }
+            TYPE_CONVERSATION_UNREAD -> {
+                val itemView = this.layoutInflater.inflate(R.layout.conversation_list_item_unread, parent, false)
+                UnreadConversationViewHolder(itemView)
+            }
+            else -> throw IllegalArgumentException("Unknown ViewHolder type!")
+        }
+    }
+
+    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
+        val conversation = this.conversations[position]
+
+        when (holder) {
+            is ReadConversationViewHolder   -> holder.bind(conversation)
+            is UnreadConversationViewHolder -> holder.bind(conversation)
+            is HeaderViewHolder             -> holder.bind(conversation)
+            else -> throw IllegalArgumentException("Unknown ViewHolder type!")
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return this.conversations.size
+    }
 
     private fun getFormattedDate(date: LocalDateTime) : String {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm")
@@ -65,61 +123,53 @@ class ConversationListRecyclerAdapter(
         return "$hour:$minute"
     }
 
-    /**
-    *   Create the view to display an individual list item.
-    */
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        // Pass 'false' so that the RecyclerView would take care of that for us.
-        val itemView = this.layoutInflater.inflate(R.layout.conversation_list_item, parent, false)
-        return ViewHolder(itemView)
+    private fun openConversation(conversationId: Number) {
+        val intent = Intent(context, MessageListActivity::class.java)
+        intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
+        intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, conversationId)
+        context.startActivity(intent)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val conversation = this.conversations[position]
+    inner class ReadConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
+        private val sender: TextView = itemView.findViewById(R.id.tv_sender)
+        private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
+        private val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
+        private val date: TextView = itemView.findViewById(R.id.tv_messageDate)
+        private lateinit var conversationId: Number
 
-        holder.conversationId = conversation.threadId
-        holder.sender.text = conversation.getDisplayName()
-
-        holder.lastMessage.text =
-            if (conversation.latestMessageIsOurs)
-                "You: ${conversation.latestMessageText}"
-            else
-                conversation.latestMessageText
-
-        if (!conversation.wasRead) {
-            holder.lastMessage.setTypeface(holder.lastMessage.typeface, Typeface.BOLD)
-            holder.lastMessage.setTextColor(Color.parseColor("#D8000000"))
-            // TODO: [Bug] RecyclerView reuses items - so this may be invisible when it shouldn't
-            holder.notification.visibility = View.VISIBLE
+        init {
+            itemView.setOnClickListener { openConversation(this.conversationId) }
         }
 
-        val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)
-        val properDate = "\u00B7 ${getFormattedDate(date)}"
-        holder.date.text = properDate
+        override fun bind(conversation: Conversation) {
+            conversationId = conversation.threadId
+            sender.text = conversation.getDisplayName()
 
-        if (conversation.contact?.photoUri != null) {
-            holder.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
-        } else {
-            holder.senderImage.setImageResource(R.drawable.unknown_contact)
+            this.lastMessage.text =
+                if (conversation.latestMessageIsOurs)
+                    "You: ${conversation.latestMessageText}"
+                else
+                    conversation.latestMessageText
+
+            val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)
+            val properDate = "\u00B7 ${getFormattedDate(date)}"
+            this.date.text = properDate
+
+            if (conversation.contact?.photoUri != null) {
+                this.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
+            } else {
+                this.senderImage.setImageResource(R.drawable.unknown_contact)
+            }
         }
     }
 
-    override fun getItemCount(): Int {
-        return this.conversations.size
-    }
-
-    /**
-    *   Bind the fields that we use in the view for an individual list item.
-    *   Class is marked as 'inner' so we could the pass the constructor's context to an intent.
-    */
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val sender: TextView = itemView.findViewById(R.id.tv_sender)
-        val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
-        val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
-        val notification: ImageView = itemView.findViewById(R.id.iv_notification)
-        val date: TextView = itemView.findViewById(R.id.tv_messageDate)
-
-        var conversationId: Number? = null
+    // TODO: [Refactor] Find a way to easily reuse the logic
+    inner class UnreadConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
+        private val sender: TextView = itemView.findViewById(R.id.tv_sender)
+        private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
+        private val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
+        private val date: TextView = itemView.findViewById(R.id.tv_messageDate)
+        private lateinit var conversationId: Number
 
         init {
             itemView.setOnClickListener {
@@ -129,5 +179,33 @@ class ConversationListRecyclerAdapter(
                 context.startActivity(intent)
             }
         }
+
+        override fun bind(conversation: Conversation) {
+            conversationId = conversation.threadId
+            sender.text = conversation.getDisplayName()
+
+            this.lastMessage.text =
+                if (conversation.latestMessageIsOurs)
+                    "You: ${conversation.latestMessageText}"
+                else
+                    conversation.latestMessageText
+
+            val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)
+            val properDate = "\u00B7 ${getFormattedDate(date)}"
+            this.date.text = properDate
+
+            if (conversation.contact?.photoUri != null) {
+                this.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
+            } else {
+                this.senderImage.setImageResource(R.drawable.unknown_contact)
+            }
+        }
+    }
+
+    // TODO: [Task] Enable filtering of conversations
+    inner class HeaderViewHolder(itemView: View) : BaseViewHolder(itemView) {
+        private val search: EditText = itemView.findViewById(R.id.et_conversationSearch)
+
+        override fun bind(conversation: Conversation) { }
     }
 }

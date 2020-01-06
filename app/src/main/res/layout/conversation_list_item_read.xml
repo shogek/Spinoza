@@ -35,14 +35,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="32dp"
             android:ellipsize="end"
             android:singleLine="true"
             android:text="TextView"
             android:textColor="#D8000000"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/iv_notification"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/cl_wrapper_sender"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -52,9 +52,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="2dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="32dp"
             android:shrinkColumns="0"
-            app:layout_constraintEnd_toStartOf="@+id/iv_notification"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/cl_wrapper_sender"
             app:layout_constraintTop_toBottomOf="@+id/tv_sender">
 
@@ -84,15 +84,6 @@
 
         </TableLayout>
 
-        <ImageView
-            android:id="@+id/iv_notification"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_notification_bubble_active_16dp" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

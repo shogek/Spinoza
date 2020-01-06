@@ -172,12 +172,7 @@ class ConversationListRecyclerAdapter(
         private lateinit var conversationId: Number
 
         init {
-            itemView.setOnClickListener {
-                val intent = Intent(context, MessageListActivity::class.java)
-                intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
-                intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, this.conversationId)
-                context.startActivity(intent)
-            }
+            itemView.setOnClickListener { openConversation(this.conversationId) }
         }
 
         override fun bind(conversation: Conversation) {

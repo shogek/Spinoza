@@ -5,12 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.*
+import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -37,9 +33,9 @@ class ConversationListRecyclerAdapter(
     }
 
     companion object {
-        const val TYPE_HEADER = R.layout.conversation_list_header
-        const val TYPE_CONVERSATION_READ = R.layout.conversation_list_item_read
-        const val TYPE_CONVERSATION_UNREAD = R.layout.conversation_list_item_unread
+        const val TYPE_HEADER               = R.layout.conversation_list_item_header
+        const val TYPE_CONVERSATION_READ    = R.layout.conversation_list_item_read
+        const val TYPE_CONVERSATION_UNREAD  = R.layout.conversation_list_item_unread
     }
 
     private val layoutInflater = LayoutInflater.from(context)
@@ -147,6 +143,45 @@ class ConversationListRecyclerAdapter(
                 context.startActivity(intent)
                 // TODO: [Bug] Find a simple way to clear search after exiting activity
             }
+
+            itemView.setOnLongClickListener {
+                val view = layoutInflater.inflate(R.layout.conversation_list_popup_menu, null)
+                val width = LinearLayout.LayoutParams.MATCH_PARENT
+                val height = LinearLayout.LayoutParams.MATCH_PARENT
+                val focusable = true // lets taps outside the popup to dismiss it
+                val popupWindow = PopupWindow(view, width, height, focusable)
+                popupWindow.showAtLocation(itemView, Gravity.CENTER, 0, 0)
+
+                // TODO: [Feature] Implement archive conversation functionality
+                val buttonArchive = view.findViewById<TextView>(R.id.tv_archiveConversation)
+                buttonArchive.setOnClickListener { Toast.makeText(context, "Conversation archived", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
+
+                // TODO: [Feature] Implement delete conversation functionality
+                val buttonDelete = view.findViewById<TextView>(R.id.tv_deleteConversation)
+                buttonDelete.setOnClickListener { Toast.makeText(context, "Conversation deleted", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
+
+                // TODO: [Feature] Implement mute conversation functionality
+                val buttonMute = view.findViewById<TextView>(R.id.tv_muteConversation)
+                buttonMute.setOnClickListener { Toast.makeText(context, "Conversation muted", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
+
+                // TODO: [Feature] Implement mark conversation as unread functionality
+                val buttonUnread = view.findViewById<TextView>(R.id.tv_markConversationAsUnread)
+                buttonUnread.setOnClickListener { Toast.makeText(context, "Conversation marked as unread", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
+
+                // TODO: [Feature] Implement ignore conversation functionality
+                val buttonIgnore = view.findViewById<TextView>(R.id.tv_ignoreConversationMessages)
+                buttonIgnore.setOnClickListener { Toast.makeText(context, "Conversation ignored", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
+
+                // TODO: [Feature] Implement block conversation functionality
+                val buttonBlock = view.findViewById<TextView>(R.id.tv_blockConversationMessages)
+                buttonBlock.setOnClickListener { Toast.makeText(context, "Conversation blocked", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
+
+                view.setOnTouchListener { _, _ ->
+                    popupWindow.dismiss()
+                    true
+                }
+                true
+            }
         }
 
         override fun bind(conversation: Conversation?) {
@@ -171,7 +206,6 @@ class ConversationListRecyclerAdapter(
         }
     }
 
-    // TODO: [Task] Enable filtering of conversations
     inner class HeaderViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val search: EditText = itemView.findViewById(R.id.et_conversationSearch)
 

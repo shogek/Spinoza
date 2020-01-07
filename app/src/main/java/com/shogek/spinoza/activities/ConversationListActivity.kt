@@ -73,6 +73,7 @@ class ConversationListActivity : AppCompatActivity() {
     private fun initApp() {
         rv_conversationList.layoutManager = LinearLayoutManager(this)
         rv_conversationList.adapter = ConversationListRecyclerAdapter(this, this.getConversations())
+        rv_conversationList.setHasFixedSize(true)
 
         this.initToolbarElevation()
         this.initButtonNewMessage()

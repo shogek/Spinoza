@@ -2,8 +2,6 @@ package com.shogek.spinoza.adapters
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Typeface
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +10,8 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
@@ -33,9 +33,9 @@ class ConversationListRecyclerAdapter(
     }
 
     companion object {
-        const val TYPE_HEADER = 0
-        const val TYPE_CONVERSATION_READ = 1
-        const val TYPE_CONVERSATION_UNREAD = 2
+        const val TYPE_HEADER = R.layout.conversation_list_header
+        const val TYPE_CONVERSATION_READ = R.layout.conversation_list_item_read
+        const val TYPE_CONVERSATION_UNREAD = R.layout.conversation_list_item_unread
     }
 
     private val layoutInflater = LayoutInflater.from(context)
@@ -53,20 +53,12 @@ class ConversationListRecyclerAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
-        return when (viewType) {
-            TYPE_HEADER -> {
-                val itemView = this.layoutInflater.inflate(R.layout.conversation_list_header, parent, false)
-                HeaderViewHolder(itemView)
-            }
-            TYPE_CONVERSATION_READ -> {
-                val itemView = this.layoutInflater.inflate(R.layout.conversation_list_item_read, parent, false)
-                ReadConversationViewHolder(itemView)
-            }
-            TYPE_CONVERSATION_UNREAD -> {
-                val itemView = this.layoutInflater.inflate(R.layout.conversation_list_item_unread, parent, false)
-                UnreadConversationViewHolder(itemView)
-            }
-            else -> throw IllegalArgumentException("Unknown ViewHolder type!")
+        return if (viewType == TYPE_HEADER) {
+            val itemView = this.layoutInflater.inflate(viewType, parent, false)
+            HeaderViewHolder(itemView)
+        } else {
+            val itemView = this.layoutInflater.inflate(viewType, parent, false)
+            ConversationViewHolder(itemView)
         }
     }
 
@@ -74,9 +66,8 @@ class ConversationListRecyclerAdapter(
         val conversation = this.conversations[position]
 
         when (holder) {
-            is ReadConversationViewHolder   -> holder.bind(conversation)
-            is UnreadConversationViewHolder -> holder.bind(conversation)
-            is HeaderViewHolder             -> holder.bind(conversation)
+            is ConversationViewHolder   -> holder.bind(conversation)
+            is HeaderViewHolder         -> holder.bind(conversation)
             else -> throw IllegalArgumentException("Unknown ViewHolder type!")
         }
     }
@@ -123,14 +114,7 @@ class ConversationListRecyclerAdapter(
         return "$hour:$minute"
     }
 
-    private fun openConversation(conversationId: Number) {
-        val intent = Intent(context, MessageListActivity::class.java)
-        intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
-        intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, conversationId)
-        context.startActivity(intent)
-    }
-
-    inner class ReadConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
+    inner class ConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val sender: TextView = itemView.findViewById(R.id.tv_sender)
         private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
         private val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
@@ -138,7 +122,12 @@ class ConversationListRecyclerAdapter(
         private lateinit var conversationId: Number
 
         init {
-            itemView.setOnClickListener { openConversation(this.conversationId) }
+            itemView.setOnClickListener {
+                val intent = Intent(context, MessageListActivity::class.java)
+                intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
+                intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, this.conversationId)
+                context.startActivity(intent)
+            }
         }
 
         override fun bind(conversation: Conversation) {
@@ -155,45 +144,11 @@ class ConversationListRecyclerAdapter(
             val properDate = "\u00B7 ${getFormattedDate(date)}"
             this.date.text = properDate
 
-            if (conversation.contact?.photoUri != null) {
-                this.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
-            } else {
-                this.senderImage.setImageResource(R.drawable.unknown_contact)
-            }
-        }
-    }
-
-    // TODO: [Refactor] Find a way to easily reuse the logic
-    inner class UnreadConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
-        private val sender: TextView = itemView.findViewById(R.id.tv_sender)
-        private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
-        private val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
-        private val date: TextView = itemView.findViewById(R.id.tv_messageDate)
-        private lateinit var conversationId: Number
-
-        init {
-            itemView.setOnClickListener { openConversation(this.conversationId) }
-        }
-
-        override fun bind(conversation: Conversation) {
-            conversationId = conversation.threadId
-            sender.text = conversation.getDisplayName()
-
-            this.lastMessage.text =
-                if (conversation.latestMessageIsOurs)
-                    "You: ${conversation.latestMessageText}"
-                else
-                    conversation.latestMessageText
-
-            val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)
-            val properDate = "\u00B7 ${getFormattedDate(date)}"
-            this.date.text = properDate
-
-            if (conversation.contact?.photoUri != null) {
-                this.senderImage.setImageURI(Uri.parse(conversation.contact?.photoUri))
-            } else {
-                this.senderImage.setImageResource(R.drawable.unknown_contact)
-            }
+            Glide
+                .with(itemView)
+                .load(Uri.parse(conversation.contact?.photoUri ?: ""))
+                .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
+                .into(this.senderImage)
         }
     }
 

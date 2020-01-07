@@ -29,7 +29,7 @@ class ConversationListRecyclerAdapter(
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        abstract fun bind(conversation: Conversation)
+        abstract fun bind(conversation: Conversation?)
     }
 
     companion object {
@@ -41,11 +41,10 @@ class ConversationListRecyclerAdapter(
     private val layoutInflater = LayoutInflater.from(context)
 
     override fun getItemViewType(position: Int) : Int {
-        // TODO: [Bug] First conversation item is hidden because of header
         if (position == 0)
             return TYPE_HEADER
 
-        val conversation = this.conversations[position]
+        val conversation = this.conversations[position - 1] // -1 for header
         return if  (conversation.wasRead)
             TYPE_CONVERSATION_READ
         else
@@ -63,17 +62,18 @@ class ConversationListRecyclerAdapter(
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        val conversation = this.conversations[position]
-
         when (holder) {
-            is ConversationViewHolder   -> holder.bind(conversation)
-            is HeaderViewHolder         -> holder.bind(conversation)
+            is ConversationViewHolder   -> {
+                val conversation = this.conversations[position - 1] // -1 for header
+                holder.bind(conversation)
+            }
+            is HeaderViewHolder         -> holder.bind(null)
             else -> throw IllegalArgumentException("Unknown ViewHolder type!")
         }
     }
 
     override fun getItemCount(): Int {
-        return this.conversations.size
+        return this.conversations.size + 1 // +1 for header
     }
 
     private fun getFormattedDate(date: LocalDateTime) : String {
@@ -130,8 +130,8 @@ class ConversationListRecyclerAdapter(
             }
         }
 
-        override fun bind(conversation: Conversation) {
-            conversationId = conversation.threadId
+        override fun bind(conversation: Conversation?) {
+            conversationId = conversation!!.threadId
             sender.text = conversation.getDisplayName()
 
             this.lastMessage.text =
@@ -156,6 +156,6 @@ class ConversationListRecyclerAdapter(
     inner class HeaderViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val search: EditText = itemView.findViewById(R.id.et_conversationSearch)
 
-        override fun bind(conversation: Conversation) { }
+        override fun bind(conversation: Conversation?) { }
     }
 }

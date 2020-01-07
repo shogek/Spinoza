@@ -3,6 +3,8 @@ package com.shogek.spinoza.adapters
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +29,8 @@ class ConversationListRecyclerAdapter(
     private val context: Context,
     private val conversations: Array<Conversation>
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
+
+    private val filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(conversations) }
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         abstract fun bind(conversation: Conversation?)
@@ -64,7 +68,7 @@ class ConversationListRecyclerAdapter(
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
         when (holder) {
             is ConversationViewHolder   -> {
-                val conversation = this.conversations[position - 1] // -1 for header
+                val conversation = this.filteredConversations[position - 1] // -1 for header
                 holder.bind(conversation)
             }
             is HeaderViewHolder         -> holder.bind(null)
@@ -73,7 +77,21 @@ class ConversationListRecyclerAdapter(
     }
 
     override fun getItemCount(): Int {
-        return this.conversations.size + 1 // +1 for header
+        return this.filteredConversations.size + 1 // +1 for header
+    }
+
+    private fun filter(phrase: String) {
+        this.filteredConversations.clear()
+
+        if (phrase.isEmpty()) {
+            this.filteredConversations.addAll(this.conversations)
+        } else {
+            val lowerCasePhrase = phrase.toLowerCase()
+            val filtered = this.conversations.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
+            this.filteredConversations.addAll(filtered)
+        }
+
+        notifyDataSetChanged()
     }
 
     private fun getFormattedDate(date: LocalDateTime) : String {
@@ -127,6 +145,7 @@ class ConversationListRecyclerAdapter(
                 intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
                 intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, this.conversationId)
                 context.startActivity(intent)
+                // TODO: [Bug] Find a simple way to clear search after exiting activity
             }
         }
 
@@ -155,6 +174,14 @@ class ConversationListRecyclerAdapter(
     // TODO: [Task] Enable filtering of conversations
     inner class HeaderViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val search: EditText = itemView.findViewById(R.id.et_conversationSearch)
+
+        init {
+            this.search.addTextChangedListener(object: TextWatcher {
+                override fun afterTextChanged(s: Editable?) {}
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = filter(s.toString())
+            })
+        }
 
         override fun bind(conversation: Conversation?) { }
     }

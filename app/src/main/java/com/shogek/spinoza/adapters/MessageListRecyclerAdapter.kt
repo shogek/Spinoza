@@ -7,79 +7,63 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.shogek.spinoza.R
 import com.shogek.spinoza.cores.MessageListCore
 import com.shogek.spinoza.models.Message
+import java.lang.IllegalArgumentException
 
 class MessageListRecyclerAdapter(
     private val context: Context,
     private val core: MessageListCore,
     private val messages: MutableList<Message>,
     private val senderPhotoUri: String?
-): RecyclerView.Adapter<MessageListRecyclerAdapter.ViewHolder>() {
+): RecyclerView.Adapter<MessageListRecyclerAdapter.BaseViewHolder>() {
+
+    abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        abstract fun bind(message: Message)
+    }
 
     companion object {
-        // Used to differentiate view holders
-        const val MESSAGE_OURS = 0
-        const val MESSAGE_THEIRS = 1
+        const val TYPE_MESSAGE_OUR = R.layout.message_list_item_ours
+        const val TYPE_MESSAGE_THEIRS = R.layout.message_list_item_theirs
+        const val TYPE_MESSAGE_THEIRS_NO_IMAGE = R.layout.message_list_item_theirs_no_image
     }
 
     private val layoutInflater = LayoutInflater.from(context)
 
     override fun getItemViewType(position: Int): Int {
         val message = this.messages[position]
-        return if (message.isOurs) MESSAGE_OURS else MESSAGE_THEIRS
+        if (message.isOurs)
+            return TYPE_MESSAGE_OUR
+
+        return if (this.shouldHideSenderImage(position))
+            TYPE_MESSAGE_THEIRS_NO_IMAGE
+        else
+            TYPE_MESSAGE_THEIRS
     }
 
     override fun getItemCount(): Int = this.messages.size
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = if (viewType == MESSAGE_OURS)
-            R.layout.message_list_item_ours
-        else
-            R.layout.message_list_item_theirs
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+        val itemView = this.layoutInflater.inflate(viewType, parent, false)
 
-        val itemView = this.layoutInflater.inflate(view, parent, false)
-        return ViewHolder(itemView)
+        return when (viewType) {
+            TYPE_MESSAGE_OUR                -> OurMessageViewHolder(itemView)
+            TYPE_MESSAGE_THEIRS             -> TheirMessageViewHolder(itemView)
+            TYPE_MESSAGE_THEIRS_NO_IMAGE    -> TheirMessageNoImageViewHolder(itemView)
+            else -> throw IllegalArgumentException("Unknown ViewHolder type!")
+        }
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
         val currentMessage = this.messages[position]
-        holder.message = currentMessage
 
-        val viewHolder = holder.ourMessage ?: holder.theirMessage
-        viewHolder.text = currentMessage.text
-
-        // TODO: [Bug] RecyclerView reuses ViewHolders that have the sender's image hidden.
-        // That means that in places, where the image should be visible, it isn't, because the logic is not reevaluated
-        if (!currentMessage.isOurs && this.shouldHideSenderImage(position)) {
-            holder.senderPhoto.visibility = View.INVISIBLE
-        } else if (holder.senderPhoto != null) {
-            if (this.senderPhotoUri != null) {
-                holder.senderPhoto.setImageURI(Uri.parse(this.senderPhotoUri))
-            } else {
-                holder.senderPhoto.setImageResource(R.drawable.unknown_contact)
-            }
-        }
-
-        // First message of the conversation
-        if (position == 0) {
-            return
-        } else {
-            // TODO: [Style] First message should have top margin
-            // Add an extra top margin if the previous message's sender doesn't match the current one
-//            val previousMessage = this.messages[position - 1]
-//            if (previousMessage.isOurs != currentMessage.isOurs) {
-//                val layoutParams = viewHolder.layoutParams as (RelativeLayout.LayoutParams)
-//                layoutParams.setMargins(
-//                    layoutParams.leftMargin,
-//                    layoutParams.topMargin + UnitUtils.asPixels(8f, this.context.resources),
-//                    layoutParams.rightMargin,
-//                    layoutParams.bottomMargin)
-//                viewHolder.layoutParams = layoutParams
-//            }
+        when (holder) {
+            is OurMessageViewHolder -> holder.bind(currentMessage)
+            is TheirMessageViewHolder -> holder.bind(currentMessage)
+            is TheirMessageNoImageViewHolder -> holder.bind(currentMessage)
         }
     }
 
@@ -97,12 +81,59 @@ class MessageListRecyclerAdapter(
         return true
     }
 
-    inner class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+    inner class OurMessageViewHolder(itemView: View) : BaseViewHolder(itemView) {
         lateinit var message: Message
+        private val messageBody: TextView = itemView.findViewById(R.id.tv_ourMessageText)
 
-        val ourMessage = itemView.findViewById<TextView>(R.id.tv_ourMessageText)
-        val theirMessage = itemView.findViewById<TextView>(R.id.tv_theirMessageText)
-        val senderPhoto = itemView.findViewById<ImageView>(R.id.message_list_sender_photo_civ)
+        override fun bind(message: Message) {
+            this.messageBody.text = message.text
+        }
+
+        init {
+            itemView.setOnLongClickListener {
+                core.onLongClickMessage(this.message)
+                true
+            }
+
+            itemView.setOnClickListener {
+                core.onClickMessage()
+            }
+        }
+    }
+
+    inner class TheirMessageViewHolder(itemView: View) : BaseViewHolder(itemView) {
+        lateinit var message: Message
+        private val messageBody: TextView = itemView.findViewById(R.id.tv_theirMessageText)
+        private val contactPhoto: ImageView = itemView.findViewById(R.id.message_list_sender_photo_civ)
+
+        override fun bind(message: Message) {
+            this.messageBody.text = message.text
+            Glide
+                .with(itemView)
+                .load(Uri.parse(senderPhotoUri ?: ""))
+                .into(this.contactPhoto)
+        }
+
+        init {
+            // TODO: [Refactor] Figure out how to reuse the event registration logic
+            itemView.setOnLongClickListener {
+                core.onLongClickMessage(this.message)
+                true
+            }
+
+            itemView.setOnClickListener {
+                core.onClickMessage()
+            }
+        }
+    }
+
+    inner class TheirMessageNoImageViewHolder(itemView: View) : BaseViewHolder(itemView) {
+        lateinit var message: Message
+        private val messageBody: TextView = itemView.findViewById(R.id.tv_theirMessageText)
+
+        override fun bind(message: Message) {
+            this.messageBody.text = message.text
+        }
 
         init {
             itemView.setOnLongClickListener {

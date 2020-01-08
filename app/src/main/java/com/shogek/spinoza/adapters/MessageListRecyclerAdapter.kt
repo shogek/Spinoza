@@ -7,17 +7,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
-import com.shogek.spinoza.cores.MessageListCore
+import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Message
+import org.greenrobot.eventbus.EventBus
 import java.lang.IllegalArgumentException
 
 class MessageListRecyclerAdapter(
-    private val context: Context,
-    private val core: MessageListCore,
+    context: Context,
+    buttonCopyMessage: ConstraintLayout,
+    buttonRemoveMessage: ConstraintLayout,
+    buttonForwardMessage: ConstraintLayout,
     private val messages: MutableList<Message>,
     private val senderPhotoUri: String?
 ): RecyclerView.Adapter<MessageListRecyclerAdapter.BaseViewHolder>() {
@@ -26,13 +30,21 @@ class MessageListRecyclerAdapter(
         abstract fun bind(message: Message)
     }
 
-    companion object {
+    private val layoutInflater = LayoutInflater.from(context)
+    private var selectedMessage: Message? = null
+
+    private companion object {
         const val TYPE_MESSAGE_OUR = R.layout.message_list_item_ours
         const val TYPE_MESSAGE_THEIRS = R.layout.message_list_item_theirs
         const val TYPE_MESSAGE_THEIRS_NO_IMAGE = R.layout.message_list_item_theirs_no_image
     }
 
-    private val layoutInflater = LayoutInflater.from(context)
+    init {
+        val bus = EventBus.getDefault()
+        buttonCopyMessage.setOnClickListener    { bus.post(MessageCopiedEvent(selectedMessage!!.text)) }
+        buttonRemoveMessage.setOnClickListener  { bus.post(MessageDeletedEvent(selectedMessage!!.id)) }
+        buttonForwardMessage.setOnClickListener { bus.post(MessageForwardedEvent(selectedMessage!!.text)) }
+    }
 
     override fun getItemViewType(position: Int): Int {
         val message = this.messages[position]
@@ -51,9 +63,9 @@ class MessageListRecyclerAdapter(
         val itemView = this.layoutInflater.inflate(viewType, parent, false)
 
         return when (viewType) {
-            TYPE_MESSAGE_OUR                -> OurMessageViewHolder(itemView)
-            TYPE_MESSAGE_THEIRS             -> TheirMessageViewHolder(itemView)
-            TYPE_MESSAGE_THEIRS_NO_IMAGE    -> TheirMessageNoImageViewHolder(itemView)
+            TYPE_MESSAGE_OUR             -> OurMessageViewHolder(itemView)
+            TYPE_MESSAGE_THEIRS          -> TheirMessageViewHolder(itemView)
+            TYPE_MESSAGE_THEIRS_NO_IMAGE -> TheirMessageNoImageViewHolder(itemView)
             else -> throw IllegalArgumentException("Unknown ViewHolder type!")
         }
     }
@@ -62,8 +74,8 @@ class MessageListRecyclerAdapter(
         val currentMessage = this.messages[position]
 
         when (holder) {
-            is OurMessageViewHolder -> holder.bind(currentMessage)
-            is TheirMessageViewHolder -> holder.bind(currentMessage)
+            is OurMessageViewHolder          -> holder.bind(currentMessage)
+            is TheirMessageViewHolder        -> holder.bind(currentMessage)
             is TheirMessageNoImageViewHolder -> holder.bind(currentMessage)
         }
     }
@@ -82,23 +94,28 @@ class MessageListRecyclerAdapter(
         return true
     }
 
+    private fun messageLongClicked(message: Message) {
+        this.selectedMessage = message
+        EventBus.getDefault().post(MessageLongClickedEvent(null))
+    }
+
+    private fun messageClicked() {
+        this.selectedMessage = null
+        EventBus.getDefault().post(MessageClickedEvent(null))
+    }
+
     inner class OurMessageViewHolder(itemView: View) : BaseViewHolder(itemView) {
         lateinit var message: Message
         private val messageBody: TextView = itemView.findViewById(R.id.tv_ourMessageText)
 
         override fun bind(message: Message) {
+            this.message = message
             this.messageBody.text = message.text
         }
 
         init {
-            itemView.setOnLongClickListener {
-                core.onLongClickMessage(this.message)
-                true
-            }
-
-            itemView.setOnClickListener {
-                core.onClickMessage()
-            }
+            itemView.setOnLongClickListener { messageLongClicked(this.message); true }
+            itemView.setOnClickListener     { messageClicked() }
         }
     }
 
@@ -108,24 +125,18 @@ class MessageListRecyclerAdapter(
         private val contactPhoto: ImageView = itemView.findViewById(R.id.message_list_sender_photo_civ)
 
         override fun bind(message: Message) {
+            this.message = message
             this.messageBody.text = message.text
-            Glide
-                .with(itemView)
-                .load(Uri.parse(senderPhotoUri ?: ""))
-                .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
-                .into(this.contactPhoto)
+
+            Glide.with(itemView)
+                 .load(Uri.parse(senderPhotoUri ?: ""))
+                 .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
+                 .into(this.contactPhoto)
         }
 
         init {
-            // TODO: [Refactor] Figure out how to reuse the event registration logic
-            itemView.setOnLongClickListener {
-                core.onLongClickMessage(this.message)
-                true
-            }
-
-            itemView.setOnClickListener {
-                core.onClickMessage()
-            }
+            itemView.setOnLongClickListener { messageLongClicked(this.message); true }
+            itemView.setOnClickListener     { messageClicked() }
         }
     }
 
@@ -134,18 +145,13 @@ class MessageListRecyclerAdapter(
         private val messageBody: TextView = itemView.findViewById(R.id.tv_theirMessageText)
 
         override fun bind(message: Message) {
+            this.message = message
             this.messageBody.text = message.text
         }
 
         init {
-            itemView.setOnLongClickListener {
-                core.onLongClickMessage(this.message)
-                true
-            }
-
-            itemView.setOnClickListener {
-                core.onClickMessage()
-            }
+            itemView.setOnLongClickListener { messageLongClicked(this.message); true }
+            itemView.setOnClickListener     { messageClicked() }
         }
     }
 }

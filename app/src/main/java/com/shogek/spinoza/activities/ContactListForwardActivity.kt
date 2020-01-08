@@ -22,13 +22,11 @@ class ContactListForwardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_contact_list_forward)
 
         val messageToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE)!!
-        val originatingContactId = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.CONTACT_ID)
 
         this.core = ContactListForwardCore(contentResolver, messageToForward)
 
         val sortedContacts = ContactCache
             .getAll(contentResolver, true)
-            .filter { c -> c.id != originatingContactId }
             .sortedBy { c -> c.displayName }
             .toTypedArray()
         val adapter = ContactListForwardRecyclerAdapter(this, this.core, sortedContacts)

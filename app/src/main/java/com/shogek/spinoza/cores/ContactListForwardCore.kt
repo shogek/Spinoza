@@ -9,6 +9,7 @@ class ContactListForwardCore(
     private val messageToForward: String
 ) {
 
+    // TODO: [Refactor] Remove this class and delete the whole folder
     fun onClickForwardMessage(contactId: String) {
         val contact = ContactCache.get(this.resolver, contactId)
         MessageService.send(contact.strippedPhone, messageToForward)

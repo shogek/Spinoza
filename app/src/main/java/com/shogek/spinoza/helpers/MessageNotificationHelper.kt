@@ -23,7 +23,7 @@ import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
-import com.shogek.spinoza.events.MessageReceivedEvent
+import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import org.greenrobot.eventbus.EventBus
 
 

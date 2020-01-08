@@ -16,7 +16,10 @@ object MessageService {
             .sendTextMessage(recipient, null, message, null, null)
     }
 
-    fun delete(resolver: ContentResolver, message: Message) {
-        MessageRepository.delete(resolver, message.id)
+    fun delete(
+        resolver: ContentResolver,
+        messageId: String
+    ) {
+        MessageRepository.delete(resolver, messageId)
     }
 }

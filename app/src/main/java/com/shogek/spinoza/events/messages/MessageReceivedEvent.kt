@@ -1,4 +1,4 @@
-package com.shogek.spinoza.events
+package com.shogek.spinoza.events.messages
 
 import com.shogek.spinoza.models.Message
 

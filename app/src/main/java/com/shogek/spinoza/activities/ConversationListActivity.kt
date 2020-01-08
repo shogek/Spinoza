@@ -17,7 +17,7 @@ import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.events.ConversationActionEvent
-import com.shogek.spinoza.events.MessageReceivedEvent
+import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.helpers.ConversationHelper
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.utils.UnitUtils

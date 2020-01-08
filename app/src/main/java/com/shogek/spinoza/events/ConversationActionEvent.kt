@@ -5,6 +5,7 @@ data class ConversationActionEvent(
     val conversationId: Number
 )
 
+// TODO: [Refactor] Implement in separate data classes
 enum class ConversationActions {
     ARCHIVE,
     DELETE,

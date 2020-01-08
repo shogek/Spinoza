@@ -8,7 +8,11 @@ import android.os.Bundle
 import android.net.Uri
 import android.telephony.SmsManager
 import android.view.View
+import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
 import com.shogek.spinoza.caches.ContactCache
@@ -16,9 +20,10 @@ import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
-import com.shogek.spinoza.cores.MessageListCore
-import com.shogek.spinoza.events.MessageReceivedEvent
+import com.shogek.spinoza.events.messages.MessageReceivedEvent
+import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.services.MessageService
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import org.greenrobot.eventbus.EventBus
@@ -29,13 +34,14 @@ class MessageListActivity : AppCompatActivity() {
     companion object {
         const val NO_CONVERSATION_ID = -1
         const val PENDING_MESSAGE_INTENT = "PENDING_MESSAGE_INTENT"
-        const val PENDING_MESSAGE_BODY = "PENDING_MESSAGE_BODY"
         const val PENDING_MESSAGE_THREAD = "PENDING_MESSAGE_THREAD"
+        const val PENDING_MESSAGE_BODY   = "PENDING_MESSAGE_BODY"
     }
 
     private var messageIndex = 0
     private var contact: Contact? = null
     private var conversation: Conversation? = null
+    private lateinit var messageActionButtons: ConstraintLayout
     private lateinit var messages: MutableList<Message>
     private lateinit var adapter: MessageListRecyclerAdapter
 
@@ -46,7 +52,7 @@ class MessageListActivity : AppCompatActivity() {
                 val conversationId = arg1.extras!!.getInt(PENDING_MESSAGE_THREAD)
                 onMessageSentSuccess(conversationId, messageText)
             } else {
-                onMessageSentError()
+                // TODO: [Bug] Handle failed to send message scenario
             }
         }
     }
@@ -61,17 +67,15 @@ class MessageListActivity : AppCompatActivity() {
             Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
         }
 
-        val core = MessageListCore(
-            this,
-            contact?.id,
-            getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager,
-            findViewById(R.id.cl_messageActionsRow)
-        )
+        val buttonCopyMessage     = findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn)
+        val buttonRemoveMessage   = findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn)
+        val buttonForwardMessage  = findViewById<ConstraintLayout>(R.id.cl_forwardMessageColumn)
+        this.messageActionButtons = findViewById(R.id.cl_messageActionsRow)
 
         val contactName = contact?.displayName ?: conversation!!.getDisplayName()
         val contactPhone = contact?.strippedPhone ?: conversation!!.senderPhoneStripped
 
-        this.adapter = MessageListRecyclerAdapter(this, core, messages, contact?.photoUri)
+        this.adapter = MessageListRecyclerAdapter(this, buttonCopyMessage, buttonRemoveMessage, buttonForwardMessage, messages, contact?.photoUri)
         rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
         rv_messageList.scrollToPosition(messages.size - 1)
@@ -80,7 +84,6 @@ class MessageListActivity : AppCompatActivity() {
         this.initButtonReturn()
         // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
         this.initButtonSendMessage(contactPhone, conversation!!.threadId)
-        this.initRowButtonActions(core)
         this.setToolbarInformation(contactName, contact?.photoUri)
         // TODO: [Style] Add elevation to message box when not at bottom.
     }
@@ -107,9 +110,6 @@ class MessageListActivity : AppCompatActivity() {
         this.messages.add(sentMessage)
         this.adapter.notifyDataSetChanged()
         rv_messageList.scrollToPosition(this.messages.size)
-    }
-
-    private fun onMessageSentError() {
     }
 
     override fun onResume() {
@@ -176,12 +176,6 @@ class MessageListActivity : AppCompatActivity() {
         }
     }
 
-    private fun initRowButtonActions(core: MessageListCore) {
-        cl_copyMessageColumn.setOnClickListener { core.onClickCopy() }
-        cl_forwardMessageColumn.setOnClickListener { core.onClickForwardMessage() }
-        cl_removeMessageColumn.setOnClickListener { core.onClickRemoveMessage() }
-    }
-
     private fun initButtonSendMessage(
         recipientNumber: String,
         conversationId: Number
@@ -219,10 +213,10 @@ class MessageListActivity : AppCompatActivity() {
     ) {
         message_list_toolbar_title_tv.text = title
 
-        if (contactPhotoUri != null)
-            message_list_toolbar_sender_photo_civ.setImageURI(Uri.parse(contactPhotoUri))
-        else
-            message_list_toolbar_sender_photo_civ.visibility = View.GONE
+        Glide.with(this)
+             .load(Uri.parse(contactPhotoUri ?: ""))
+             .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
+             .into(message_list_toolbar_sender_photo_civ)
     }
 
     /** Simply to differentiate between broadcast's pending intents - otherwise it returns the same one */
@@ -232,6 +226,14 @@ class MessageListActivity : AppCompatActivity() {
         return number
     }
 
+    private fun showMessageActionButtons() {
+        this.messageActionButtons.visibility = View.VISIBLE
+    }
+
+    private fun hideMessageActionButtons() {
+        this.messageActionButtons.visibility = View.GONE
+    }
+
     @Subscribe
     fun onMessageReceivedEvent(event: MessageReceivedEvent) {
         if (event.conversationId == this.conversation?.threadId) {
@@ -239,5 +241,39 @@ class MessageListActivity : AppCompatActivity() {
             this.adapter.notifyDataSetChanged()
             rv_messageList.scrollToPosition(messages.size - 1)
         }
+    }
+
+    @Subscribe
+    fun onMessageLongClicked(event: MessageLongClickedEvent) {
+        this.showMessageActionButtons()
+    }
+
+    @Subscribe
+    fun onMessageClicked(event: MessageClickedEvent) {
+        this.hideMessageActionButtons()
+    }
+
+    @Subscribe
+    fun onMessageForwarded(event: MessageForwardedEvent) {
+        this.hideMessageActionButtons()
+        val intent = Intent(this, ContactListForwardActivity::class.java)
+        intent.putExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE, event.text)
+        this.startActivity(intent)
+    }
+
+    @Subscribe
+    fun onMessageCopied(event: MessageCopiedEvent) {
+        this.hideMessageActionButtons()
+        // TODO: [Task] Create a new toast background
+        val clipData = ClipData.newPlainText("", event.text) // 'label' is for developers only
+        val clipManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipManager.setPrimaryClip(clipData)
+        Toast.makeText(this, "Copied", Toast.LENGTH_LONG).show()
+    }
+
+    @Subscribe
+    fun onMessageDeleted(event: MessageDeletedEvent) {
+        this.hideMessageActionButtons()
+        MessageService.delete(this.contentResolver, event.messageId)
     }
 }

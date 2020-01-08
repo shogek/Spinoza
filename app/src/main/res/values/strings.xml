@@ -14,10 +14,6 @@
     <string name="conversation_list_item_option_block">Block</string>
 
 
-    <!-- Contact list -->
-    <string name="contact_list_forward_button_send">SEND</string>
-
-
     <!-- Message list -->
     <string name="message_list_button_send_meaning">Send written message</string>
     <string name="message_list_button_copy_meaning">Copy selected message</string>
@@ -39,6 +35,7 @@
     <string name="contact_list_forward_toolbar_title">Send to</string>
     <string name="contact_list_forward_text_send_to">To:</string>
     <string name="contact_list_forward_input_filter_hint">Type a name</string>
+    <string name="contact_list_forward_button_send">SEND</string>
 
 
     <!-- Common -->

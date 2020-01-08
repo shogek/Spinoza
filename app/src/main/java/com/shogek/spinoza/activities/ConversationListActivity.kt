@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,6 +16,7 @@ import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
+import com.shogek.spinoza.events.ConversationActionEvent
 import com.shogek.spinoza.events.MessageReceivedEvent
 import com.shogek.spinoza.helpers.ConversationHelper
 import com.shogek.spinoza.models.Conversation
@@ -178,5 +180,10 @@ class ConversationListActivity : AppCompatActivity() {
         conversation.latestMessageText = event.message.text
         conversation.latestMessageTimestamp = event.message.dateTimestamp
         rv_conversationList.adapter?.notifyDataSetChanged()
+    }
+
+    @Subscribe
+    fun onConversationActionEvent(event: ConversationActionEvent) {
+        Toast.makeText(this, event.action.toString(), Toast.LENGTH_SHORT).show()
     }
 }

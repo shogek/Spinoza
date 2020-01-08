@@ -8,14 +8,20 @@ import android.text.TextWatcher
 import android.view.*
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.list.listItems
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
+import com.shogek.spinoza.events.ConversationActionEvent
+import com.shogek.spinoza.events.ConversationActions
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.utils.DateUtils
+import org.greenrobot.eventbus.EventBus
 import java.lang.IllegalArgumentException
+import java.security.InvalidParameterException
 import java.time.format.DateTimeFormatter
 import java.time.*
 import java.time.format.TextStyle
@@ -26,19 +32,91 @@ class ConversationListRecyclerAdapter(
     private val conversations: Array<Conversation>
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
 
+    private val layoutInflater = LayoutInflater.from(context)
     private val filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(conversations) }
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         abstract fun bind(conversation: Conversation?)
     }
 
-    companion object {
+    private companion object {
         const val TYPE_HEADER               = R.layout.conversation_list_item_header
         const val TYPE_CONVERSATION_READ    = R.layout.conversation_list_item_read
         const val TYPE_CONVERSATION_UNREAD  = R.layout.conversation_list_item_unread
-    }
 
-    private val layoutInflater = LayoutInflater.from(context)
+        fun openConversationOptionsDialog(
+            context: Context,
+            conversationId: Number
+        ) {
+            MaterialDialog(context).show {
+                title(R.string.conversation_list_item_options_title)
+
+                val textArchive = context.getString(R.string.conversation_list_item_option_archive)
+                val textDelete  = context.getString(R.string.conversation_list_item_option_delete)
+                val textMute    = context.getString(R.string.conversation_list_item_option_mute)
+                val textUnread  = context.getString(R.string.conversation_list_item_option_unread)
+                val textIgnore  = context.getString(R.string.conversation_list_item_option_ignore)
+                val textBlock   = context.getString(R.string.conversation_list_item_option_block)
+
+                listItems(items = listOf(textArchive, textDelete, textMute, textUnread, textIgnore, textBlock)) { _, _, text ->
+                    val bus = EventBus.getDefault()
+                    when (text) {
+                        // TODO: [Feature] Implement archive conversation functionality
+                        textArchive -> bus.post(ConversationActionEvent(ConversationActions.ARCHIVE, conversationId))
+                        // TODO: [Feature] Implement delete conversation functionality
+                        textDelete  -> bus.post(ConversationActionEvent(ConversationActions.DELETE, conversationId))
+                        // TODO: [Feature] Implement mute conversation functionality
+                        textMute    -> bus.post(ConversationActionEvent(ConversationActions.MUTE, conversationId))
+                        // TODO: [Feature] Implement mark conversation as unread functionality
+                        textUnread  -> bus.post(ConversationActionEvent(ConversationActions.UNREAD, conversationId))
+                        // TODO: [Feature] Implement ignore conversation functionality
+                        textIgnore  -> bus.post(ConversationActionEvent(ConversationActions.IGNORE, conversationId))
+                        // TODO: [Feature] Implement block conversation functionality
+                        textBlock   -> bus.post(ConversationActionEvent(ConversationActions.BLOCK, conversationId))
+                        else -> throw InvalidParameterException("Unknown conversation action!")
+                    }
+                }
+            }
+        }
+
+        fun getFormattedDate(date: LocalDateTime) : String {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm")
+            val parsed = date.format(formatter)
+            val parsedDateAndTime = parsed.split(" ")
+
+            val parsedDate = parsedDateAndTime[0].split("-")
+            val year = parsedDate[0]
+            val month = parsedDate[1]
+            val day = parsedDate[2]
+
+            val parsedTime = parsedDateAndTime[1].split(":")
+            val hour = parsedTime[0]
+            val minute = parsedTime[1]
+
+            val current = LocalDateTime.now(ZoneOffset.UTC)
+            // Use 6 days instead of 7 to not show the same day.
+            // Ex.: If today is MONDAY, to not show a message from previous week as also MONDAY but instead MM-dd.
+            val lastWeek = current.minusDays(6)
+
+            // If not this year
+            if (current.year != date.year)
+                return "${year}-${month}-${day}"
+
+            // If not this month
+            if (current.month != date.month)
+                return "$day ${date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+
+            // If not this week (used to avoid confusion - check definition of 'lastWeek')
+            if (date.isBefore(lastWeek))
+                return "$day ${date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+
+            // If not today
+            if (current.dayOfMonth != date.dayOfMonth)
+                return date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+
+            return "$hour:$minute"
+        }
+    }
 
     override fun getItemViewType(position: Int) : Int {
         if (position == 0)
@@ -90,44 +168,6 @@ class ConversationListRecyclerAdapter(
         notifyDataSetChanged()
     }
 
-    private fun getFormattedDate(date: LocalDateTime) : String {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm")
-        val parsed = date.format(formatter)
-        val parsedDateAndTime = parsed.split(" ")
-
-        val parsedDate = parsedDateAndTime[0].split("-")
-        val year = parsedDate[0]
-        val month = parsedDate[1]
-        val day = parsedDate[2]
-
-        val parsedTime = parsedDateAndTime[1].split(":")
-        val hour = parsedTime[0]
-        val minute = parsedTime[1]
-
-        val current = LocalDateTime.now(ZoneOffset.UTC)
-        // Use 6 days instead of 7 to not show the same day.
-        // Ex.: If today is MONDAY, to not show a message from previous week as also MONDAY but instead MM-dd.
-        val lastWeek = current.minusDays(6)
-
-        // If not this year
-        if (current.year != date.year)
-            return "${year}-${month}-${day}"
-
-        // If not this month
-        if (current.month != date.month)
-            return "$day ${date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
-
-        // If not this week (used to avoid confusion - check definition of 'lastWeek')
-        if (date.isBefore(lastWeek))
-            return "$day ${date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
-
-        // If not today
-        if (current.dayOfMonth != date.dayOfMonth)
-            return date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-
-        return "$hour:$minute"
-    }
-
     inner class ConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val sender: TextView = itemView.findViewById(R.id.tv_sender)
         private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
@@ -144,44 +184,7 @@ class ConversationListRecyclerAdapter(
                 // TODO: [Bug] Find a simple way to clear search after exiting activity
             }
 
-            itemView.setOnLongClickListener {
-                val view = layoutInflater.inflate(R.layout.conversation_list_popup_menu, null)
-                val width = LinearLayout.LayoutParams.MATCH_PARENT
-                val height = LinearLayout.LayoutParams.MATCH_PARENT
-                val focusable = true // lets taps outside the popup to dismiss it
-                val popupWindow = PopupWindow(view, width, height, focusable)
-                popupWindow.showAtLocation(itemView, Gravity.CENTER, 0, 0)
-
-                // TODO: [Feature] Implement archive conversation functionality
-                val buttonArchive = view.findViewById<TextView>(R.id.tv_archiveConversation)
-                buttonArchive.setOnClickListener { Toast.makeText(context, "Conversation archived", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
-
-                // TODO: [Feature] Implement delete conversation functionality
-                val buttonDelete = view.findViewById<TextView>(R.id.tv_deleteConversation)
-                buttonDelete.setOnClickListener { Toast.makeText(context, "Conversation deleted", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
-
-                // TODO: [Feature] Implement mute conversation functionality
-                val buttonMute = view.findViewById<TextView>(R.id.tv_muteConversation)
-                buttonMute.setOnClickListener { Toast.makeText(context, "Conversation muted", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
-
-                // TODO: [Feature] Implement mark conversation as unread functionality
-                val buttonUnread = view.findViewById<TextView>(R.id.tv_markConversationAsUnread)
-                buttonUnread.setOnClickListener { Toast.makeText(context, "Conversation marked as unread", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
-
-                // TODO: [Feature] Implement ignore conversation functionality
-                val buttonIgnore = view.findViewById<TextView>(R.id.tv_ignoreConversationMessages)
-                buttonIgnore.setOnClickListener { Toast.makeText(context, "Conversation ignored", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
-
-                // TODO: [Feature] Implement block conversation functionality
-                val buttonBlock = view.findViewById<TextView>(R.id.tv_blockConversationMessages)
-                buttonBlock.setOnClickListener { Toast.makeText(context, "Conversation blocked", Toast.LENGTH_SHORT).show(); popupWindow.dismiss() }
-
-                view.setOnTouchListener { _, _ ->
-                    popupWindow.dismiss()
-                    true
-                }
-                true
-            }
+            itemView.setOnLongClickListener { openConversationOptionsDialog(itemView.context, conversationId); true }
         }
 
         override fun bind(conversation: Conversation?) {

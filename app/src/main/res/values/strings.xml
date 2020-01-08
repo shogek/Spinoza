@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Spinoza</string>
+
+    <string name="conversation_list_item_options_title">Conversation</string>
+    <string name="conversation_list_item_option_archive">Archive</string>
+    <string name="conversation_list_item_option_delete">Delete</string>
+    <string name="conversation_list_item_option_mute">Mute notifications</string>
+    <string name="conversation_list_item_option_unread">Mark as unread</string>
+    <string name="conversation_list_item_option_ignore">Ignore messages</string>
+    <string name="conversation_list_item_option_block">Block</string>
 </resources>

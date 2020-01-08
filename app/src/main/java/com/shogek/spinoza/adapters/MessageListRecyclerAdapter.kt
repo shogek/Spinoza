@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
 import com.shogek.spinoza.cores.MessageListCore
 import com.shogek.spinoza.models.Message
@@ -111,6 +112,7 @@ class MessageListRecyclerAdapter(
             Glide
                 .with(itemView)
                 .load(Uri.parse(senderPhotoUri ?: ""))
+                .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
                 .into(this.contactPhoto)
         }
 

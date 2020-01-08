@@ -3,7 +3,9 @@ package com.shogek.spinoza.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.telephony.SmsMessage
+import androidx.core.os.postDelayed
 import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.caches.ConversationCache
 
@@ -29,11 +31,13 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
         conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
         if (conversationId == null) {
             // TODO: [Bug] Being the default SMS messaging app means we need to create the conversation for unknown numbers
-            // If we didn't find a 'Conversation' - it means it was cached by the repository.
             val newConversations = ConversationCache.getAll(context.contentResolver, true)
             conversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
         }
 
-        MessageNotificationHelper.notify(context, conversationId!!, senderPhone, text)
+        // TODO: [Bug] Being the default SMS messaging app means we need to create the message records
+        Handler().postDelayed(1000) {
+            MessageNotificationHelper.notify(context, conversationId!!, senderPhone, text)
+        }
     }
 }

@@ -32,6 +32,7 @@ object ConversationCache {
         conversation.latestMessageText = message.text
     }
 
+    // TODO: [Refactor] Shouldn't he also be listening to the EventBus for new message?
     fun notifyMessageReceived(
         threadId: Number,
         message: Message

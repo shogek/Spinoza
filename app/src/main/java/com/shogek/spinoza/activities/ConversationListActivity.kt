@@ -15,10 +15,13 @@ import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
+import com.shogek.spinoza.events.MessageReceivedEvent
 import com.shogek.spinoza.helpers.ConversationHelper
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.utils.UnitUtils
 import kotlinx.android.synthetic.main.activity_conversation_list.*
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 
 
 class ConversationListActivity : AppCompatActivity() {
@@ -38,10 +41,22 @@ class ConversationListActivity : AppCompatActivity() {
         )
     }
 
+    private lateinit var conversations: Array<Conversation>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
         this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        EventBus.getDefault().register(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        EventBus.getDefault().unregister(this)
     }
 
     private fun ensurePermissionsGranted(permissions: Array<String>) {
@@ -71,8 +86,9 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
+        this.conversations = this.getConversations()
         rv_conversationList.layoutManager = LinearLayoutManager(this)
-        rv_conversationList.adapter = ConversationListRecyclerAdapter(this, this.getConversations())
+        rv_conversationList.adapter = ConversationListRecyclerAdapter(this, this.conversations)
         rv_conversationList.setHasFixedSize(true)
 
         this.initToolbarElevation()
@@ -147,6 +163,20 @@ class ConversationListActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         // When we return to the conversation list, make sure we show any changes if there are any.
+        rv_conversationList.adapter?.notifyDataSetChanged()
+    }
+
+    @Subscribe
+    fun onMessageReceivedEvent(event: MessageReceivedEvent) {
+        // TODO: [Bug] If when in contact1 message list an SMS for contact2 arrives - it will not be seen in the conversation list
+        // (because no one is listening to the event)
+        // TODO: [Refactor] Have a single source of truth that's always listening
+        // TODO: [Bug] When a message is received, the conversation is not sorted to be on top again
+        val conversation = this.conversations.find { c -> c.threadId == event.conversationId }!!
+        conversation.latestMessageIsOurs = false
+        conversation.wasRead = false
+        conversation.latestMessageText = event.message.text
+        conversation.latestMessageTimestamp = event.message.dateTimestamp
         rv_conversationList.adapter?.notifyDataSetChanged()
     }
 }

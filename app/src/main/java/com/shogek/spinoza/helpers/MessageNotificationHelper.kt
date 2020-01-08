@@ -23,6 +23,8 @@ import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
+import com.shogek.spinoza.events.MessageReceivedEvent
+import org.greenrobot.eventbus.EventBus
 
 
 // More information can be found at:
@@ -100,6 +102,7 @@ object MessageNotificationHelper {
         message: String
     ) {
         val realMessage = MessageCache.notifyMessageReceived(resolver, conversationId, message)
+        EventBus.getDefault().post(MessageReceivedEvent(conversationId, realMessage))
         ConversationCache.notifyMessageReceived(conversationId, realMessage)
     }
 

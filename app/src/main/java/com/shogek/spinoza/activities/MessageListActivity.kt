@@ -17,9 +17,12 @@ import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
 import com.shogek.spinoza.cores.MessageListCore
+import com.shogek.spinoza.events.MessageReceivedEvent
 import com.shogek.spinoza.models.Contact
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 
 class MessageListActivity : AppCompatActivity() {
 
@@ -80,6 +83,16 @@ class MessageListActivity : AppCompatActivity() {
         this.initRowButtonActions(core)
         this.setToolbarInformation(contactName, contact?.photoUri)
         // TODO: [Style] Add elevation to message box when not at bottom.
+    }
+
+    override fun onStart() {
+        super.onStart()
+        EventBus.getDefault().register(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        EventBus.getDefault().unregister(this)
     }
 
     private fun onMessageSentSuccess(
@@ -217,5 +230,14 @@ class MessageListActivity : AppCompatActivity() {
         val number = this.messageIndex
         this.messageIndex++
         return number
+    }
+
+    @Subscribe
+    fun onMessageReceivedEvent(event: MessageReceivedEvent) {
+        if (event.conversationId == this.conversation?.threadId) {
+            this.messages.add(event.message)
+            this.adapter.notifyDataSetChanged()
+            rv_messageList.scrollToPosition(messages.size - 1)
+        }
     }
 }

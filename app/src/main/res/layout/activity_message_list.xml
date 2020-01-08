@@ -32,7 +32,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_arrow_back_24dp" />
+                app:srcCompat="@drawable/ic_arrow_back_24dp"
+                android:contentDescription="@string/common_button_return_meaning" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/chatHeadWrapper"
@@ -58,7 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="John Doe"
+                android:text="@string/common_fake_full_name"
                 android:textColor="@color/colorBlack"
                 android:textSize="15sp"
                 android:textStyle="bold"
@@ -99,7 +100,7 @@
             android:layout_marginBottom="8dp"
             android:width="0dp"
             android:background="@drawable/send_message_box"
-            android:hint="Aa"
+            android:hint="@string/message_list_input_send_message_hint"
             android:maxLines="6"
             android:paddingHorizontal="14dp"
             android:paddingVertical="7dp"
@@ -119,7 +120,8 @@
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:srcCompat="@drawable/ic_arrow_send_message_24dp" />
+            app:srcCompat="@drawable/ic_arrow_send_message_24dp"
+            android:contentDescription="@string/message_list_button_send_meaning" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -152,7 +154,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_content_copy_black_24dp" />
+                app:srcCompat="@drawable/ic_content_copy_black_24dp"
+                android:contentDescription="@string/message_list_button_copy_meaning" />
 
             <TextView
                 android:id="@+id/tv_copyMessage"
@@ -161,7 +164,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="16dp"
                 android:color="@color/colorGrayDarker"
-                android:text="Copy"
+                android:text="@string/message_list_button_copy"
                 android:textAlignment="center"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="@+id/iv_copyMessage"
@@ -188,7 +191,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_forward_black_24dp" />
+                app:srcCompat="@drawable/ic_forward_black_24dp"
+                android:contentDescription="@string/message_list_button_forward_meaning" />
 
             <TextView
                 android:id="@+id/tv_forwardMessage"
@@ -197,7 +201,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="16dp"
                 android:color="@color/colorGrayDarker"
-                android:text="Forward"
+                android:text="@string/message_list_button_forward"
                 android:textAlignment="center"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="@+id/iv_forwardMessage"
@@ -224,7 +228,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_delete_black_24dp" />
+                app:srcCompat="@drawable/ic_delete_black_24dp"
+                android:contentDescription="@string/message_list_button_remove_meaning" />
 
             <TextView
                 android:id="@+id/tv_deleteMessage"
@@ -233,7 +238,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="16dp"
                 android:color="@color/colorGrayDarker"
-                android:text="Remove"
+                android:text="@string/message_list_button_remove"
                 android:textAlignment="center"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="@+id/iv_removeMessage"

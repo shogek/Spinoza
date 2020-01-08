@@ -38,14 +38,15 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_arrow_back_24dp" />
+                    app:srcCompat="@drawable/ic_arrow_back_24dp"
+                    android:contentDescription="@string/common_contact_photo_meaning" />
 
                 <TextView
                     android:id="@+id/contact_list_toolbar_title_tv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
-                    android:text="Send to"
+                    android:text="@string/contact_list_forward_toolbar_title"
                     android:textColor="@color/colorBlack"
                     android:textSize="15sp"
                     android:textStyle="bold"
@@ -71,7 +72,7 @@
                     android:id="@+id/textView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="To:"
+                    android:text="@string/contact_list_forward_text_send_to"
                     android:textSize="14sp"
                     app:layout_constraintBottom_toBottomOf="@+id/et_filterContacts"
                     app:layout_constraintStart_toStartOf="parent"
@@ -84,7 +85,7 @@
                     android:layout_marginStart="8dp"
                     android:background="@android:color/transparent"
                     android:ems="10"
-                    android:hint="Type a name"
+                    android:hint="@string/contact_list_forward_input_filter_hint"
                     android:inputType="textPersonName"
                     android:maxLines="1"
                     android:textColor="@color/colorBlack"

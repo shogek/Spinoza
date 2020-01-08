@@ -31,7 +31,7 @@
         android:layout_marginStart="16dp"
         android:ellipsize="end"
         android:singleLine="true"
-        android:text="TextView"
+        android:text="@string/common_fake_full_name"
         android:textColor="#D8000000"
         android:textSize="15sp"
         android:textStyle="bold"

@@ -36,7 +36,7 @@
         android:background="@drawable/message_bubble_theirs"
         android:paddingHorizontal="14dp"
         android:paddingVertical="7dp"
-        android:text="TextView"
+        android:text="@string/common_fake_message"
         android:textColor="@color/colorBlack"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"

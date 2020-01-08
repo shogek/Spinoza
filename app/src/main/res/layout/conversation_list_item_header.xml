@@ -16,7 +16,7 @@
         android:drawableStart="@drawable/ic_search_black_24dp"
         android:drawablePadding="8dp"
         android:ems="10"
-        android:hint="Search"
+        android:hint="@string/conversation_list_item_header_input_search_hint"
         android:inputType="textPersonName"
         android:maxLines="1"
         android:paddingHorizontal="10dp"
@@ -27,5 +27,6 @@
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:autofillHints="personName" />
 </androidx.constraintlayout.widget.ConstraintLayout>

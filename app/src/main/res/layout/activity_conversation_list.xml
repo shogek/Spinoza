@@ -26,7 +26,7 @@
                 android:id="@+id/action_bar_conversation_list_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chats"
+                android:text="@string/conversation_list_toolbar_title"
                 android:textColor="@color/colorBlack"
                 android:textSize="25sp"
                 android:textStyle="bold"
@@ -42,7 +42,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_new_message" />
+                app:srcCompat="@drawable/ic_new_message"
+                android:contentDescription="@string/common_contact_photo_meaning" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 

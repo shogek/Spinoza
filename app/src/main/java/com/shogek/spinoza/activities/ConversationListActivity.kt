@@ -17,6 +17,7 @@ import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.events.ConversationActionEvent
+import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.helpers.ConversationHelper
 import com.shogek.spinoza.models.Conversation
@@ -43,6 +44,7 @@ class ConversationListActivity : AppCompatActivity() {
         )
     }
 
+    private var lastOpenedConversationId: Number? = null
     private lateinit var conversations: Array<Conversation>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -168,18 +170,25 @@ class ConversationListActivity : AppCompatActivity() {
         rv_conversationList.adapter?.notifyDataSetChanged()
     }
 
-    @Subscribe
+    @Subscribe(sticky = true)
     fun onMessageReceivedEvent(event: MessageReceivedEvent) {
-        // TODO: [Bug] If when in contact1 message list an SMS for contact2 arrives - it will not be seen in the conversation list
-        // (because no one is listening to the event)
         // TODO: [Refactor] Have a single source of truth that's always listening
         // TODO: [Bug] When a message is received, the conversation is not sorted to be on top again
         val conversation = this.conversations.find { c -> c.threadId == event.conversationId }!!
         conversation.latestMessageIsOurs = false
-        conversation.wasRead = false
         conversation.latestMessageText = event.message.text
         conversation.latestMessageTimestamp = event.message.dateTimestamp
+
+        // Mark the last message as read if it was received while in the conversation with him
+        conversation.wasRead = event.conversationId == this.lastOpenedConversationId
+        this.lastOpenedConversationId = null
+
         rv_conversationList.adapter?.notifyDataSetChanged()
+    }
+
+    @Subscribe(sticky = true)
+    fun onConversationOpenedEvent(event: ConversationOpenedEvent) {
+        this.lastOpenedConversationId = event.conversationId
     }
 
     @Subscribe

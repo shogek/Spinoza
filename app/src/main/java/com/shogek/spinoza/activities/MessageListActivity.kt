@@ -20,6 +20,7 @@ import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
+import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Contact
@@ -66,6 +67,8 @@ class MessageListActivity : AppCompatActivity() {
             Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
             Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
         }
+
+        EventBus.getDefault().postSticky(ConversationOpenedEvent(this.conversation?.threadId))
 
         val buttonCopyMessage     = findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn)
         val buttonRemoveMessage   = findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn)

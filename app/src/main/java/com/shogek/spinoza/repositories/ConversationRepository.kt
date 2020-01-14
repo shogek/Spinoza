@@ -2,12 +2,49 @@ package com.shogek.spinoza.repositories
 
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.Context
 import android.provider.Telephony
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.shogek.spinoza.models.Conversation
 
-object ConversationRepository {
+class ConversationRepository(
+    private val context: Context
+) {
 
-    fun getAll(resolver: ContentResolver): Array<Conversation> {
+    private companion object {
+        private var conversations: MutableLiveData<List<Conversation>> = MutableLiveData()
+    }
+
+    fun get(
+        threadId: Number
+    ): Conversation {
+        if (conversations.value.isNullOrEmpty()) {
+            this.initData()
+        }
+        return conversations.value!!.first { it.threadId == threadId }
+    }
+
+    fun getAll(): LiveData<List<Conversation>> {
+        if (conversations.value.isNullOrEmpty()) {
+            this.initData()
+        }
+        return conversations
+    }
+
+    fun update() {
+        val tempConversations = conversations.value!!.toMutableList()
+        val conversation = tempConversations[0]
+        conversation.latestMessageText = "IT WORKED"
+        conversation.wasRead = false
+        conversations.value = tempConversations
+    }
+
+    private fun initData() {
+        conversations.value = this.loadAllConversations(context.contentResolver)
+    }
+
+    private fun loadAllConversations(resolver: ContentResolver): List<Conversation> {
         val projection = arrayOf(
             Telephony.Sms.Conversations.ADDRESS     + " as " + Telephony.Sms.Conversations.ADDRESS,
             Telephony.Sms.Conversations.BODY        + " as " + Telephony.Sms.Conversations.BODY,
@@ -24,7 +61,7 @@ object ConversationRepository {
             null,
             null
         )
-            ?: return arrayOf()
+            ?: return listOf()
 
         val conversations = mutableListOf<Conversation>()
 
@@ -43,7 +80,7 @@ object ConversationRepository {
         }
 
         cursor.close()
-        return conversations.toTypedArray()
+        return conversations
     }
 
     fun markAsRead(

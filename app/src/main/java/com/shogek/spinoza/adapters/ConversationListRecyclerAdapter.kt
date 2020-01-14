@@ -28,12 +28,12 @@ import java.time.format.TextStyle
 import java.util.*
 
 class ConversationListRecyclerAdapter(
-    private val context: Context,
-    private val conversations: Array<Conversation>
+    private val context: Context
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
 
     private val layoutInflater = LayoutInflater.from(context)
-    private val filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(conversations) }
+    private var originalConversations = listOf<Conversation>()
+    private var filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(originalConversations) }
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         abstract fun bind(conversation: Conversation?)
@@ -122,7 +122,7 @@ class ConversationListRecyclerAdapter(
         if (position == 0)
             return TYPE_HEADER
 
-        val conversation = this.conversations[position - 1] // -1 for header
+        val conversation = this.originalConversations[position - 1] // -1 for header
         return if  (conversation.wasRead)
             TYPE_CONVERSATION_READ
         else
@@ -158,13 +158,19 @@ class ConversationListRecyclerAdapter(
         this.filteredConversations.clear()
 
         if (phrase.isEmpty()) {
-            this.filteredConversations.addAll(this.conversations)
+            this.filteredConversations.addAll(this.originalConversations)
         } else {
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.conversations.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
+            val filtered = this.originalConversations.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
             this.filteredConversations.addAll(filtered)
         }
 
+        notifyDataSetChanged()
+    }
+
+    fun setConversations(conversations: List<Conversation>) {
+        this.originalConversations = conversations
+        this.filteredConversations = conversations.toMutableList()
         notifyDataSetChanged()
     }
 

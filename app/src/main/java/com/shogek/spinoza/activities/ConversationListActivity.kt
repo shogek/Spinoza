@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
@@ -21,7 +23,9 @@ import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.helpers.ConversationHelper
 import com.shogek.spinoza.models.Conversation
+import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.utils.UnitUtils
+import com.shogek.spinoza.viewModels.ConversationListViewModel
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -46,6 +50,7 @@ class ConversationListActivity : AppCompatActivity() {
 
     private var lastOpenedConversationId: Number? = null
     private lateinit var conversations: Array<Conversation>
+    private lateinit var viewModel: ConversationListViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,9 +95,15 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
+        this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
+        val adapter = ConversationListRecyclerAdapter(this)
+        this.viewModel.conversations.observe(this, Observer { conversations ->
+            adapter.setConversations(conversations)
+        })
+
         this.conversations = this.getConversations()
         rv_conversationList.layoutManager = LinearLayoutManager(this)
-        rv_conversationList.adapter = ConversationListRecyclerAdapter(this, this.conversations)
+        rv_conversationList.adapter = adapter
         rv_conversationList.setHasFixedSize(true)
 
         this.initToolbarElevation()
@@ -127,8 +138,9 @@ class ConversationListActivity : AppCompatActivity() {
 
     private fun initButtonNewMessage() {
         createNewMessage.setOnClickListener {
-            val intent = Intent(this, ContactListActivity::class.java)
-            startActivityForResult(intent, REQUEST_PICK_CONTACT)
+            ConversationRepository(this).update()
+//            val intent = Intent(this, ContactListActivity::class.java)
+//            startActivityForResult(intent, REQUEST_PICK_CONTACT)
         }
     }
 

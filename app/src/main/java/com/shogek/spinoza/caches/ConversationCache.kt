@@ -13,7 +13,7 @@ object ConversationCache {
         resolver: ContentResolver,
         conversationId: Int
     ) {
-        ConversationRepository.markAsRead(resolver, conversationId)
+//        ConversationRepository.markAsRead(resolver, conversationId)
 
         val conversation = this.cache[conversationId]!!
         conversation.wasRead = true
@@ -51,7 +51,7 @@ object ConversationCache {
             return this.cache.values.toTypedArray()
         }
 
-        val conversations = ConversationRepository.getAll(resolver)
+        val conversations = arrayOf<Conversation>()
 
         // Cache the result
         conversations.forEach { c -> this.cache[c.threadId] = c }

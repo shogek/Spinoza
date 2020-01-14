@@ -123,7 +123,7 @@ class ConversationListRecyclerAdapter(
             return TYPE_HEADER
 
         val conversation = this.originalConversations[position - 1] // -1 for header
-        return if  (conversation.wasRead)
+        return if  (conversation.latestMessageWasRead)
             TYPE_CONVERSATION_READ
         else
             TYPE_CONVERSATION_UNREAD

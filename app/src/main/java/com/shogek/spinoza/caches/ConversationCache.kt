@@ -3,7 +3,6 @@ package com.shogek.spinoza.caches
 import android.content.ContentResolver
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
-import com.shogek.spinoza.repositories.ConversationRepository
 
 object ConversationCache {
     /** Telephony.Sms.Conversations.THREAD_ID returns Conversation */
@@ -16,7 +15,7 @@ object ConversationCache {
 //        ConversationRepository.markAsRead(resolver, conversationId)
 
         val conversation = this.cache[conversationId]!!
-        conversation.wasRead = true
+        conversation.latestMessageWasRead = true
     }
 
     fun get(threadId: Number) : Conversation? {
@@ -24,16 +23,6 @@ object ConversationCache {
     }
 
     fun notifyMessageSent(
-        threadId: Number,
-        message: Message
-    ) {
-        val conversation = this.cache[threadId]!!
-        conversation.latestMessageTimestamp = message.dateTimestamp
-        conversation.latestMessageText = message.text
-    }
-
-    // TODO: [Refactor] Shouldn't he also be listening to the EventBus for new message?
-    fun notifyMessageReceived(
         threadId: Number,
         message: Message
     ) {

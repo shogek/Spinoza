@@ -8,6 +8,7 @@ import android.telephony.SmsMessage
 import androidx.core.os.postDelayed
 import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.caches.ConversationCache
+import com.shogek.spinoza.repositories.ConversationRepository
 
 class MessageBroadcastReceiver: BroadcastReceiver() {
 
@@ -27,7 +28,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
         val text = pdus.fold("") { acc, bytes -> acc + SmsMessage.createFromPdu(bytes, format).displayMessageBody }
 
         var conversationId: Number?
-        val conversations = ConversationCache.getAll(context.contentResolver)
+        val conversations = ConversationRepository(context).getAll().value!!
         conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
         if (conversationId == null) {
             // TODO: [Bug] Being the default SMS messaging app means we need to create the conversation for unknown numbers

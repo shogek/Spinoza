@@ -103,7 +103,6 @@ object MessageNotificationHelper {
     ) {
         val realMessage = MessageCache.notifyMessageReceived(resolver, conversationId, message)
         EventBus.getDefault().postSticky(MessageReceivedEvent(conversationId, realMessage))
-        ConversationCache.notifyMessageReceived(conversationId, realMessage)
     }
 
 

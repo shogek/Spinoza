@@ -130,7 +130,7 @@ class MessageListActivity : AppCompatActivity() {
         val conversation = ConversationCache.get(conversationId)!!
         this.conversation = conversation
 
-        if (!conversation.wasRead) {
+        if (!conversation.latestMessageWasRead) {
             MessageCache.markMessagesAsRead(contentResolver, conversationId)
             ConversationCache.markConversationAsRead(contentResolver, conversationId)
         }

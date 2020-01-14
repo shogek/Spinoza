@@ -8,7 +8,7 @@ class Conversation(
     var messages: MutableList<Message>?,
     var latestMessageText: String,
     var latestMessageTimestamp: Long,
-    var wasRead: Boolean,
+    var latestMessageWasRead: Boolean,
     var latestMessageIsOurs: Boolean
     ) {
     fun getDisplayName(): String = contact?.displayName ?: senderPhoneStripped

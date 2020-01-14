@@ -32,11 +32,20 @@ class ConversationRepository(
         return conversations
     }
 
-    fun update() {
+    fun messageReceived(
+        threadId: Number,
+        text: String,
+        timestamp: Long,
+        isOurs: Boolean
+    ) {
+        // TODO: [Bug] Breaks if an unknown number messages us
         val tempConversations = conversations.value!!.toMutableList()
-        val conversation = tempConversations[0]
-        conversation.latestMessageText = "IT WORKED"
-        conversation.wasRead = false
+        val conversation = tempConversations.find { it.threadId == threadId }!!
+        conversation.latestMessageText = text
+        conversation.latestMessageIsOurs = isOurs
+        conversation.latestMessageWasRead = isOurs
+        conversation.latestMessageTimestamp = timestamp
+
         conversations.value = tempConversations
     }
 

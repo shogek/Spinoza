@@ -36,6 +36,6 @@ object ContactCache {
         // Cache the result
         contacts.forEach { c -> this.cache[c.strippedPhone] = c }
 
-        return contacts
+        return contacts.toTypedArray()
     }
 }

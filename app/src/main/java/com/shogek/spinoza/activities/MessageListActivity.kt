@@ -24,6 +24,7 @@ import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.services.MessageService
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
@@ -127,12 +128,12 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun cameFromOpenConversation() {
         val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-        val conversation = ConversationCache.get(conversationId)!!
+        val conversation = ConversationRepository(this).get(conversationId)
         this.conversation = conversation
 
         if (!conversation.latestMessageWasRead) {
             MessageCache.markMessagesAsRead(contentResolver, conversationId)
-            ConversationCache.markConversationAsRead(contentResolver, conversationId)
+            ConversationRepository(this).markAsRead(conversationId)
         }
 
         this.messages = MessageCache

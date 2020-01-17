@@ -46,7 +46,7 @@ object ContactRepository {
         return contact
     }
 
-    fun getAll(resolver: ContentResolver): Array<Contact> {
+    fun getAll(resolver: ContentResolver): List<Contact> {
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone._ID,
             ContactsContract.CommonDataKinds.Phone.NUMBER,
@@ -62,7 +62,7 @@ object ContactRepository {
             null,
             null
         )
-            ?: return arrayOf()
+            ?: return listOf()
 
         val contacts = mutableListOf<Contact>()
 
@@ -83,6 +83,6 @@ object ContactRepository {
         }
 
         cursor.close()
-        return contacts.toTypedArray()
+        return contacts
     }
 }

@@ -50,10 +50,10 @@ class ConversationRepository(
     }
 
     private fun initData() {
-        conversations.value = this.loadAllConversations(context.contentResolver)
+        conversations.value = this.retrieveAllConversations(context.contentResolver)
     }
 
-    private fun loadAllConversations(resolver: ContentResolver): List<Conversation> {
+    private fun retrieveAllConversations(resolver: ContentResolver): List<Conversation> {
         val projection = arrayOf(
             Telephony.Sms.Conversations.ADDRESS     + " as " + Telephony.Sms.Conversations.ADDRESS,
             Telephony.Sms.Conversations.BODY        + " as " + Telephony.Sms.Conversations.BODY,
@@ -92,8 +92,8 @@ class ConversationRepository(
         return conversations
     }
 
+    // TODO: [Test] As default message provider
     fun markAsRead(
-        resolver: ContentResolver,
         threadId: Int
     ) : Number {
         val contentValues = ContentValues()
@@ -101,7 +101,7 @@ class ConversationRepository(
 
         val where = "${Telephony.Sms.Conversations._ID}=${threadId} AND ${Telephony.Sms.Conversations.READ}=0"
 
-        return resolver.update(
+        return this.context.contentResolver.update(
             Telephony.Sms.Conversations.CONTENT_URI,
             contentValues,
             where,

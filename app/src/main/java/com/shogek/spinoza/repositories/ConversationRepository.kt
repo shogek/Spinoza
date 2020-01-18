@@ -93,9 +93,17 @@ class ConversationRepository(
     }
 
     // TODO: [Test] As default message provider
+    // TODO: [Async] Make it
     fun markAsRead(
         threadId: Int
     ) : Number {
+        // Local change
+        val tempConversations = conversations.value!!.toMutableList()
+        val conversation = tempConversations.find { it.threadId == threadId }!!
+        conversation.latestMessageWasRead = true
+        conversations.value = tempConversations
+
+        // Database change
         val contentValues = ContentValues()
         contentValues.put(Telephony.Sms.Conversations.READ, 1)
 

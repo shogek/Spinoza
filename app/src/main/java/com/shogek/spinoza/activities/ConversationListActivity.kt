@@ -16,13 +16,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
-import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.events.ConversationActionEvent
-import com.shogek.spinoza.events.messages.MessageReceivedEvent
-import com.shogek.spinoza.helpers.ConversationHelper
-import com.shogek.spinoza.models.Conversation
-import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.utils.UnitUtils
 import com.shogek.spinoza.viewModels.ConversationListViewModel
 import kotlinx.android.synthetic.main.activity_conversation_list.*
@@ -32,11 +27,12 @@ import org.greenrobot.eventbus.Subscribe
 
 class ConversationListActivity : AppCompatActivity() {
 
+    private lateinit var viewModel: ConversationListViewModel
+
     companion object {
         const val REQUEST_PICK_CONTACT = 0
         const val DIRECTION_UP = -1
         const val TOOLBAR_ELEVATION_DIP: Float = 4f
-
         const val PERMISSIONS_ALL = 1
         val PERMISSIONS_REQUIRED = arrayOf(
             Manifest.permission.READ_SMS,
@@ -46,9 +42,6 @@ class ConversationListActivity : AppCompatActivity() {
             Manifest.permission.READ_PHONE_STATE
         )
     }
-
-    private lateinit var conversations: Array<Conversation>
-    private lateinit var viewModel: ConversationListViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,10 +89,10 @@ class ConversationListActivity : AppCompatActivity() {
         this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
         val adapter = ConversationListRecyclerAdapter(this)
         this.viewModel.conversations.observe(this, Observer { conversations ->
-            adapter.setConversations(conversations)
+            val sorted = conversations.sortedByDescending { c -> c.latestMessageTimestamp }
+            adapter.setConversations(sorted)
         })
 
-        this.conversations = this.getConversations()
         rv_conversationList.layoutManager = LinearLayoutManager(this)
         rv_conversationList.adapter = adapter
         rv_conversationList.setHasFixedSize(true)
@@ -121,17 +114,6 @@ class ConversationListActivity : AppCompatActivity() {
                         0f
             }
         })
-    }
-
-    private fun getConversations() : Array<Conversation> {
-        val contacts = ContactCache.getAll(contentResolver)
-        val conversations = ConversationCache
-            .getAll(contentResolver, false)
-            .sortedByDescending { c -> c.latestMessageTimestamp }
-            .toTypedArray()
-
-        ConversationHelper.matchContactsWithConversations(conversations, contacts)
-        return conversations
     }
 
     private fun initButtonNewMessage() {
@@ -171,20 +153,6 @@ class ConversationListActivity : AppCompatActivity() {
         }
 
         startActivity(intent)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // When we return to the conversation list, make sure we show any changes if there are any.
-        rv_conversationList.adapter?.notifyDataSetChanged()
-    }
-
-    @Subscribe(sticky = true)
-    fun onMessageReceivedEvent(event: MessageReceivedEvent) {
-        // TODO: [Bug] When a message is received, the conversation is not sorted to be on top again
-        // TODO: [Refactor] There has to be a smarter way to pass the parameters here.
-        ConversationRepository(this)
-            .messageReceived(event.conversationId, event.message.text, event.message.dateTimestamp, event.message.isOurs)
     }
 
     @Subscribe

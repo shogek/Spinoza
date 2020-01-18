@@ -7,6 +7,7 @@ import android.provider.Telephony
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.shogek.spinoza.models.Conversation
+import com.shogek.spinoza.models.Message
 
 class ConversationRepository(
     private val context: Context
@@ -34,17 +35,15 @@ class ConversationRepository(
 
     fun messageReceived(
         threadId: Number,
-        text: String,
-        timestamp: Long,
-        isOurs: Boolean
+        message: Message
     ) {
         // TODO: [Bug] Breaks if an unknown number messages us
         val tempConversations = conversations.value!!.toMutableList()
         val conversation = tempConversations.find { it.threadId == threadId }!!
-        conversation.latestMessageText = text
-        conversation.latestMessageIsOurs = isOurs
-        conversation.latestMessageWasRead = isOurs
-        conversation.latestMessageTimestamp = timestamp
+        conversation.latestMessageText = message.text
+        conversation.latestMessageIsOurs = message.isOurs
+        conversation.latestMessageWasRead = message.isOurs
+        conversation.latestMessageTimestamp = message.dateTimestamp
 
         conversations.value = tempConversations
     }

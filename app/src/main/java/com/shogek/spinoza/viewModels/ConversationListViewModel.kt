@@ -1,6 +1,7 @@
 package com.shogek.spinoza.viewModels
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.*
 import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.models.Conversation
@@ -11,12 +12,12 @@ class ConversationListViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val context: Context = application.applicationContext
     var conversations: LiveData<List<Conversation>> = MutableLiveData()
 
     init {
-        val context = application.applicationContext
-        val allConversations = ConversationRepository(context).getAll()
-        val allContacts = ContactRepository.getAll(context.contentResolver)
+        val allConversations = ConversationRepository(this.context).getAll()
+        val allContacts = ContactRepository.getAll(this.context.contentResolver)
 
         this.conversations = Transformations.map(allConversations) {  mergeConversationsToContacts(it, allContacts) }
     }

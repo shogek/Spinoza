@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
@@ -17,12 +16,9 @@ import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.caches.ConversationCache
-import com.shogek.spinoza.events.ConversationActionEvent
 import com.shogek.spinoza.utils.UnitUtils
 import com.shogek.spinoza.viewModels.ConversationListViewModel
 import kotlinx.android.synthetic.main.activity_conversation_list.*
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
 
 
 class ConversationListActivity : AppCompatActivity() {
@@ -33,6 +29,7 @@ class ConversationListActivity : AppCompatActivity() {
         const val REQUEST_PICK_CONTACT = 0
         const val DIRECTION_UP = -1
         const val TOOLBAR_ELEVATION_DIP: Float = 4f
+
         const val PERMISSIONS_ALL = 1
         val PERMISSIONS_REQUIRED = arrayOf(
             Manifest.permission.READ_SMS,
@@ -47,16 +44,6 @@ class ConversationListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
         this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        EventBus.getDefault().register(this)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        EventBus.getDefault().unregister(this)
     }
 
     private fun ensurePermissionsGranted(permissions: Array<String>) {
@@ -87,7 +74,8 @@ class ConversationListActivity : AppCompatActivity() {
 
     private fun initApp() {
         this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
-        val adapter = ConversationListRecyclerAdapter(this)
+        val adapter = ConversationListRecyclerAdapter(this, this.viewModel)
+
         this.viewModel.conversations.observe(this, Observer { conversations ->
             val sorted = conversations.sortedByDescending { c -> c.latestMessageTimestamp }
             adapter.setConversations(sorted)
@@ -153,10 +141,5 @@ class ConversationListActivity : AppCompatActivity() {
         }
 
         startActivity(intent)
-    }
-
-    @Subscribe
-    fun onConversationActionEvent(event: ConversationActionEvent) {
-        Toast.makeText(this, event.action.toString(), Toast.LENGTH_SHORT).show()
     }
 }

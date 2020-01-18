@@ -15,11 +15,9 @@ import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
-import com.shogek.spinoza.events.ConversationActionEvent
-import com.shogek.spinoza.events.ConversationActions
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.utils.DateUtils
-import org.greenrobot.eventbus.EventBus
+import com.shogek.spinoza.viewModels.ConversationListViewModel
 import java.lang.IllegalArgumentException
 import java.security.InvalidParameterException
 import java.time.format.DateTimeFormatter
@@ -28,9 +26,11 @@ import java.time.format.TextStyle
 import java.util.*
 
 class ConversationListRecyclerAdapter(
-    private val context: Context
+    private val context: Context,
+    viewModel: ConversationListViewModel
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
 
+    val vm = viewModel
     private val layoutInflater = LayoutInflater.from(context)
     private var originalConversations = listOf<Conversation>()
     private var filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(originalConversations) }
@@ -46,6 +46,7 @@ class ConversationListRecyclerAdapter(
 
         fun openConversationOptionsDialog(
             context: Context,
+            viewModel: ConversationListViewModel,
             conversationId: Number
         ) {
             MaterialDialog(context).show {
@@ -59,20 +60,13 @@ class ConversationListRecyclerAdapter(
                 val textBlock   = context.getString(R.string.conversation_list_item_option_block)
 
                 listItems(items = listOf(textArchive, textDelete, textMute, textUnread, textIgnore, textBlock)) { _, _, text ->
-                    val bus = EventBus.getDefault()
                     when (text) {
-                        // TODO: [Feature] Implement archive conversation functionality
-                        textArchive -> bus.post(ConversationActionEvent(ConversationActions.ARCHIVE, conversationId))
-                        // TODO: [Feature] Implement delete conversation functionality
-                        textDelete  -> bus.post(ConversationActionEvent(ConversationActions.DELETE, conversationId))
-                        // TODO: [Feature] Implement mute conversation functionality
-                        textMute    -> bus.post(ConversationActionEvent(ConversationActions.MUTE, conversationId))
-                        // TODO: [Feature] Implement mark conversation as unread functionality
-                        textUnread  -> bus.post(ConversationActionEvent(ConversationActions.UNREAD, conversationId))
-                        // TODO: [Feature] Implement ignore conversation functionality
-                        textIgnore  -> bus.post(ConversationActionEvent(ConversationActions.IGNORE, conversationId))
-                        // TODO: [Feature] Implement block conversation functionality
-                        textBlock   -> bus.post(ConversationActionEvent(ConversationActions.BLOCK, conversationId))
+                        textArchive -> viewModel.archiveConversation(conversationId)
+                        textDelete  -> viewModel.deleteConversation(conversationId)
+                        textMute    -> viewModel.muteConversation(conversationId)
+                        textUnread  -> viewModel.markAsUnreadConversation(conversationId)
+                        textIgnore  -> viewModel.ignoreConversation(conversationId)
+                        textBlock   -> viewModel.blockConversation(conversationId)
                         else -> throw InvalidParameterException("Unknown conversation action!")
                     }
                 }
@@ -190,7 +184,7 @@ class ConversationListRecyclerAdapter(
                 // TODO: [Bug] Find a simple way to clear search after exiting activity
             }
 
-            itemView.setOnLongClickListener { openConversationOptionsDialog(itemView.context, conversationId); true }
+            itemView.setOnLongClickListener { openConversationOptionsDialog(itemView.context, vm, conversationId); true }
         }
 
         override fun bind(conversation: Conversation?) {

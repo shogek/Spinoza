@@ -20,10 +20,9 @@ import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.caches.ContactCache
-import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
+import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 import org.greenrobot.eventbus.EventBus
 
@@ -56,7 +55,7 @@ object MessageNotificationHelper {
         this.registerNotificationChannel(context)
         this.propagateMessage(context, threadId, message)
 
-        val contact = this.tryGetContact(threadId, strippedPhone, context.contentResolver)
+        val contact = this.tryGetContact(threadId, strippedPhone, context)
         val notificationTitle = contact?.displayName ?: strippedPhone
 
         // This image is used as the notification's large icon (thumbnail)
@@ -173,15 +172,16 @@ object MessageNotificationHelper {
     private fun tryGetContact(
         threadId: Number,
         strippedPhone: String,
-        resolver: ContentResolver
+        context: Context
     ): Contact? {
-        val contact = ConversationCache.get(threadId)?.contact
+        val contact = ConversationRepository(context).get(threadId)?.contact
         if (contact != null)
             return contact
 
         // Maybe a new 'Contact' record was created while our app was opened (cached)?
-        val newContacts = ContactCache.getAll(resolver, true)
-        val newContact = newContacts.find { c -> c.strippedPhone ==  strippedPhone }
+        val newContact = ContactRepository(context)
+            .getAll().value!!
+            .find { it.strippedPhone ==  strippedPhone }
         if (newContact == null ) {
             Log.i(this.TAG, "'Contact' record not found.")
         }

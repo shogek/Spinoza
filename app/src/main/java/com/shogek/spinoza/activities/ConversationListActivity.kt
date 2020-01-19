@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
-import com.shogek.spinoza.caches.ConversationCache
+import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.utils.UnitUtils
 import com.shogek.spinoza.viewModels.ConversationListViewModel
 import kotlinx.android.synthetic.main.activity_conversation_list.*
@@ -46,7 +46,9 @@ class ConversationListActivity : AppCompatActivity() {
         this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
     }
 
-    private fun ensurePermissionsGranted(permissions: Array<String>) {
+    private fun ensurePermissionsGranted(
+        permissions: Array<String>
+    ) {
         if (!hasPermissions(this, permissions))
             ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_ALL)
         else
@@ -117,18 +119,16 @@ class ConversationListActivity : AppCompatActivity() {
         data: Intent?
     ) {
         super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode != REQUEST_PICK_CONTACT) return
-
-        // Unsuccessful request - the user backed out of the operation
-        if (resultCode != Activity.RESULT_OK) return
+        if (requestCode != REQUEST_PICK_CONTACT || resultCode != Activity.RESULT_OK) {
+            return
+        }
 
         // User picked a contact - open the corresponding conversation
         val intent = Intent(this, MessageListActivity::class.java)
 
         val contactId = data!!.extras!![Extra.ContactList.ConversationList.PickContact.CONTACT_ID] as String
-        val conversationId = ConversationCache
-            .getAll(contentResolver)
+        val conversationId = ConversationRepository(this)
+            .getAll().value!!
             .find { c -> c.contact?.id == contactId }
             ?.threadId
 

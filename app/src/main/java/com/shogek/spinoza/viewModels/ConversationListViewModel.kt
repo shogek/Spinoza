@@ -18,7 +18,7 @@ class ConversationListViewModel(
 
     init {
         val allConversations = ConversationRepository(this.context).getAll()
-        val allContacts = ContactRepository.getAll(this.context.contentResolver)
+        val allContacts = ContactRepository(this.context).getAll().value!!
 
         this.conversations = Transformations.map(allConversations) {  mergeConversationsToContacts(it, allContacts) }
     }

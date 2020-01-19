@@ -19,11 +19,11 @@ class ConversationRepository(
 
     fun get(
         threadId: Number
-    ): Conversation {
+    ): Conversation? {
         if (conversations.value.isNullOrEmpty()) {
             this.initData()
         }
-        return conversations.value!!.first { it.threadId == threadId }
+        return conversations.value!!.find { it.threadId == threadId }
     }
 
     fun getAll(): LiveData<List<Conversation>> {
@@ -37,7 +37,21 @@ class ConversationRepository(
         threadId: Number,
         message: Message
     ) {
-        // TODO: [Bug] Breaks if an unknown number messages us
+        // TODO: [Bug] Show as read if received while in that conversation
+        this.updateConversationWithNewMessage(threadId, message)
+    }
+
+    fun messageSent(
+        threadId: Number,
+        message: Message
+    ) {
+        this.updateConversationWithNewMessage(threadId, message)
+    }
+
+    private fun updateConversationWithNewMessage(
+        threadId: Number,
+        message: Message
+    ) {
         val tempConversations = conversations.value!!.toMutableList()
         val conversation = tempConversations.find { it.threadId == threadId }!!
         conversation.latestMessageText = message.text

@@ -9,8 +9,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ContactListForwardRecyclerAdapter
-import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.cores.ContactListForwardCore
+import com.shogek.spinoza.repositories.ContactRepository
 import kotlinx.android.synthetic.main.activity_contact_list.*
 
 class ContactListForwardActivity : AppCompatActivity() {
@@ -23,10 +23,10 @@ class ContactListForwardActivity : AppCompatActivity() {
 
         val messageToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE)!!
 
-        this.core = ContactListForwardCore(contentResolver, messageToForward)
+        this.core = ContactListForwardCore(this, messageToForward)
 
-        val sortedContacts = ContactCache
-            .getAll(contentResolver, true)
+        val sortedContacts = ContactRepository(this)
+            .getAll().value!!
             .sortedBy { c -> c.displayName }
             .toTypedArray()
         val adapter = ContactListForwardRecyclerAdapter(this, this.core, sortedContacts)

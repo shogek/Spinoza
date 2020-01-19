@@ -15,15 +15,14 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
-import com.shogek.spinoza.caches.ContactCache
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
-import com.shogek.spinoza.caches.ConversationCache
 import com.shogek.spinoza.caches.MessageCache
 import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Contact
+import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.services.MessageService
 import kotlinx.android.synthetic.main.activity_message_list.*
@@ -109,7 +108,7 @@ class MessageListActivity : AppCompatActivity() {
         // TODO: [Style] If we're here, it means message was sent - make speech bubble darker
         // TODO: [Style] Scroll to bottom when message sent
         val sentMessage = MessageCache.notifyMessageSent(contentResolver, threadId, messageBody)
-        ConversationCache.notifyMessageSent(threadId, sentMessage)
+        ConversationRepository(this).messageSent(threadId, sentMessage)
 
         this.messages.add(sentMessage)
         this.adapter.notifyDataSetChanged()
@@ -128,19 +127,20 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun cameFromOpenConversation() {
         val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-        val conversation = ConversationRepository(this).get(conversationId)
+        val repository = ConversationRepository(this)
+        val conversation = repository.get(conversationId)!!
         this.conversation = conversation
 
         if (!conversation.latestMessageWasRead) {
             MessageCache.markMessagesAsRead(contentResolver, conversationId)
-            ConversationRepository(this).markAsRead(conversationId)
+            repository.markAsRead(conversationId)
         }
 
         this.messages = MessageCache
             .getAll(contentResolver, conversationId)
             .toMutableList()
-        this.contact = ContactCache
-            .getAll(contentResolver)
+        this.contact = ContactRepository(this)
+            .getAll().value!!
             .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
     }
 
@@ -148,10 +148,10 @@ class MessageListActivity : AppCompatActivity() {
         val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
         val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)!!
 
-        this.contact = ContactCache.get(contentResolver, contactId)
+        this.contact = ContactRepository(this).get(contactId)
 
         if (conversationId != NO_CONVERSATION_ID) {
-            this.conversation = ConversationCache.get(conversationId)
+            this.conversation = ConversationRepository(this).get(conversationId)
             this.messages = MessageCache
                 .getAll(contentResolver, conversationId)
                 .toMutableList()
@@ -163,10 +163,10 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun cameFromReceivedMessage() {
         val conversationId = intent.getIntExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
-        this.conversation = ConversationCache.get(conversationId)
-        this.contact = ContactCache
-            .getAll(contentResolver)
-            .find { c -> c.strippedPhone == conversation!!.senderPhoneStripped }
+        this.conversation = ConversationRepository(this).get(conversationId)
+        this.contact = ContactRepository(this)
+            .getAll().value!!
+            .find { c -> c.strippedPhone == this.conversation!!.senderPhoneStripped }
         this.messages = MessageCache
             .getAll(contentResolver, conversationId)
             .toMutableList()

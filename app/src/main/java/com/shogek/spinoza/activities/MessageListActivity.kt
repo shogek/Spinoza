@@ -7,9 +7,12 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.net.Uri
 import android.telephony.SmsManager
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -17,20 +20,23 @@ import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
 import com.shogek.spinoza.models.Conversation
 import com.shogek.spinoza.models.Message
-import com.shogek.spinoza.caches.MessageCache
 import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Contact
 import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.repositories.MessageRepository
 import com.shogek.spinoza.services.MessageService
+import com.shogek.spinoza.viewModels.MessageListViewModel
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 
 class MessageListActivity : AppCompatActivity() {
+
+    private lateinit var viewModel: MessageListViewModel
 
     companion object {
         const val NO_CONVERSATION_ID = -1
@@ -43,7 +49,7 @@ class MessageListActivity : AppCompatActivity() {
     private var contact: Contact? = null
     private var conversation: Conversation? = null
     private lateinit var messageActionButtons: ConstraintLayout
-    private lateinit var messages: MutableList<Message>
+    private var messages: MutableList<Message> = mutableListOf()
     private lateinit var adapter: MessageListRecyclerAdapter
 
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -62,6 +68,11 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
+        val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
+        this.viewModel = ViewModelProviders.of(this)
+            .get(MessageListViewModel::class.java)
+            .init(conversationId)
+
         when (intent.getStringExtra(Extra.GOAL)) {
             Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage()
             Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
@@ -75,15 +86,20 @@ class MessageListActivity : AppCompatActivity() {
         val buttonForwardMessage  = findViewById<ConstraintLayout>(R.id.cl_forwardMessageColumn)
         this.messageActionButtons = findViewById(R.id.cl_messageActionsRow)
 
+        this.adapter = MessageListRecyclerAdapter(this, buttonCopyMessage, buttonRemoveMessage, buttonForwardMessage, contact?.photoUri)
+
+        this.viewModel.getMessages().observe(this, Observer { messages ->
+            adapter.setMessages(messages)
+            rv_messageList.scrollToPosition(messages.size - 1)
+            this.initScrollDownWhenKeyboardAppears(messages.size)
+        })
+
         val contactName = contact?.displayName ?: conversation!!.getDisplayName()
         val contactPhone = contact?.strippedPhone ?: conversation!!.senderPhoneStripped
 
-        this.adapter = MessageListRecyclerAdapter(this, buttonCopyMessage, buttonRemoveMessage, buttonForwardMessage, messages, contact?.photoUri)
         rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
-        rv_messageList.scrollToPosition(messages.size - 1)
 
-        this.initScrollDownWhenKeyboardAppears(messages.size)
         this.initButtonReturn()
         // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
         this.initButtonSendMessage(contactPhone, conversation!!.threadId)
@@ -103,16 +119,10 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun onMessageSentSuccess(
         threadId: Number,
-        messageBody: String
+        messageText: String
     ) {
-        // TODO: [Style] If we're here, it means message was sent - make speech bubble darker
-        // TODO: [Style] Scroll to bottom when message sent
-        val sentMessage = MessageCache.notifyMessageSent(contentResolver, threadId, messageBody)
+        val sentMessage = MessageRepository(this).messageSent(threadId, messageText)
         ConversationRepository(this).messageSent(threadId, sentMessage)
-
-        this.messages.add(sentMessage)
-        this.adapter.notifyDataSetChanged()
-        rv_messageList.scrollToPosition(this.messages.size)
     }
 
     override fun onResume() {
@@ -132,13 +142,9 @@ class MessageListActivity : AppCompatActivity() {
         this.conversation = conversation
 
         if (!conversation.latestMessageWasRead) {
-            MessageCache.markMessagesAsRead(contentResolver, conversationId)
-            repository.markAsRead(conversationId)
+            this.viewModel.markConversationAsRead()
         }
 
-        this.messages = MessageCache
-            .getAll(contentResolver, conversationId)
-            .toMutableList()
         this.contact = ContactRepository(this)
             .getAll().value!!
             .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
@@ -152,9 +158,9 @@ class MessageListActivity : AppCompatActivity() {
 
         if (conversationId != NO_CONVERSATION_ID) {
             this.conversation = ConversationRepository(this).get(conversationId)
-            this.messages = MessageCache
-                .getAll(contentResolver, conversationId)
-                .toMutableList()
+//            this.messages = MessageCache
+//                .getAll(contentResolver, conversationId)
+//                .toMutableList()
         } else {
             // Never exchanged messages with this contact before
             this.messages = mutableListOf()
@@ -167,13 +173,11 @@ class MessageListActivity : AppCompatActivity() {
         this.contact = ContactRepository(this)
             .getAll().value!!
             .find { c -> c.strippedPhone == this.conversation!!.senderPhoneStripped }
-        this.messages = MessageCache
-            .getAll(contentResolver, conversationId)
-            .toMutableList()
     }
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {
         KeyboardVisibilityEvent.setEventListener(this) { isVisible ->
+            // TODO: test if it's not called multiple times
             if (isVisible) {
                 rv_messageList.scrollToPosition(messageCount - 1)
             }

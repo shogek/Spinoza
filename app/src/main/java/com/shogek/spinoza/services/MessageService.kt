@@ -20,6 +20,6 @@ object MessageService {
         resolver: ContentResolver,
         messageId: String
     ) {
-        MessageRepository.delete(resolver, messageId)
+//        MessageRepository.delete(resolver, messageId)
     }
 }

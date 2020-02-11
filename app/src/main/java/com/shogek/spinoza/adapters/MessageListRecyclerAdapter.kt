@@ -22,7 +22,7 @@ class MessageListRecyclerAdapter(
     buttonCopyMessage: ConstraintLayout,
     buttonRemoveMessage: ConstraintLayout,
     buttonForwardMessage: ConstraintLayout,
-    private val messages: MutableList<Message>,
+//    private val messages: MutableList<Message>,
     private val senderPhotoUri: String?
 ): RecyclerView.Adapter<MessageListRecyclerAdapter.BaseViewHolder>() {
 
@@ -30,6 +30,7 @@ class MessageListRecyclerAdapter(
         abstract fun bind(message: Message)
     }
 
+    private var messages = listOf<Message>()
     private val layoutInflater = LayoutInflater.from(context)
     private var selectedMessage: Message? = null
 
@@ -102,6 +103,11 @@ class MessageListRecyclerAdapter(
     private fun messageClicked() {
         this.selectedMessage = null
         EventBus.getDefault().post(MessageClickedEvent(null))
+    }
+
+    fun setMessages (messages: List<Message>) {
+        this.messages = messages
+        notifyDataSetChanged()
     }
 
     inner class OurMessageViewHolder(itemView: View) : BaseViewHolder(itemView) {

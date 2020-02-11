@@ -20,10 +20,10 @@ import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.caches.MessageCache
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.repositories.MessageRepository
 import org.greenrobot.eventbus.EventBus
 
 
@@ -99,11 +99,13 @@ object MessageNotificationHelper {
     private fun propagateMessage(
         context: Context,
         conversationId: Number,
-        message: String
+        text: String
     ) {
-        val realMessage = MessageCache.notifyMessageReceived(context.contentResolver, conversationId, message)
+        val realMessage = MessageRepository(context).messageReceived(conversationId, text)
         ConversationRepository(context).messageReceived(conversationId, realMessage)
-        EventBus.getDefault().postSticky(MessageReceivedEvent(conversationId, realMessage))
+//        val realMessage = MessageCache.notifyMessageReceived(context.contentResolver, conversationId, message)
+//        ConversationRepository(context).messageReceived(conversationId, realMessage)
+//        EventBus.getDefault().postSticky(MessageReceivedEvent(conversationId, realMessage))
     }
 
 

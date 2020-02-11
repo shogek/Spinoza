@@ -17,9 +17,7 @@ class ConversationRepository(
         private var conversations: MutableLiveData<List<Conversation>> = MutableLiveData()
     }
 
-    fun get(
-        threadId: Number
-    ): Conversation? {
+    fun get(threadId: Number): Conversation? {
         if (conversations.value.isNullOrEmpty()) {
             this.initData()
         }
@@ -107,9 +105,7 @@ class ConversationRepository(
 
     // TODO: [Test] As default message provider
     // TODO: [Async] Make it
-    fun markAsRead(
-        threadId: Int
-    ) : Number {
+    fun markAsRead(threadId: Number): Number {
         // Local change
         val tempConversations = conversations.value!!.toMutableList()
         val conversation = tempConversations.find { it.threadId == threadId }!!

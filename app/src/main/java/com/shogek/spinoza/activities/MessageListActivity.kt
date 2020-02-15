@@ -102,7 +102,7 @@ class MessageListActivity : AppCompatActivity() {
 
         this.initButtonReturn()
         // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
-        this.initButtonSendMessage(contactPhone, conversation!!.threadId)
+        this.initButtonSendMessage(contactPhone, conversation!!.threadId!!)
         this.setToolbarInformation(contactName, contact?.photoUri)
         // TODO: [Style] Add elevation to message box when not at bottom.
     }

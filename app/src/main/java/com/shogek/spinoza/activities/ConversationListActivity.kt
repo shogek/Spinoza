@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
+import com.shogek.spinoza.db.ConversationDatabase
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.utils.UnitUtils
 import com.shogek.spinoza.viewModels.ConversationListViewModel
@@ -23,7 +24,7 @@ import kotlinx.android.synthetic.main.activity_conversation_list.*
 
 class ConversationListActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: ConversationListViewModel
+    private var viewModel: ConversationListViewModel? = null
 
     companion object {
         const val REQUEST_PICK_CONTACT = 0
@@ -43,16 +44,25 @@ class ConversationListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
+
+        val conversation = ConversationDatabase.createConversation(
+            this,
+            this.contentResolver,
+            "+37287798974",
+            "example text",
+            System.currentTimeMillis(),
+            latestMessageIsOurs = false,
+            latestMessageWasRead = false
+        )
+
         this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
     }
 
-    private fun ensurePermissionsGranted(
-        permissions: Array<String>
-    ) {
+    private fun ensurePermissionsGranted(permissions: Array<String>) {
         if (!hasPermissions(this, permissions))
             ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_ALL)
-        else
-            this.initApp()
+//        else
+//            this.initApp()
     }
 
     private fun hasPermissions(
@@ -70,15 +80,15 @@ class ConversationListActivity : AppCompatActivity() {
         val permissionsMissing = grantResults.any { gr -> gr == PackageManager.PERMISSION_DENIED }
         if (permissionsMissing)
             this.requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_ALL)
-        else
-            this.initApp()
+//        else
+//            this.initApp()
     }
 
     private fun initApp() {
         this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
-        val adapter = ConversationListRecyclerAdapter(this, this.viewModel)
+        val adapter = ConversationListRecyclerAdapter(this, this.viewModel!!)
 
-        this.viewModel.conversations.observe(this, Observer { conversations ->
+        this.viewModel!!.conversations.observe(this, Observer { conversations ->
             val sorted = conversations.sortedByDescending { c -> c.latestMessageTimestamp }
             adapter.setConversations(sorted)
         })

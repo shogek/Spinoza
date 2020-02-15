@@ -1,7 +1,7 @@
 package com.shogek.spinoza.models
 
 class Conversation(
-    val threadId: Number,
+    val threadId: Number?,
     /** 'stripped' meaning it contains no spaces and parentheses. */
     val senderPhoneStripped: String,
     var contact: Contact?,

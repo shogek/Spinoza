@@ -188,7 +188,7 @@ class ConversationListRecyclerAdapter(
         }
 
         override fun bind(conversation: Conversation?) {
-            conversationId = conversation!!.threadId
+            conversationId = conversation!!.threadId!!
             sender.text = conversation.getDisplayName()
 
             this.lastMessage.text =

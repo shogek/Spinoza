@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Handler
 import android.telephony.SmsMessage
 import androidx.core.os.postDelayed
+import com.shogek.spinoza.db.ConversationDatabase
+import com.shogek.spinoza.db.MessageDatabase
 import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.repositories.ConversationRepository
 
@@ -26,18 +28,31 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
 
         val text = pdus.fold("") { acc, bytes -> acc + SmsMessage.createFromPdu(bytes, format).displayMessageBody }
 
-        var conversationId: Number?
-        val conversations = ConversationRepository(context).getAll().value!!
-        conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
-        if (conversationId == null) {
-            // TODO: [Bug] Being the default SMS messaging app means we need to create the conversation for unknown numbers
-            val newConversations = ConversationRepository(context).getAll().value!!
-            conversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
-        }
+//        var conversationId: Number?
+//        val conversations = ConversationRepository(context).getAll().value!!
+//        conversationId = conversations.find { c -> c.senderPhoneStripped == senderPhone}?.threadId
+//        if (conversationId == null) {
+//            // TODO: [Bug] Being the default SMS messaging app means we need to create the conversation for unknown numbers
+//            val newConversations = ConversationRepository(context).getAll().value!!
+//            conversationId = newConversations.find { c -> c.senderPhoneStripped == senderPhone }?.threadId
+//        }
+
+        val conversation = ConversationDatabase.createConversation(
+            context,
+            context.contentResolver,
+            senderPhone,
+            text,
+            System.currentTimeMillis(),
+            latestMessageIsOurs = false,
+            latestMessageWasRead = false
+        )
+        return
+        val result = MessageDatabase.createMessage(context.contentResolver, 14, text, false)
+
 
         // TODO: [Bug] Being the default SMS messaging app means we need to create the message records
         Handler().postDelayed(1000) {
-            MessageNotificationHelper.notify(context, conversationId!!, senderPhone, text)
+            MessageNotificationHelper.notify(context, 14, senderPhone, text)
         }
     }
 }

@@ -236,15 +236,15 @@ object ConversationDatabase {
         values1.put(Telephony.Threads.READ, 0)
         values1.put(Telephony.Threads.TYPE, isOurs)
 //        values1.put(Telephony.Sms.Conversations.READ, wasRead)
-        val result2 = resolver.update(
-            Telephony.Threads.CONTENT_URI.buildUpon().appendQueryParameter(Telephony.Threads._ID, threadId.toString()).build(),
-            values1,
-            null,
-            null
-        )
+//        val result2 = resolver.update(
+//            Telephony.Threads.CONTENT_URI.buildUpon().appendQueryParameter(Telephony.Threads._ID, threadId.toString()).build(),
+//            values1,
+//            null,
+//            null
+//        )
 
         return null
-        return this.getConversation(resolver, Telephony.Sms.Conversations.CONTENT_URI)
+//        return this.getConversation(resolver, Telephony.Sms.Conversations.CONTENT_URI)
     }
 }
 

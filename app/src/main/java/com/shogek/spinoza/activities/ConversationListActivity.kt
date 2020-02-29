@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,6 +18,7 @@ import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
 import com.shogek.spinoza.db.ConversationDatabase
 import com.shogek.spinoza.repositories.ConversationRepository
+import com.shogek.spinoza.ui.ConversationViewModel
 import com.shogek.spinoza.utils.UnitUtils
 import com.shogek.spinoza.viewModels.ConversationListViewModel
 import kotlinx.android.synthetic.main.activity_conversation_list.*
@@ -25,6 +27,7 @@ import kotlinx.android.synthetic.main.activity_conversation_list.*
 class ConversationListActivity : AppCompatActivity() {
 
     private var viewModel: ConversationListViewModel? = null
+    private lateinit var conversationViewModel: ConversationViewModel
 
     companion object {
         const val REQUEST_PICK_CONTACT = 0
@@ -45,17 +48,21 @@ class ConversationListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
 
-        val conversation = ConversationDatabase.createConversation(
-            this,
-            this.contentResolver,
-            "+37287798974",
-            "example text",
-            System.currentTimeMillis(),
-            latestMessageIsOurs = false,
-            latestMessageWasRead = false
-        )
+        this.conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
 
-        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
+
+//        val conversation = ConversationDatabase.createConversation(
+//            this,
+//            this.contentResolver,
+//            "+37287798974",
+//            "example text",
+//            System.currentTimeMillis(),
+//            latestMessageIsOurs = false,
+//            latestMessageWasRead = false
+//        )
+//
+//        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
+        this.initApp()
     }
 
     private fun ensurePermissionsGranted(permissions: Array<String>) {
@@ -85,11 +92,11 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
-        this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
-        val adapter = ConversationListRecyclerAdapter(this, this.viewModel!!)
+//        this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
+        val adapter = ConversationListRecyclerAdapter(this)
 
-        this.viewModel!!.conversations.observe(this, Observer { conversations ->
-            val sorted = conversations.sortedByDescending { c -> c.latestMessageTimestamp }
+        this.conversationViewModel.allConversations.observe(this, Observer { conversations ->
+            val sorted = conversations.sortedByDescending { c -> c.snippetTimestamp }
             adapter.setConversations(sorted)
         })
 

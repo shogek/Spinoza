@@ -15,7 +15,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
-import com.shogek.spinoza.models.Conversation
+import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.utils.DateUtils
 import com.shogek.spinoza.viewModels.ConversationListViewModel
 import java.lang.IllegalArgumentException
@@ -26,11 +26,10 @@ import java.time.format.TextStyle
 import java.util.*
 
 class ConversationListRecyclerAdapter(
-    private val context: Context,
-    viewModel: ConversationListViewModel
+    private val context: Context
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
 
-    val vm = viewModel
+//    val vm = viewModel
     private val layoutInflater = LayoutInflater.from(context)
     private var originalConversations = listOf<Conversation>()
     private var filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(originalConversations) }
@@ -117,7 +116,7 @@ class ConversationListRecyclerAdapter(
             return TYPE_HEADER
 
         val conversation = this.originalConversations[position - 1] // -1 for header
-        return if  (conversation.latestMessageWasRead)
+        return if  (conversation.snippetIsOurs)
             TYPE_CONVERSATION_READ
         else
             TYPE_CONVERSATION_UNREAD
@@ -155,7 +154,7 @@ class ConversationListRecyclerAdapter(
             this.filteredConversations.addAll(this.originalConversations)
         } else {
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.originalConversations.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
+            val filtered = this.originalConversations.filter { c -> c.phone.toLowerCase().contains(lowerCasePhrase) }
             this.filteredConversations.addAll(filtered)
         }
 
@@ -184,28 +183,29 @@ class ConversationListRecyclerAdapter(
                 // TODO: [Bug] Find a simple way to clear search after exiting activity
             }
 
-            itemView.setOnLongClickListener { openConversationOptionsDialog(itemView.context, vm, conversationId); true }
+//            itemView.setOnLongClickListener { openConversationOptionsDialog(itemView.context, vm, conversationId); true }
         }
 
         override fun bind(conversation: Conversation?) {
-            conversationId = conversation!!.threadId!!
-            sender.text = conversation.getDisplayName()
+            // TODO: Why can 'conversation' be null?
+            val conversationId = conversation!!.id
+            sender.text = conversation.phone
 
             this.lastMessage.text =
-                if (conversation.latestMessageIsOurs)
-                    "You: ${conversation.latestMessageText}"
+                if (conversation.snippetIsOurs)
+                    "You: ${conversation.snippetIsOurs}"
                 else
-                    conversation.latestMessageText
+                    conversation.snippet
 
-            val date = DateUtils.getUTCLocalDateTime(conversation.latestMessageTimestamp)
+            val date = DateUtils.getUTCLocalDateTime(conversation.snippetTimestamp)
             val properDate = "\u00B7 ${getFormattedDate(date)}"
             this.date.text = properDate
 
-            Glide
-                .with(itemView)
-                .load(Uri.parse(conversation.contact?.photoUri ?: ""))
-                .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
-                .into(this.senderImage)
+//            Glide
+//                .with(itemView)
+//                .load(Uri.parse(conversation.contact?.photoUri ?: ""))
+//                .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
+//                .into(this.senderImage)
         }
     }
 

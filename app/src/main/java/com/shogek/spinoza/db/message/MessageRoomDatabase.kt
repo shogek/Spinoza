@@ -1,24 +1,25 @@
-package com.shogek.spinoza.db.conversation
+package com.shogek.spinoza.db.message
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.shogek.spinoza.db.conversation.Conversation
 
 @Database(
-    entities = [Conversation::class],
+    entities = [Message::class, Conversation::class],
     version = 3,
     exportSchema = false
 )
-abstract class ConversationRoomDatabase : RoomDatabase() {
+abstract class MessageRoomDatabase : RoomDatabase() {
 
-    abstract fun conversationDao(): ConversationDao
+    abstract fun messageDao(): MessageDao
 
     companion object {
         @Volatile
-        private var INSTANCE: ConversationRoomDatabase? = null
+        private var INSTANCE: MessageRoomDatabase? = null
 
-        fun getDatabase (context: Context): ConversationRoomDatabase {
+        fun getDatabase (context: Context): MessageRoomDatabase {
             val tempInstance = INSTANCE
             if (tempInstance != null) {
                 return tempInstance
@@ -27,8 +28,8 @@ abstract class ConversationRoomDatabase : RoomDatabase() {
             synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    ConversationRoomDatabase::class.java,
-                    "conversation_database"
+                    MessageRoomDatabase::class.java,
+                    "message_database"
                 ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 return instance

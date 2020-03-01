@@ -10,7 +10,7 @@ import androidx.room.Query
 interface MessageDao {
 
     @Query("SELECT * FROM message_table WHERE conversation_id LIKE :conversationId")
-    fun getAllMessages(conversationId: Int): LiveData<List<Message>>
+    fun getAllMessages(conversationId: Long): LiveData<List<Message>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(message: Message)

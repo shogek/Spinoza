@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 
 class MessageRepository(private val messageDao: MessageDao) {
 
-    fun getAll(conversationId: Int): LiveData<List<Message>> {
+    fun getAll(conversationId: Long): LiveData<List<Message>> {
         return messageDao.getAllMessages(conversationId)
     }
 

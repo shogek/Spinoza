@@ -9,8 +9,11 @@ import androidx.room.Query
 @Dao
 interface ConversationDao {
 
+    @Query("SELECT * FROM conversation_table WHERE id = :id")
+    fun get(id: Long): LiveData<Conversation>
+
     @Query("SELECT * FROM conversation_table")
-    fun getAllConversations(): LiveData<List<Conversation>>
+    fun getAll(): LiveData<List<Conversation>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(conversation: Conversation): Long

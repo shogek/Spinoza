@@ -70,7 +70,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
 
         val conversationDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
         val messageDao = MessageRoomDatabase.getDatabase(context).messageDao()
-        val conversationData = conversationDao.getAllConversations()
+        val conversationData = conversationDao.getAll()
         conversationData.observeForever(object : Observer<List<Conversation>> {
             override fun onChanged(allConversations: List<Conversation>?) {
                 val id = upsertConversation(allConversations, conversationDao, basicMessage)

@@ -27,7 +27,7 @@ import kotlinx.android.synthetic.main.activity_conversation_list.*
 class ConversationListActivity : AppCompatActivity() {
 
     private var viewModel: ConversationListViewModel? = null
-    private lateinit var conversationViewModel: ConversationViewModel
+    private lateinit var vm: ConversationViewModel
 
     companion object {
         const val REQUEST_PICK_CONTACT = 0
@@ -48,19 +48,7 @@ class ConversationListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
 
-        this.conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
-
-
-//        val conversation = ConversationDatabase.createConversation(
-//            this,
-//            this.contentResolver,
-//            "+37287798974",
-//            "example text",
-//            System.currentTimeMillis(),
-//            latestMessageIsOurs = false,
-//            latestMessageWasRead = false
-//        )
-//
+        this.vm = ViewModelProvider(this).get(ConversationViewModel::class.java)
 //        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
         this.initApp()
     }
@@ -95,8 +83,8 @@ class ConversationListActivity : AppCompatActivity() {
 //        this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
         val adapter = ConversationListRecyclerAdapter(this)
 
-        this.conversationViewModel.allConversations.observe(this, Observer { conversations ->
-            val sorted = conversations.sortedByDescending { c -> c.snippetTimestamp }
+        this.vm.allConversations.observe(this, Observer { conversations ->
+            val sorted = conversations.sortedByDescending { it.snippetTimestamp }
             adapter.setConversations(sorted)
         })
 

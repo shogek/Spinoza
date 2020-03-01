@@ -17,7 +17,7 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
     init {
         val conversationDao = ConversationRoomDatabase.getDatabase(application).conversationDao()
         this.repository = ConversationRepository(conversationDao)
-        this.allConversations = repository.allConversations
+        this.allConversations = repository.getAll()
     }
 
     fun insert(conversation: Conversation) = viewModelScope.launch {

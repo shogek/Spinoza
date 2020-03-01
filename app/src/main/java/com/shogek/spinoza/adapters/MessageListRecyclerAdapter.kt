@@ -13,7 +13,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
 import com.shogek.spinoza.events.messages.*
-import com.shogek.spinoza.models.Message
+import com.shogek.spinoza.db.message.Message
 import org.greenrobot.eventbus.EventBus
 import java.lang.IllegalArgumentException
 
@@ -42,9 +42,9 @@ class MessageListRecyclerAdapter(
 
     init {
         val bus = EventBus.getDefault()
-        buttonCopyMessage.setOnClickListener    { bus.post(MessageCopiedEvent(selectedMessage!!.text)) }
-        buttonRemoveMessage.setOnClickListener  { bus.post(MessageDeletedEvent(selectedMessage!!.id)) }
-        buttonForwardMessage.setOnClickListener { bus.post(MessageForwardedEvent(selectedMessage!!.text)) }
+        buttonCopyMessage.setOnClickListener    { bus.post(MessageCopiedEvent(selectedMessage!!.body)) }
+        buttonRemoveMessage.setOnClickListener  { /*bus.post(MessageDeletedEvent(selectedMessage!!.id))*/ }
+        buttonForwardMessage.setOnClickListener { bus.post(MessageForwardedEvent(selectedMessage!!.body)) }
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -116,7 +116,7 @@ class MessageListRecyclerAdapter(
 
         override fun bind(message: Message) {
             this.message = message
-            this.messageBody.text = message.text
+            this.messageBody.text = message.body
         }
 
         init {
@@ -132,7 +132,7 @@ class MessageListRecyclerAdapter(
 
         override fun bind(message: Message) {
             this.message = message
-            this.messageBody.text = message.text
+            this.messageBody.text = message.body
 
             Glide.with(itemView)
                  .load(Uri.parse(senderPhotoUri ?: ""))
@@ -152,7 +152,7 @@ class MessageListRecyclerAdapter(
 
         override fun bind(message: Message) {
             this.message = message
-            this.messageBody.text = message.text
+            this.messageBody.text = message.body
         }
 
         init {

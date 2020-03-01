@@ -4,7 +4,13 @@ import androidx.lifecycle.LiveData
 
 class ConversationRepository(private val conversationDao: ConversationDao) {
 
-    val allConversations: LiveData<List<Conversation>> = conversationDao.getAllConversations()
+    fun getAll(): LiveData<List<Conversation>> {
+        return conversationDao.getAll()
+    }
+
+    fun get(id: Long): LiveData<Conversation> {
+        return conversationDao.get(id)
+    }
 
     suspend fun insert(conversation: Conversation): Long {
         return conversationDao.insert(conversation)

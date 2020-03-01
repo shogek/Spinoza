@@ -7,18 +7,17 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.net.Uri
 import android.telephony.SmsManager
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.*
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
-import com.shogek.spinoza.models.Conversation
+import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
@@ -28,7 +27,7 @@ import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.repositories.MessageRepository
 import com.shogek.spinoza.services.MessageService
-import com.shogek.spinoza.viewModels.MessageListViewModel
+import com.shogek.spinoza.ui.messages.list.MessageListViewModel
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import org.greenrobot.eventbus.EventBus
@@ -36,10 +35,11 @@ import org.greenrobot.eventbus.Subscribe
 
 class MessageListActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: MessageListViewModel
+//    private lateinit var viewModel: MessageListViewModel
+    private lateinit var vm: MessageListViewModel
 
     companion object {
-        const val NO_CONVERSATION_ID = -1
+        const val NO_CONVERSATION_ID = -1L
         const val PENDING_MESSAGE_INTENT = "PENDING_MESSAGE_INTENT"
         const val PENDING_MESSAGE_THREAD = "PENDING_MESSAGE_THREAD"
         const val PENDING_MESSAGE_BODY   = "PENDING_MESSAGE_BODY"
@@ -68,18 +68,18 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-        this.viewModel = ViewModelProviders.of(this)
+        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
+        this.vm = ViewModelProvider(this)
             .get(MessageListViewModel::class.java)
             .init(conversationId)
 
         when (intent.getStringExtra(Extra.GOAL)) {
             Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage()
-            Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
+//            Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
             Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
         }
 
-        EventBus.getDefault().postSticky(ConversationOpenedEvent(this.conversation?.threadId))
+//        EventBus.getDefault().postSticky(ConversationOpenedEvent(this.conversation?.threadId))
 
         val buttonCopyMessage     = findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn)
         val buttonRemoveMessage   = findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn)
@@ -88,23 +88,23 @@ class MessageListActivity : AppCompatActivity() {
 
         this.adapter = MessageListRecyclerAdapter(this, buttonCopyMessage, buttonRemoveMessage, buttonForwardMessage, contact?.photoUri)
 
-        this.viewModel.getMessages().observe(this, Observer { messages ->
+        this.vm.messages.observe(this, Observer { messages ->
             adapter.setMessages(messages)
             rv_messageList.scrollToPosition(messages.size - 1)
             this.initScrollDownWhenKeyboardAppears(messages.size)
         })
 
-        val contactName = contact?.displayName ?: conversation!!.getDisplayName()
-        val contactPhone = contact?.strippedPhone ?: conversation!!.senderPhoneStripped
+        this.vm.conversation.observe(this, Observer {
+            // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
+            this.initButtonSendMessage(it.phone, it.id)
+            // TODO: [Style] Add elevation to message box when not at bottom.
+            this.setToolbarInformation(it.phone, contact?.photoUri)
+        })
 
         rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
 
         this.initButtonReturn()
-        // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
-        this.initButtonSendMessage(contactPhone, conversation!!.threadId!!)
-        this.setToolbarInformation(contactName, contact?.photoUri)
-        // TODO: [Style] Add elevation to message box when not at bottom.
     }
 
     override fun onStart() {
@@ -136,13 +136,13 @@ class MessageListActivity : AppCompatActivity() {
     }
 
     private fun cameFromOpenConversation() {
-        val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
+        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
         val repository = ConversationRepository(this)
         val conversation = repository.get(conversationId)!!
-        this.conversation = conversation
+//        this.conversation = conversation
 
         if (!conversation.latestMessageWasRead) {
-            this.viewModel.markConversationAsRead()
+//            this.viewModel.markConversationAsRead()
         }
 
         this.contact = ContactRepository(this)
@@ -151,13 +151,13 @@ class MessageListActivity : AppCompatActivity() {
     }
 
     private fun cameFromWriteNewMessage() {
-        val conversationId = intent.getIntExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
+        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
         val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)!!
 
         this.contact = ContactRepository(this).get(contactId)
 
         if (conversationId != NO_CONVERSATION_ID) {
-            this.conversation = ConversationRepository(this).get(conversationId)
+//            this.conversation = ConversationRepository(this).get(conversationId)
 //            this.messages = MessageCache
 //                .getAll(contentResolver, conversationId)
 //                .toMutableList()
@@ -168,11 +168,11 @@ class MessageListActivity : AppCompatActivity() {
     }
 
     private fun cameFromReceivedMessage() {
-        val conversationId = intent.getIntExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
-        this.conversation = ConversationRepository(this).get(conversationId)
-        this.contact = ContactRepository(this)
-            .getAll().value!!
-            .find { c -> c.strippedPhone == this.conversation!!.senderPhoneStripped }
+//        val conversationId = intent.getLongExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
+//        this.conversation = ConversationRepository(this).get(conversationId)
+//        this.contact = ContactRepository(this)
+//            .getAll().value!!
+//            .find { c -> c.strippedPhone == this.conversation!!.senderPhoneStripped }
     }
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {
@@ -244,11 +244,11 @@ class MessageListActivity : AppCompatActivity() {
 
     @Subscribe
     fun onMessageReceivedEvent(event: MessageReceivedEvent) {
-        if (event.conversationId == this.conversation?.threadId) {
-            this.messages.add(event.message)
-            this.adapter.notifyDataSetChanged()
-            rv_messageList.scrollToPosition(messages.size - 1)
-        }
+//        if (event.conversationId == this.conversation?.threadId) {
+//            this.messages.add(event.message)
+//            this.adapter.notifyDataSetChanged()
+//            rv_messageList.scrollToPosition(messages.size - 1)
+//        }
     }
 
     @Subscribe

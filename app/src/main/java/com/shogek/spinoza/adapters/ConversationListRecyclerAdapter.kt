@@ -188,7 +188,7 @@ class ConversationListRecyclerAdapter(
 
         override fun bind(conversation: Conversation?) {
             // TODO: Why can 'conversation' be null?
-            val conversationId = conversation!!.id
+            conversationId = conversation!!.id
             sender.text = conversation.phone
 
             this.lastMessage.text =
@@ -201,11 +201,9 @@ class ConversationListRecyclerAdapter(
             val properDate = "\u00B7 ${getFormattedDate(date)}"
             this.date.text = properDate
 
-//            Glide
-//                .with(itemView)
-//                .load(Uri.parse(conversation.contact?.photoUri ?: ""))
-//                .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
-//                .into(this.senderImage)
+            Glide.with(itemView)
+                .load(R.drawable.unknown_contact)
+                .into(this.senderImage)
         }
     }
 

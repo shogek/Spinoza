@@ -2,7 +2,6 @@ package com.shogek.spinoza.adapters
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.*
@@ -11,13 +10,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItems
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.db.conversation.Conversation
+import com.shogek.spinoza.ui.conversation.list.ConversationListViewModel
 import com.shogek.spinoza.utils.DateUtils
-import com.shogek.spinoza.viewModels.ConversationListViewModel
 import java.lang.IllegalArgumentException
 import java.security.InvalidParameterException
 import java.time.format.DateTimeFormatter
@@ -26,10 +24,10 @@ import java.time.format.TextStyle
 import java.util.*
 
 class ConversationListRecyclerAdapter(
-    private val context: Context
+    private val context: Context,
+    private val viewModel: ConversationListViewModel
 ) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
 
-//    val vm = viewModel
     private val layoutInflater = LayoutInflater.from(context)
     private var originalConversations = listOf<Conversation>()
     private var filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(originalConversations) }
@@ -42,35 +40,6 @@ class ConversationListRecyclerAdapter(
         const val TYPE_HEADER               = R.layout.conversation_list_item_header
         const val TYPE_CONVERSATION_READ    = R.layout.conversation_list_item_read
         const val TYPE_CONVERSATION_UNREAD  = R.layout.conversation_list_item_unread
-
-        fun openConversationOptionsDialog(
-            context: Context,
-            viewModel: ConversationListViewModel,
-            conversationId: Number
-        ) {
-            MaterialDialog(context).show {
-                title(R.string.conversation_list_item_options_title)
-
-                val textArchive = context.getString(R.string.conversation_list_item_option_archive)
-                val textDelete  = context.getString(R.string.conversation_list_item_option_delete)
-                val textMute    = context.getString(R.string.conversation_list_item_option_mute)
-                val textUnread  = context.getString(R.string.conversation_list_item_option_unread)
-                val textIgnore  = context.getString(R.string.conversation_list_item_option_ignore)
-                val textBlock   = context.getString(R.string.conversation_list_item_option_block)
-
-                listItems(items = listOf(textArchive, textDelete, textMute, textUnread, textIgnore, textBlock)) { _, _, text ->
-                    when (text) {
-                        textArchive -> viewModel.archiveConversation(conversationId)
-                        textDelete  -> viewModel.deleteConversation(conversationId)
-                        textMute    -> viewModel.muteConversation(conversationId)
-                        textUnread  -> viewModel.markAsUnreadConversation(conversationId)
-                        textIgnore  -> viewModel.ignoreConversation(conversationId)
-                        textBlock   -> viewModel.blockConversation(conversationId)
-                        else -> throw InvalidParameterException("Unknown conversation action!")
-                    }
-                }
-            }
-        }
 
         fun getFormattedDate(date: LocalDateTime) : String {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm")
@@ -167,12 +136,37 @@ class ConversationListRecyclerAdapter(
         notifyDataSetChanged()
     }
 
+    fun openConversationOptionsDialog(conversationId: Long) {
+        MaterialDialog(context).show {
+            title(R.string.conversation_list_item_options_title)
+
+            val textArchive = context.getString(R.string.conversation_list_item_option_archive)
+            val textDelete  = context.getString(R.string.conversation_list_item_option_delete)
+            val textMute    = context.getString(R.string.conversation_list_item_option_mute)
+            val textUnread  = context.getString(R.string.conversation_list_item_option_unread)
+            val textIgnore  = context.getString(R.string.conversation_list_item_option_ignore)
+            val textBlock   = context.getString(R.string.conversation_list_item_option_block)
+
+            listItems(items = listOf(textArchive, textDelete, textMute, textUnread, textIgnore, textBlock)) { _, _, text ->
+                when (text) {
+                    textArchive -> viewModel.archiveConversation(conversationId)
+                    textDelete  -> viewModel.deleteConversation(conversationId)
+                    textMute    -> viewModel.muteConversation(conversationId)
+                    textUnread  -> viewModel.markAsUnreadConversation(conversationId)
+                    textIgnore  -> viewModel.ignoreConversation(conversationId)
+                    textBlock   -> viewModel.blockConversation(conversationId)
+                    else -> throw InvalidParameterException("Unknown conversation action!")
+                }
+            }
+        }
+    }
+
     inner class ConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val sender: TextView = itemView.findViewById(R.id.tv_sender)
         private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
         private val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
         private val date: TextView = itemView.findViewById(R.id.tv_messageDate)
-        private lateinit var conversationId: Number
+        private var conversationId: Long = -1
 
         init {
             itemView.setOnClickListener {
@@ -183,7 +177,7 @@ class ConversationListRecyclerAdapter(
                 // TODO: [Bug] Find a simple way to clear search after exiting activity
             }
 
-//            itemView.setOnLongClickListener { openConversationOptionsDialog(itemView.context, vm, conversationId); true }
+            itemView.setOnLongClickListener { openConversationOptionsDialog(conversationId); true }
         }
 
         override fun bind(conversation: Conversation?) {

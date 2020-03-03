@@ -10,24 +10,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
-import com.shogek.spinoza.db.ConversationDatabase
 import com.shogek.spinoza.repositories.ConversationRepository
-import com.shogek.spinoza.ui.ConversationViewModel
+import com.shogek.spinoza.ui.conversation.list.ConversationListViewModel
 import com.shogek.spinoza.utils.UnitUtils
-import com.shogek.spinoza.viewModels.ConversationListViewModel
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
 
 class ConversationListActivity : AppCompatActivity() {
 
-    private var viewModel: ConversationListViewModel? = null
-    private lateinit var vm: ConversationViewModel
+    private lateinit var viewModel: ConversationListViewModel
 
     companion object {
         const val REQUEST_PICK_CONTACT = 0
@@ -48,7 +44,7 @@ class ConversationListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
 
-        this.vm = ViewModelProvider(this).get(ConversationViewModel::class.java)
+        this.viewModel = ViewModelProvider(this).get(ConversationListViewModel::class.java)
 //        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
         this.initApp()
     }
@@ -80,10 +76,9 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
-//        this.viewModel = ViewModelProviders.of(this).get(ConversationListViewModel::class.java)
-        val adapter = ConversationListRecyclerAdapter(this)
+        val adapter = ConversationListRecyclerAdapter(this, this.viewModel)
 
-        this.vm.allConversations.observe(this, Observer { conversations ->
+        this.viewModel.allConversations.observe(this, Observer { conversations ->
             val sorted = conversations.sortedByDescending { it.snippetTimestamp }
             adapter.setConversations(sorted)
         })

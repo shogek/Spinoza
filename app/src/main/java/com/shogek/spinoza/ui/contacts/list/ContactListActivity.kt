@@ -1,30 +1,35 @@
-package com.shogek.spinoza.activities
+package com.shogek.spinoza.ui.contacts.list
 
 import android.app.Activity
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.R
-import com.shogek.spinoza.adapters.ContactListRecyclerAdapter
 import com.shogek.spinoza.repositories.ContactRepository
 import kotlinx.android.synthetic.main.activity_contact_list.*
 
 class ContactListActivity : AppCompatActivity() {
 
+    private lateinit var viewModel: ContactListViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list)
 
-        val sortedContacts = ContactRepository(this)
-            .getAll().value!!
-            .sortedBy { c -> c.displayName }
-            .toTypedArray()
-        val adapter = ContactListRecyclerAdapter(this, sortedContacts)
+        this.viewModel = ViewModelProvider(this).get(ContactListViewModel::class.java)
+        val adapter = ContactListAdapter(this, this.viewModel)
+
+        this.viewModel.contacts.observe(this, Observer {
+            val sortedContacts = it.sortedBy { c -> c.getDisplayName() }
+            adapter.setContacts(sortedContacts)
+        })
+
         rv_contactList.adapter = adapter
         rv_contactList.layoutManager = LinearLayoutManager(this)
-        rv_contactList.adapter
 
         this.enableReturnButton()
         this.enableContactFiltering(adapter)
@@ -36,7 +41,7 @@ class ContactListActivity : AppCompatActivity() {
         et_filterContacts.requestFocus()
     }
 
-    private fun enableContactFiltering(adapter: ContactListRecyclerAdapter) {
+    private fun enableContactFiltering(adapter: ContactListAdapter) {
         et_filterContacts.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

@@ -37,9 +37,7 @@ class ContactRepository(
         contacts.value = this.retrieveAllContacts(context.contentResolver)
     }
 
-    private fun retrieveAllContacts(
-        resolver: ContentResolver
-    ): List<Contact> {
+    private fun retrieveAllContacts(resolver: ContentResolver): List<Contact> {
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone._ID,
             ContactsContract.CommonDataKinds.Phone.NUMBER,
@@ -60,7 +58,7 @@ class ContactRepository(
         val contacts = mutableListOf<Contact>()
 
         while (cursor.moveToNext()) {
-            val id      = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
+            val id      = cursor.getLong(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
             val number  = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
             /*
                 TODO: [Refactor] Figure out when it is set and use it instead of comparing 'Phone.NUMBER'
@@ -72,7 +70,7 @@ class ContactRepository(
             val photo   = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI))
             val strippedPhone = PhoneUtils.getStrippedPhone(number)
 
-            contacts.add(Contact(id, name, strippedPhone, number, e164, photo))
+            contacts.add(Contact(id.toString(), name, strippedPhone, number, e164, photo))
         }
 
         cursor.close()

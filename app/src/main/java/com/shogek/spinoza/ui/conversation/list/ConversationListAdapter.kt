@@ -1,4 +1,4 @@
-package com.shogek.spinoza.adapters
+package com.shogek.spinoza.ui.conversation.list
 
 import android.content.Context
 import android.content.Intent
@@ -14,7 +14,6 @@ import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.db.conversation.Conversation
-import com.shogek.spinoza.ui.conversation.list.ConversationListViewModel
 import com.shogek.spinoza.utils.DateUtils
 import java.lang.IllegalArgumentException
 import java.security.InvalidParameterException
@@ -23,10 +22,10 @@ import java.time.*
 import java.time.format.TextStyle
 import java.util.*
 
-class ConversationListRecyclerAdapter(
+class ConversationListAdapter(
     private val context: Context,
     private val viewModel: ConversationListViewModel
-) : RecyclerView.Adapter<ConversationListRecyclerAdapter.BaseViewHolder>() {
+) : RecyclerView.Adapter<ConversationListAdapter.BaseViewHolder>() {
 
     private val layoutInflater = LayoutInflater.from(context)
     private var originalConversations = listOf<Conversation>()
@@ -103,11 +102,11 @@ class ConversationListRecyclerAdapter(
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
         when (holder) {
-            is ConversationViewHolder   -> {
+            is ConversationViewHolder -> {
                 val conversation = this.filteredConversations[position - 1] // -1 for header
                 holder.bind(conversation)
             }
-            is HeaderViewHolder         -> holder.bind(null)
+            is HeaderViewHolder -> holder.bind(null)
             else -> throw IllegalArgumentException("Unknown ViewHolder type!")
         }
     }

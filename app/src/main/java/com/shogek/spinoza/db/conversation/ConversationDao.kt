@@ -9,6 +9,9 @@ import androidx.room.Query
 @Dao
 interface ConversationDao {
 
+    @Query("DELETE FROM conversation_table")
+    suspend fun deleteAll()
+
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     fun get(id: Long): LiveData<Conversation>
 
@@ -17,6 +20,9 @@ interface ConversationDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(conversation: Conversation): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(conversations: List<Conversation>): List<Long>
 
     @Query("" +
             "UPDATE conversation_table " +

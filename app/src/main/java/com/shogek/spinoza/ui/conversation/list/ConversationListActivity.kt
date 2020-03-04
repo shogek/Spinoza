@@ -1,4 +1,4 @@
-package com.shogek.spinoza.activities
+package com.shogek.spinoza.ui.conversation.list
 
 import android.Manifest
 import android.app.Activity
@@ -14,9 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
-import com.shogek.spinoza.adapters.ConversationListRecyclerAdapter
-import com.shogek.spinoza.repositories.ConversationRepository
-import com.shogek.spinoza.ui.conversation.list.ConversationListViewModel
+import com.shogek.spinoza.ui.contacts.list.ContactListActivity
+import com.shogek.spinoza.activities.MessageListActivity
 import com.shogek.spinoza.utils.UnitUtils
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
@@ -76,9 +75,9 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
-        val adapter = ConversationListRecyclerAdapter(this, this.viewModel)
+        val adapter = ConversationListAdapter(this, this.viewModel)
 
-        this.viewModel.allConversations.observe(this, Observer { conversations ->
+        this.viewModel.conversations.observe(this, Observer { conversations ->
             val sorted = conversations.sortedByDescending { it.snippetTimestamp }
             adapter.setConversations(sorted)
         })
@@ -126,19 +125,19 @@ class ConversationListActivity : AppCompatActivity() {
         // User picked a contact - open the corresponding conversation
         val intent = Intent(this, MessageListActivity::class.java)
 
-        val contactId = data!!.extras!![Extra.ContactList.ConversationList.PickContact.CONTACT_ID] as String
-        val conversationId = ConversationRepository(this)
-            .getAll().value!!
-            .find { c -> c.contact?.id == contactId }
-            ?.threadId
+        val contactId = data!!.extras!![Extra.ContactList.ConversationList.PickContact.CONTACT_ID] as Long
+//        val conversationId = ConversationRepository(this)
+//            .getAll().value!!
+//            .find { c -> c.contact?.id == contactId }
+//            ?.threadId
 
         intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.NewMessage.GOAL)
         intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, contactId)
 
-        if (conversationId != null) {
+//        if (conversationId != null) {
             // Check if exchanged messages with the contact before
-            intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, conversationId)
-        }
+//            intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, conversationId)
+//        }
 
         startActivity(intent)
     }

@@ -11,9 +11,13 @@ import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRoomDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 
-class MessageBroadcastReceiver: BroadcastReceiver() {
+class MessageBroadcastReceiver: BroadcastReceiver(), CoroutineScope {
+
+    private var job = Job()
 
     private companion object {
         val LOG = MessageBroadcastReceiver::class.java.simpleName
@@ -68,7 +72,7 @@ class MessageBroadcastReceiver: BroadcastReceiver() {
         val basicMessage = parseReceivedMessage(intent)
             ?: return
 
-        val conversationDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
+        val conversationDao = ConversationRoomDatabase.getDatabase(context, ).conversationDao()
         val messageDao = MessageRoomDatabase.getDatabase(context).messageDao()
         val conversationData = conversationDao.getAll()
         conversationData.observeForever(object : Observer<List<Conversation>> {

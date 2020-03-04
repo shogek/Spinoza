@@ -29,18 +29,18 @@
         ></activity>
 
         <activity
-            android:name=".activities.ContactListActivity"
+            android:name=".ui.contacts.list.ContactListActivity"
             android:theme="@style/MessengerStyleActionBarTheme"
         ></activity>
 
         <activity
             android:name=".activities.MessageListActivity"
-            android:parentActivityName=".activities.ConversationListActivity"
+            android:parentActivityName=".ui.conversation.list.ConversationListActivity"
             android:theme="@style/MessengerStyleActionBarTheme"
         ></activity>
 
         <activity
-            android:name=".activities.ConversationListActivity"
+            android:name=".ui.conversation.list.ConversationListActivity"
             android:theme="@style/MessengerStyleActionBarTheme"
         >
             <intent-filter>

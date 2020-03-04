@@ -7,6 +7,10 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "conversation_table")
 data class Conversation(
 
+    @ColumnInfo(name = "contact_id")
+    /** The 'Contact' with which the conversation is happening. */
+    val contactId: Long?,
+
     @ColumnInfo(name = "phone")
     /** The sender's phone number. */
     val phone: String,

@@ -15,12 +15,12 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
 
     private val context: Context = application.applicationContext
     private val repository: ConversationRepository
-    val allConversations: LiveData<List<Conversation>>
+    val conversations: LiveData<List<Conversation>>
 
     init {
-        val conversationDao = ConversationRoomDatabase.getDatabase(application).conversationDao()
+        val conversationDao = ConversationRoomDatabase.getDatabase(application, viewModelScope).conversationDao()
         this.repository = ConversationRepository(conversationDao)
-        this.allConversations = repository.getAll()
+        this.conversations = repository.getAll()
     }
 
     fun insert(conversation: Conversation) = viewModelScope.launch {

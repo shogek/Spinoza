@@ -3,6 +3,7 @@ package com.shogek.spinoza.ui.messages.list
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
@@ -18,7 +19,7 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
     lateinit var messages: LiveData<List<Message>>
 
     init {
-        val conversationDao = ConversationRoomDatabase.getDatabase(application).conversationDao()
+        val conversationDao = ConversationRoomDatabase.getDatabase(application, viewModelScope).conversationDao()
         val messageDao = MessageRoomDatabase.getDatabase(application).messageDao()
         this.conversationRepository = ConversationRepository(conversationDao)
         this.messageRepository = MessageRepository(messageDao)

@@ -11,13 +11,10 @@ import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRoomDatabase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
-class MessageBroadcastReceiver: BroadcastReceiver(), CoroutineScope {
-
-    private var job = Job()
+class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) : BroadcastReceiver(), CoroutineScope {
 
     private companion object {
         val LOG = MessageBroadcastReceiver::class.java.simpleName
@@ -50,9 +47,10 @@ class MessageBroadcastReceiver: BroadcastReceiver(), CoroutineScope {
             message: BasicMessage
         ): Long {
             // TODO: [Refactor] Use async
+            // TODO: [Bug] Look for an existing contact first
             var ownerConversation = allConversations?.find { it.phone == message.senderPhone }
             if (ownerConversation == null) {
-                ownerConversation = Conversation(message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
+                ownerConversation = Conversation(null, message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
                 runBlocking { ownerConversation.id = conversationDao.insert(ownerConversation) }
             } else {
                 runBlocking { conversationDao.update(ownerConversation.id, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false) }
@@ -72,7 +70,14 @@ class MessageBroadcastReceiver: BroadcastReceiver(), CoroutineScope {
         val basicMessage = parseReceivedMessage(intent)
             ?: return
 
-        val conversationDao = ConversationRoomDatabase.getDatabase(context, ).conversationDao()
+        handleReceivedMessageAsync(context, basicMessage)
+    }
+
+    private fun handleReceivedMessageAsync(
+        context: Context,
+        basicMessage: BasicMessage
+    ): Deferred<Unit> = async {
+        val conversationDao = ConversationRoomDatabase.getDatabase(context, this).conversationDao()
         val messageDao = MessageRoomDatabase.getDatabase(context).messageDao()
         val conversationData = conversationDao.getAll()
         conversationData.observeForever(object : Observer<List<Conversation>> {
@@ -82,10 +87,11 @@ class MessageBroadcastReceiver: BroadcastReceiver(), CoroutineScope {
                 // TODO: [Bug] Check if message was received while in a conversation (so we can mark message as read)
                 // TODO: [Refactor] Use async
                 val message = Message(id, basicMessage.messageText, basicMessage.timestamp, isOurs = false)
-                runBlocking { messageDao.insert(message) }
+                launch { messageDao.insert(message) }
 
                 conversationData.removeObserver(this)
             }
+
         })
     }
 }

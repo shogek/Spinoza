@@ -9,17 +9,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.db.contact.Contact
-import com.shogek.spinoza.db.contact.ContactRepository
 import com.shogek.spinoza.db.contact.ContactRoomDatabase
 
 class ContactListViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: ContactRepository
     val contacts: LiveData<List<Contact>>
 
     init {
         val contactDao = ContactRoomDatabase.getDatabase(application, viewModelScope).contactDao()
-        this.repository = ContactRepository(contactDao)
         this.contacts = contactDao.getAll()
     }
 

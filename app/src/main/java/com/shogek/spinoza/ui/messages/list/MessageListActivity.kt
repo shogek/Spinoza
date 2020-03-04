@@ -1,4 +1,4 @@
-package com.shogek.spinoza.activities
+package com.shogek.spinoza.ui.messages.list
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -16,10 +16,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.*
+import com.shogek.spinoza.activities.ContactListForwardActivity
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.models.Message
-import com.shogek.spinoza.events.conversations.ConversationOpenedEvent
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.models.Contact
@@ -27,7 +27,7 @@ import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.repositories.MessageRepository
 import com.shogek.spinoza.services.MessageService
-import com.shogek.spinoza.ui.messages.list.MessageListViewModel
+import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import org.greenrobot.eventbus.EventBus
@@ -73,6 +73,8 @@ class MessageListActivity : AppCompatActivity() {
             .get(MessageListViewModel::class.java)
             .init(conversationId)
 
+        CommonState.setCurrentOpenConversationId(conversationId)
+
         when (intent.getStringExtra(Extra.GOAL)) {
             Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage()
 //            Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
@@ -96,7 +98,7 @@ class MessageListActivity : AppCompatActivity() {
 
         this.vm.conversation.observe(this, Observer {
             // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
-            this.initButtonSendMessage(it.phone, it.id)
+            this.initButtonSendMessage(it.phone, it.conversationId)
             // TODO: [Style] Add elevation to message box when not at bottom.
             this.setToolbarInformation(it.phone, contact?.photoUri)
         })
@@ -127,11 +129,15 @@ class MessageListActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        this.vm.conversation.observe(this, Observer { conversation ->
+            CommonState.setCurrentOpenConversationId(conversation.conversationId)
+        })
         registerReceiver(this.messageReceiver, IntentFilter(PENDING_MESSAGE_INTENT))
     }
 
     override fun onPause() {
         super.onPause()
+        CommonState.clearCurrentOpenConversationId()
         unregisterReceiver(this.messageReceiver)
     }
 

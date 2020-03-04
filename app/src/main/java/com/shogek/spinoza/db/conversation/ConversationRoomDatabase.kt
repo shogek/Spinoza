@@ -25,37 +25,40 @@ abstract class ConversationRoomDatabase : RoomDatabase() {
         private val scope: CoroutineScope
     ) : RoomDatabase.Callback() {
 
+        private var cameFromOnCreate = false
+
         // TODO: FINISH
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
-            INSTANCE?.let { database -> scope.launch {
-                val conversationDao = database.conversationDao()
-                conversationDao.deleteAll()
-                val conversations = ConversationDatabaseHelper.retrieveAllPhoneConversations(context.contentResolver)
+            this.cameFromOnCreate = true
 
+            INSTANCE?.let { database -> scope.launch {
+                val conversations = ConversationDatabaseHelper.retrieveAllPhoneConversations(context.contentResolver)
+                if (conversations.isEmpty()) {
+                    // No conversations to import from phone
+                    return@launch
+                }
+
+                val conversationDao = database.conversationDao()
                 val contactDao = ContactRoomDatabase.getDatabase(context, scope).contactDao()
                 val contactData = contactDao.getAll()
-                contactData.observeForever(object : Observer<List<Contact>> {
-                    override fun onChanged(contacts: List<Contact>?) {
-                        // No contacts to map with
-                        if (contacts == null || contacts.isEmpty()) {
-                            scope.launch { conversationDao.insertAll(conversations) }
-                            contactData.removeObserver(this)
-                            return
-                        }
-
-                        // Create a dictionary - key: contact's phone, value: contact itself
-                        val contactPhoneToContact = contacts.associateBy({it.phone}, {it})
-                        conversations.forEach { conversation ->
-                            if (contactPhoneToContact.containsKey(conversation.phone)) {
-                                conversation.contactId = contactPhoneToContact.getValue(conversation.phone).id
-                            }
-                        }
+                contactData.observeForever(object : Observer<List<Contact>> { override fun onChanged(contacts: List<Contact>?) {
+                    if (contacts == null || contacts.isEmpty()) {
                         scope.launch { conversationDao.insertAll(conversations) }
                         contactData.removeObserver(this)
+                        return
                     }
-                })
-            } }
+
+                    val contactPhoneToContact = contacts.associateBy({it.phone}, {it})
+                    conversations.forEach { conversation ->
+                        if (contactPhoneToContact.containsKey(conversation.phone)) {
+                            conversation.contact = contactPhoneToContact.getValue(conversation.phone)
+                        }
+                    }
+                    scope.launch { conversationDao.insertAll(conversations) }
+                    contactData.removeObserver(this)
+                }})
+            }}
         }
     }
 

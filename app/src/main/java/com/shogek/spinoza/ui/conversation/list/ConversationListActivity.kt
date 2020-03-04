@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.ui.contacts.list.ContactListActivity
-import com.shogek.spinoza.activities.MessageListActivity
+import com.shogek.spinoza.ui.messages.list.MessageListActivity
 import com.shogek.spinoza.utils.UnitUtils
 import kotlinx.android.synthetic.main.activity_conversation_list.*
 
@@ -44,7 +44,7 @@ class ConversationListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_conversation_list)
 
         this.viewModel = ViewModelProvider(this).get(ConversationListViewModel::class.java)
-//        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
+        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
         this.initApp()
     }
 
@@ -67,10 +67,10 @@ class ConversationListActivity : AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        val permissionsMissing = grantResults.any { gr -> gr == PackageManager.PERMISSION_DENIED }
-        if (permissionsMissing)
-            this.requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_ALL)
-//        else
+////        val permissionsMissing = grantResults.any { gr -> gr == PackageManager.PERMISSION_DENIED }
+////        if (permissionsMissing)
+////            this.requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_ALL)
+////        else
 //            this.initApp()
     }
 

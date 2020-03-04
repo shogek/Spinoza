@@ -2,6 +2,7 @@ package com.shogek.spinoza.ui.conversation.list
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.*
@@ -12,7 +13,7 @@ import com.afollestad.materialdialogs.list.listItems
 import com.bumptech.glide.Glide
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
-import com.shogek.spinoza.activities.MessageListActivity
+import com.shogek.spinoza.ui.messages.list.MessageListActivity
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.utils.DateUtils
 import java.lang.IllegalArgumentException
@@ -181,7 +182,7 @@ class ConversationListAdapter(
 
         override fun bind(conversation: Conversation?) {
             // TODO: Why can 'conversation' be null?
-            conversationId = conversation!!.id
+            conversationId = conversation!!.conversationId
             sender.text = conversation.phone
 
             this.lastMessage.text =
@@ -195,7 +196,8 @@ class ConversationListAdapter(
             this.date.text = properDate
 
             Glide.with(itemView)
-                .load(R.drawable.unknown_contact)
+                .load(Uri.parse(conversation.contact?.photoUri ?: ""))
+                .placeholder(R.drawable.unknown_contact)
                 .into(this.senderImage)
         }
     }

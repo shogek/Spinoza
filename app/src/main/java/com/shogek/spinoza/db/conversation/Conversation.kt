@@ -1,38 +1,40 @@
 package com.shogek.spinoza.db.conversation
 
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.shogek.spinoza.db.contact.Contact
 
 @Entity(tableName = "conversation_table")
 data class Conversation(
 
-    @ColumnInfo(name = "contact_id")
+    @Embedded
     /** The 'Contact' with which the conversation is happening. */
-    var contactId: Long?,
+    var contact: Contact?,
 
-    @ColumnInfo(name = "phone")
+    @ColumnInfo(name = "conversation_phone")
     /** The sender's phone number. */
     val phone: String,
 
-    @ColumnInfo(name = "snippet")
+    @ColumnInfo(name = "conversation_snippet")
     /** The latest message in the conversation. */
-    val snippet: String,
+    var snippet: String,
 
-    @ColumnInfo(name = "snippet_timestamp")
+    @ColumnInfo(name = "conversation_snippet_timestamp")
     /** Timestamp when the latest snippet was sent/received. */
-    val snippetTimestamp: Long,
+    var snippetTimestamp: Long,
 
-    @ColumnInfo(name = "snippet_ours")
+    @ColumnInfo(name = "conversation_snippet_is_ours")
     /** Indicates whether the latest message was sent by us. */
-    val snippetIsOurs: Boolean,
+    var snippetIsOurs: Boolean,
 
-    @ColumnInfo(name = "snippet_read")
+    @ColumnInfo(name = "conversation_snippet_was_read")
     /** Indicates whether the latest message was read by us. */
-    val snippetWasRead: Boolean
+    var snippetWasRead: Boolean
 ) {
 
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    var id: Long = 0
+    @ColumnInfo(name = "conversation_conversation_id")
+    var conversationId: Long = 0
 }

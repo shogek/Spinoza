@@ -1,8 +1,5 @@
 package com.shogek.spinoza.ui.contacts.list
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.db.contact.Contact
 
@@ -33,7 +29,7 @@ class ContactListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val contact = this.filteredContacts[position]
-        holder.contactId = contact.id
+        holder.contactId = contact.contactId
         holder.contactName.text = contact.getDisplayName()
 
         Glide.with(holder.itemView)

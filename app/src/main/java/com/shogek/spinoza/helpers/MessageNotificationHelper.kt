@@ -18,13 +18,11 @@ import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
-import com.shogek.spinoza.activities.MessageListActivity
+import com.shogek.spinoza.ui.messages.list.MessageListActivity
 import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.events.messages.MessageReceivedEvent
 import com.shogek.spinoza.repositories.ContactRepository
 import com.shogek.spinoza.repositories.ConversationRepository
 import com.shogek.spinoza.repositories.MessageRepository
-import org.greenrobot.eventbus.EventBus
 
 
 // More information can be found at:

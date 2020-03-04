@@ -34,7 +34,7 @@
         ></activity>
 
         <activity
-            android:name=".activities.MessageListActivity"
+            android:name=".ui.messages.list.MessageListActivity"
             android:parentActivityName=".ui.conversation.list.ConversationListActivity"
             android:theme="@style/MessengerStyleActionBarTheme"
         ></activity>

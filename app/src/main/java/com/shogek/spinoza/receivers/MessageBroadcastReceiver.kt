@@ -11,6 +11,7 @@ import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRoomDatabase
+import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
@@ -51,12 +52,15 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
             var ownerConversation = allConversations?.find { it.phone == message.senderPhone }
             if (ownerConversation == null) {
                 ownerConversation = Conversation(null, message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
-                runBlocking { ownerConversation.id = conversationDao.insert(ownerConversation) }
+                runBlocking { ownerConversation.conversationId = conversationDao.insert(ownerConversation) }
             } else {
-                runBlocking { conversationDao.update(ownerConversation.id, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false) }
+                // TODO: Test this
+                val openedConversationId = CommonState.getCurrentOpenConversationId()
+                val wasMessageRead = openedConversationId == ownerConversation.conversationId
+                runBlocking { conversationDao.update(ownerConversation.conversationId, message.messageText, message.timestamp, false, wasMessageRead) }
             }
 
-            return ownerConversation.id
+            return ownerConversation.conversationId
         }
     }
 
@@ -83,9 +87,6 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
         conversationData.observeForever(object : Observer<List<Conversation>> {
             override fun onChanged(allConversations: List<Conversation>?) {
                 val id = upsertConversation(allConversations, conversationDao, basicMessage)
-
-                // TODO: [Bug] Check if message was received while in a conversation (so we can mark message as read)
-                // TODO: [Refactor] Use async
                 val message = Message(id, basicMessage.messageText, basicMessage.timestamp, isOurs = false)
                 launch { messageDao.insert(message) }
 

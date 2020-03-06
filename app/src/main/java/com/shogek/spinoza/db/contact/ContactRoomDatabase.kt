@@ -31,7 +31,7 @@ abstract class ContactRoomDatabase : RoomDatabase() {
             INSTANCE?.let { database -> scope.launch {
                 val contacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
                 database.contactDao().insertAll(contacts)
-            } }
+            }}
         }
 
         override fun onOpen(db: SupportSQLiteDatabase) {
@@ -59,13 +59,14 @@ abstract class ContactRoomDatabase : RoomDatabase() {
                     val contactsToInsert = mutableListOf<Contact>()
                     val ourPhoneNumbers = ourContacts.associateBy({it.phone}, {it})
                     phoneContacts.forEach { phoneContact ->
+                        // TODO: Use PhoneNumberUtils.compare()
                         if (!ourPhoneNumbers.containsKey(phoneContact.phone)) {
                             scope.launch { dao.insert(phoneContact) }
                         } else {
                             var isChanged = false
                             val ourContact = ourPhoneNumbers.getValue(phoneContact.phone)
 
-                            if (ourContact.name != phoneContact.photoUri) {
+                            if (ourContact.name != phoneContact.name) {
                                 ourContact.name = phoneContact.name
                                 isChanged = true
                             }

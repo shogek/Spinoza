@@ -2,9 +2,10 @@ package com.shogek.spinoza.db.conversation
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Insert
+import androidx.room.Update
+import androidx.room.OnConflictStrategy
 
 @Dao
 interface ConversationDao {
@@ -23,6 +24,12 @@ interface ConversationDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(conversations: List<Conversation>): List<Long>
+
+    @Update(onConflict = OnConflictStrategy.ABORT)
+    suspend fun update(conversation: Conversation)
+
+    @Update(onConflict = OnConflictStrategy.ABORT)
+    suspend fun updateAll(conversations: List<Conversation>)
 
     // TODO: Use '@Update'
     @Query("" +

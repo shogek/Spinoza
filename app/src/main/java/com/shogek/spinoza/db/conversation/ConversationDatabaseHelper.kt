@@ -2,8 +2,13 @@ package com.shogek.spinoza.db.conversation
 
 import android.content.ContentResolver
 import android.provider.Telephony
+import android.telephony.PhoneNumberFormattingTextWatcher
+import android.telephony.PhoneNumberUtils
 import android.util.Log
 import androidx.core.database.getStringOrNull
+import com.shogek.spinoza.db.contact.Contact
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 object ConversationDatabaseHelper {
 
@@ -49,5 +54,23 @@ object ConversationDatabaseHelper {
 
         cursor.close()
         return conversations
+    }
+
+    /** Assign contacts to conversations if phone numbers match. */
+    fun pairContactlessConversationsWithContacts(
+        scope: CoroutineScope,
+        conversationDao: ConversationDao,
+        conversations: List<Conversation>,
+        contacts: List<Contact>
+    ) {
+        val unknownConversations = conversations.filter { it.contact == null }
+        unknownConversations.forEach { conversation ->
+            contacts.forEach { contact ->
+                if (PhoneNumberUtils.compare(contact.phone, conversation.phone)) {
+                    conversation.contact = contact
+                    scope.launch { conversationDao.update(conversation) }
+                }
+            }
+        }
     }
 }

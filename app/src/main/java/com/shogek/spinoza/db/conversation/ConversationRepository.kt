@@ -24,6 +24,14 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
         return conversationDao.insertAll(conversations)
     }
 
+    suspend fun update(conversation: Conversation) {
+        conversationDao.update(conversation)
+    }
+
+    suspend fun updateAll(conversations: List<Conversation>) {
+        conversationDao.updateAll(conversations)
+    }
+
     suspend fun update(
         id: Long,
         snippet: String,

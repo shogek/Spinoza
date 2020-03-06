@@ -5,16 +5,23 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Insert
 import androidx.room.Update
+import androidx.room.Delete
 import androidx.room.OnConflictStrategy
 
 @Dao
 interface ConversationDao {
 
+    @Delete
+    suspend fun delete(conversation: Conversation)
+
     @Query("DELETE FROM conversation_table")
     suspend fun deleteAll()
 
     @Query("SELECT * FROM conversation_table WHERE conversation_conversation_id = :id")
-    fun get(id: Long): LiveData<Conversation>
+    fun getObservable(id: Long): LiveData<Conversation>
+
+    @Query("SELECT * FROM conversation_table WHERE conversation_conversation_id = :id")
+    suspend fun get(id: Long): Conversation
 
     @Query("SELECT * FROM conversation_table")
     fun getAll(): LiveData<List<Conversation>>

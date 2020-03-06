@@ -4,6 +4,10 @@ import androidx.lifecycle.LiveData
 
 class ConversationRepository(private val conversationDao: ConversationDao) {
 
+    suspend fun delete(conversation: Conversation) {
+        conversationDao.delete(conversation)
+    }
+
     suspend fun deleteAll() {
         conversationDao.deleteAll()
     }
@@ -12,7 +16,7 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
         return conversationDao.getAll()
     }
 
-    fun get(id: Long): LiveData<Conversation> {
+    suspend fun get(id: Long): Conversation {
         return conversationDao.get(id)
     }
 

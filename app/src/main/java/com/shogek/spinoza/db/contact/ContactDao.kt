@@ -2,10 +2,11 @@ package com.shogek.spinoza.db.contact
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
+import androidx.room.Query
 import androidx.room.Insert
 import androidx.room.Update
+import androidx.room.Delete
 import androidx.room.OnConflictStrategy
-import androidx.room.Query
 
 @Dao
 interface ContactDao {
@@ -27,4 +28,7 @@ interface ContactDao {
 
     @Query("DELETE FROM contact_table")
     suspend fun deleteAll()
+
+    @Delete
+    suspend fun delete(contact: Contact)
 }

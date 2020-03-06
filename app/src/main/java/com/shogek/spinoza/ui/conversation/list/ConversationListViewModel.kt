@@ -49,9 +49,13 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
         Toast.makeText(this.context, "Archive: $id", Toast.LENGTH_SHORT).show()
     }
 
-    fun deleteConversation(id: Long) {
-        // TODO: [Feature] Implement delete conversation functionality
-        Toast.makeText(this.context, "Delete: $id", Toast.LENGTH_SHORT).show()
+    fun deleteConversation(id: Long) = viewModelScope.launch {
+        val conversation = conversationDao.get(id)
+        if (conversation.contact != null) {
+            contactDao.delete(conversation.contact!!)
+        }
+        conversationDao.delete(conversation)
+        Toast.makeText(context, "Conversation deleted", Toast.LENGTH_SHORT).show()
     }
 
     fun muteConversation(id: Long) {

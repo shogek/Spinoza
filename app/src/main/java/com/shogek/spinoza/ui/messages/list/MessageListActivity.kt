@@ -14,7 +14,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.*
 import com.shogek.spinoza.activities.ContactListForwardActivity
 import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
@@ -100,7 +99,8 @@ class MessageListActivity : AppCompatActivity() {
             // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
             this.initButtonSendMessage(it.phone, it.conversationId)
             // TODO: [Style] Add elevation to message box when not at bottom.
-            this.setToolbarInformation(it.phone, contact?.photoUri)
+            val title = it.contact?.getDisplayName() ?: it.phone
+            this.setToolbarInformation(title, it.contact?.photoUri)
         })
 
         rv_messageList.adapter = this.adapter
@@ -229,7 +229,7 @@ class MessageListActivity : AppCompatActivity() {
 
         Glide.with(this)
              .load(Uri.parse(contactPhotoUri ?: ""))
-             .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
+             .placeholder(R.drawable.unknown_contact)
              .into(message_list_toolbar_sender_photo_civ)
     }
 

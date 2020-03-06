@@ -13,6 +13,9 @@ interface ContactDao {
     @Query("SELECT * FROM contact_table")
     fun getAll(): LiveData<List<Contact>>
 
+    @Query("SELECT * FROM contact_table WHERE contact_contact_id = :contactId")
+    fun get(contactId: Long): Contact
+
     @Update
     suspend fun update(contact: Contact)
 

@@ -25,15 +25,6 @@ abstract class ContactRoomDatabase : RoomDatabase() {
 
         private var cameFromOnCreate = false
 
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            super.onCreate(db)
-            this.cameFromOnCreate = true
-            INSTANCE?.let { database -> scope.launch {
-                val contacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
-                database.contactDao().insertAll(contacts)
-            }}
-        }
-
         override fun onOpen(db: SupportSQLiteDatabase) {
             super.onOpen(db)
             if (this.cameFromOnCreate) {

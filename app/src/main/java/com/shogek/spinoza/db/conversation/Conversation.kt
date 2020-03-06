@@ -9,6 +9,7 @@ import com.shogek.spinoza.db.contact.Contact
 @Entity(tableName = "conversation_table")
 data class Conversation(
 
+    // TODO: [Refactor] Use '@ForeignKey'
     @Embedded
     /** The 'Contact' with which the conversation is happening. */
     var contact: Contact?,

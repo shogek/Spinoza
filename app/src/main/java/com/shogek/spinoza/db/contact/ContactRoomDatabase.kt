@@ -1,7 +1,6 @@
 package com.shogek.spinoza.db.contact
 
 import android.content.Context
-import androidx.lifecycle.Observer
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -11,7 +10,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Contact::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class ContactRoomDatabase : RoomDatabase() {
@@ -32,47 +31,7 @@ abstract class ContactRoomDatabase : RoomDatabase() {
             }
 
             INSTANCE?.let { database -> scope.launch {
-                val phoneContacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
-                // No contacts found - nothing new to put in to the database
-                if (phoneContacts.isEmpty()) {
-                    return@launch
-                }
-
-                val dao = database.contactDao()
-                val ourContactsData = dao.getAll()
-                ourContactsData.observeForever(object : Observer<List<Contact>> { override fun onChanged(ourContacts: List<Contact>?) {
-                    if (ourContacts == null || ourContacts.isEmpty()) {
-                        scope.launch { dao.insertAll(phoneContacts) }
-                        ourContactsData.removeObserver(this)
-                        return
-                    }
-
-                    val contactsToInsert = mutableListOf<Contact>()
-                    val ourPhoneNumbers = ourContacts.associateBy({it.phone}, {it})
-                    phoneContacts.forEach { phoneContact ->
-                        // TODO: Use PhoneNumberUtils.compare()
-                        if (!ourPhoneNumbers.containsKey(phoneContact.phone)) {
-                            scope.launch { dao.insert(phoneContact) }
-                        } else {
-                            var isChanged = false
-                            val ourContact = ourPhoneNumbers.getValue(phoneContact.phone)
-
-                            if (ourContact.name != phoneContact.name) {
-                                ourContact.name = phoneContact.name
-                                isChanged = true
-                            }
-                            if (ourContact.photoUri != phoneContact.photoUri) {
-                                ourContact.photoUri = phoneContact.photoUri
-                                isChanged = true
-                            }
-                            if (isChanged) {
-                                scope.launch { dao.update(ourContact) }
-                            }
-                        }
-                    }
-                    scope.launch { dao.insertAll(contactsToInsert) }
-                    ourContactsData.removeObserver(this)
-                }})
+                ContactDatabaseHelper.synchronizeOurContactsWithPhoneContacts(context, scope, database.contactDao())
             }}
         }
     }

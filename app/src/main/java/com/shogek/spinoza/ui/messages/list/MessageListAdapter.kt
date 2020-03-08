@@ -1,4 +1,4 @@
-package com.shogek.spinoza.adapters
+package com.shogek.spinoza.ui.messages.list
 
 import android.content.Context
 import android.net.Uri
@@ -17,14 +17,14 @@ import com.shogek.spinoza.db.message.Message
 import org.greenrobot.eventbus.EventBus
 import java.lang.IllegalArgumentException
 
-class MessageListRecyclerAdapter(
+class MessageListAdapter(
     context: Context,
     buttonCopyMessage: ConstraintLayout,
     buttonRemoveMessage: ConstraintLayout,
     buttonForwardMessage: ConstraintLayout,
 //    private val messages: MutableList<Message>,
     private val senderPhotoUri: String?
-): RecyclerView.Adapter<MessageListRecyclerAdapter.BaseViewHolder>() {
+): RecyclerView.Adapter<MessageListAdapter.BaseViewHolder>() {
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         abstract fun bind(message: Message)
@@ -64,8 +64,8 @@ class MessageListRecyclerAdapter(
         val itemView = this.layoutInflater.inflate(viewType, parent, false)
 
         return when (viewType) {
-            TYPE_MESSAGE_OUR             -> OurMessageViewHolder(itemView)
-            TYPE_MESSAGE_THEIRS          -> TheirMessageViewHolder(itemView)
+            TYPE_MESSAGE_OUR -> OurMessageViewHolder(itemView)
+            TYPE_MESSAGE_THEIRS -> TheirMessageViewHolder(itemView)
             TYPE_MESSAGE_THEIRS_NO_IMAGE -> TheirMessageNoImageViewHolder(itemView)
             else -> throw IllegalArgumentException("Unknown ViewHolder type!")
         }
@@ -75,8 +75,8 @@ class MessageListRecyclerAdapter(
         val currentMessage = this.messages[position]
 
         when (holder) {
-            is OurMessageViewHolder          -> holder.bind(currentMessage)
-            is TheirMessageViewHolder        -> holder.bind(currentMessage)
+            is OurMessageViewHolder -> holder.bind(currentMessage)
+            is TheirMessageViewHolder -> holder.bind(currentMessage)
             is TheirMessageNoImageViewHolder -> holder.bind(currentMessage)
         }
     }

@@ -29,8 +29,8 @@ class ContactListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val contact = this.filteredContacts[position]
-        holder.contactId = contact.contactId
-        holder.contactName.text = contact.getDisplayName()
+        holder.contactId = contact.id
+        holder.contactName.text = contact.getDisplayTitle()
 
         Glide.with(holder.itemView)
              .load(contact.photoUri)
@@ -53,7 +53,7 @@ class ContactListAdapter(
         } else {
             // Apply filter
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.originalContacts.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
+            val filtered = this.originalContacts.filter { c -> (c.name ?: c.phone).toLowerCase().contains(lowerCasePhrase) }
             this.filteredContacts.addAll(filtered)
         }
 

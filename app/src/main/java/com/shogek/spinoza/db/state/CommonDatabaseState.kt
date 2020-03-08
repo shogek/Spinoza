@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 
 object CommonDatabaseState {
 
-    /** Populate database with conversations and contacts already in the phone. */
-    fun populateDatabaseWithExistingConversationsAndContacts(
+    /** Populate database with conversations already in the phone. */
+    fun importConversationsFromPhone(
         context: Context,
         scope: CoroutineScope,
         conversationDao: ConversationDao
@@ -25,23 +25,15 @@ object CommonDatabaseState {
             return
         }
 
+        // TODO: Use ContactDao + get number of contacts to escape endless observing
         val phoneContacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
         if (phoneContacts.isEmpty()) {
             scope.launch { conversationDao.insertAll(phoneConversations) }
             return
         }
 
-        val contactDao = ContactRoomDatabase.getDatabase(context, scope).contactDao()
-
         val matched = matchByPhone(phoneConversations, phoneContacts, onlyMatches = false)
-        scope.launch {
-            matched.forEach { conversation ->
-                if (conversation.contact != null) {
-                    contactDao.insert(conversation.contact!!)
-                }
-                conversationDao.insert(conversation)
-            }
-        }
+        scope.launch { conversationDao.insertAll(matched) }
     }
 
     /** Insert contacts if we found matching conversations for it. */
@@ -54,7 +46,7 @@ object CommonDatabaseState {
         conversationData.observeForever(object : Observer<List<Conversation>> { override fun onChanged(conversations: List<Conversation>?) {
             conversationData.removeObserver(this)
 
-            val contactless = conversations?.filter { it.contact == null }
+            val contactless = conversations?.filter { it.contactId == null }
             if (contactless == null || contactless.isEmpty()) {
                 return
             }
@@ -65,12 +57,10 @@ object CommonDatabaseState {
                 return
             }
 
-            val contactDao = ContactRoomDatabase.getDatabase(context, scope).contactDao()
-
             val matched = matchByPhone(contactless, contacts, onlyMatches = true)
             scope.launch {
                 matched.forEach { conversation ->
-                    contactDao.insert(conversation.contact!!)
+                    // TODO: Contact database should check and insert new contacts
                     conversationDao.update(conversation)
                 }
             }
@@ -99,7 +89,7 @@ object CommonDatabaseState {
             }
 
             if (match != null) {
-                conversation.contact = match
+                conversation.contactId = match.id
                 result.add(conversation)
             } else {
                 if (!onlyMatches) {

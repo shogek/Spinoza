@@ -24,7 +24,7 @@ class ContactListActivity : AppCompatActivity() {
         val adapter = ContactListAdapter(this, this.viewModel)
 
         this.viewModel.contacts.observe(this, Observer {
-            val sortedContacts = it.sortedBy { c -> c.getDisplayName() }
+            val sortedContacts = it.sortedBy { c -> c.getDisplayTitle().toLowerCase() }
             adapter.setContacts(sortedContacts)
         })
 

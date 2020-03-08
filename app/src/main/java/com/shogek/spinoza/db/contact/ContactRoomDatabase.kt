@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Contact::class],
-    version = 4,
+    version = 1,
     exportSchema = false
 )
 abstract class ContactRoomDatabase : RoomDatabase() {
@@ -24,6 +24,15 @@ abstract class ContactRoomDatabase : RoomDatabase() {
 
         private var cameFromOnCreate = false
 
+        override fun onCreate(db: SupportSQLiteDatabase) {
+            super.onCreate(db)
+            this.cameFromOnCreate = true
+
+            INSTANCE?.let { database -> scope.launch {
+                ContactDatabaseHelper.importContactsFromPhone(context, scope, database.contactDao())
+            }}
+        }
+
         override fun onOpen(db: SupportSQLiteDatabase) {
             super.onOpen(db)
             if (this.cameFromOnCreate) {
@@ -31,6 +40,7 @@ abstract class ContactRoomDatabase : RoomDatabase() {
             }
 
             INSTANCE?.let { database -> scope.launch {
+                // TODO: Only update contacts with which the conversation is happening?
                 ContactDatabaseHelper.synchronizeOurContactsWithPhoneContacts(context, scope, database.contactDao())
             }}
         }

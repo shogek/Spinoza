@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.shogek.spinoza.*
 import com.shogek.spinoza.activities.ContactListForwardActivity
-import com.shogek.spinoza.adapters.MessageListRecyclerAdapter
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.models.Message
 import com.shogek.spinoza.events.messages.MessageReceivedEvent
@@ -49,7 +48,7 @@ class MessageListActivity : AppCompatActivity() {
     private var conversation: Conversation? = null
     private lateinit var messageActionButtons: ConstraintLayout
     private var messages: MutableList<Message> = mutableListOf()
-    private lateinit var adapter: MessageListRecyclerAdapter
+    private lateinit var adapter: MessageListAdapter
 
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(arg0: Context?, arg1: Intent?) {
@@ -87,7 +86,14 @@ class MessageListActivity : AppCompatActivity() {
         val buttonForwardMessage  = findViewById<ConstraintLayout>(R.id.cl_forwardMessageColumn)
         this.messageActionButtons = findViewById(R.id.cl_messageActionsRow)
 
-        this.adapter = MessageListRecyclerAdapter(this, buttonCopyMessage, buttonRemoveMessage, buttonForwardMessage, contact?.photoUri)
+        this.adapter =
+            MessageListAdapter(
+                this,
+                buttonCopyMessage,
+                buttonRemoveMessage,
+                buttonForwardMessage,
+                contact?.photoUri
+            )
 
         this.vm.messages.observe(this, Observer { messages ->
             adapter.setMessages(messages)
@@ -97,9 +103,9 @@ class MessageListActivity : AppCompatActivity() {
 
         this.vm.conversation.observe(this, Observer {
             // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
-            this.initButtonSendMessage(it.phone, it.conversationId)
+            this.initButtonSendMessage(it.phone, it.id)
             // TODO: [Style] Add elevation to message box when not at bottom.
-            val title = it.contact?.getDisplayName() ?: it.phone
+            val title = it.contact?.getDisplayTitle() ?: it.phone
             this.setToolbarInformation(title, it.contact?.photoUri)
         })
 
@@ -130,7 +136,7 @@ class MessageListActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         this.vm.conversation.observe(this, Observer { conversation ->
-            CommonState.setCurrentOpenConversationId(conversation.conversationId)
+            CommonState.setCurrentOpenConversationId(conversation.id)
         })
         registerReceiver(this.messageReceiver, IntentFilter(PENDING_MESSAGE_INTENT))
     }

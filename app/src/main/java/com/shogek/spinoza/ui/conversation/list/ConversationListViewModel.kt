@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
+import com.shogek.spinoza.db.contact.Contact
 import com.shogek.spinoza.db.contact.ContactRoomDatabase
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
@@ -17,14 +18,29 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
     private val context: Context = application.applicationContext
     private val contactDao = ContactRoomDatabase.getDatabase(application, viewModelScope).contactDao()
     private val conversationDao = ConversationRoomDatabase.getDatabase(application, viewModelScope).conversationDao()
-    val conversations: LiveData<List<Conversation>> = conversationDao.getAll()
 
-    // TODO: Combine 'Conversation' and 'Contact' streams
-//    init {
-//        conversationDao.getAll().combineWith(contactDao.getAll()) { conversations, contacts ->
-//            this.conversations = conversations
-//        }
-//    }
+    var conversations: LiveData<List<Conversation>> = conversationDao.getAll().combineWith(contactDao.getAll()) {
+            conversations, contacts -> matchByContactId(conversations, contacts)
+    }
+
+    private fun matchByContactId(
+        conversations: List<Conversation>?,
+        contacts: List<Contact>?
+    ): List<Conversation> {
+        if (conversations == null || conversations.isEmpty() || contacts == null || contacts.isEmpty()) {
+            return listOf()
+        }
+
+        val contactTable = contacts.associateBy({it.id}, {it})
+
+        conversations.forEach { conversation ->
+            if (contactTable.containsKey(conversation.contactId)) {
+                conversation.contact = contactTable[conversation.contactId]
+            }
+        }
+
+        return conversations
+    }
 
     private fun <T, K, R> LiveData<T>.combineWith(
         liveData: LiveData<K>,

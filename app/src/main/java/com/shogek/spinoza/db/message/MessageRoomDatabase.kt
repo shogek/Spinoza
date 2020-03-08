@@ -8,7 +8,7 @@ import com.shogek.spinoza.db.conversation.Conversation
 
 @Database(
     entities = [Message::class, Conversation::class],
-    version = 3,
+    version = 1,
     exportSchema = false
 )
 abstract class MessageRoomDatabase : RoomDatabase() {

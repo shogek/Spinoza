@@ -12,6 +12,21 @@ object ContactDatabaseHelper {
 
     private val LOG: String = ContactDatabaseHelper::class.java.simpleName
 
+    fun importContactsFromPhone(
+        context: Context,
+        scope: CoroutineScope,
+        contactDao: ContactDao
+    ) {
+        val contacts = this.retrieveAllPhoneContacts(context.contentResolver)
+        if (contacts.isEmpty()) {
+            return
+        }
+
+        scope.launch {
+            contactDao.insertAll(contacts)
+        }
+    }
+
     /** Retrieve contacts saved in phone. */
     fun retrieveAllPhoneContacts(resolver: ContentResolver): List<Contact> {
         val projection = arrayOf(
@@ -36,12 +51,12 @@ object ContactDatabaseHelper {
         val contacts = mutableListOf<Contact>()
 
         while (cursor.moveToNext()) {
-            val internalId = cursor.getLong(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
+            val id = cursor.getLong(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
             val phone = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
             val name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
             val photo = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI))
 
-            val contact = Contact(internalId, name, phone, photo)
+            val contact = Contact(id, name, phone, photo)
             contacts.add(contact)
         }
 
@@ -68,9 +83,14 @@ object ContactDatabaseHelper {
                 return
             }
 
-            val ourContactTable = ourContacts.associateBy({it.internalContactId}, {it})
+            val ourContactTable = ourContacts.associateBy({it.id}, {it})
             for (phoneContact in phoneContacts) {
-                val ourContact = ourContactTable[phoneContact.internalContactId] ?: continue
+                val ourContact = ourContactTable[phoneContact.id]
+                if (ourContact == null) {
+                    // New contact found in phone
+                    scope.launch { contactDao.insert(phoneContact) }
+                    continue
+                }
 
                 if (ourContact.name != phoneContact.name) { ourContact.name = phoneContact.name }
                 if (ourContact.phone != phoneContact.phone) { ourContact.phone = phoneContact.phone }

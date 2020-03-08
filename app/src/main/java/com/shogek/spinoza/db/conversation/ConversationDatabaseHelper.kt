@@ -43,6 +43,7 @@ object ConversationDatabaseHelper {
             val snippet = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Conversations.BODY))
             val timestamp = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Conversations.DATE))
             val type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.TYPE))
+            // TODO: [Bug] Read phone conversations are shown as unread in ours
             val read = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Conversations.READ))
 
             val isOurs = type == Telephony.Sms.Conversations.MESSAGE_TYPE_SENT
@@ -63,11 +64,11 @@ object ConversationDatabaseHelper {
         conversations: List<Conversation>,
         contacts: List<Contact>
     ) {
-        val unknownConversations = conversations.filter { it.contact == null }
+        val unknownConversations = conversations.filter { it.contactId == null }
         unknownConversations.forEach { conversation ->
             contacts.forEach { contact ->
                 if (PhoneNumberUtils.compare(contact.phone, conversation.phone)) {
-                    conversation.contact = contact
+                    conversation.contactId = contact.id
                     scope.launch { conversationDao.update(conversation) }
                 }
             }

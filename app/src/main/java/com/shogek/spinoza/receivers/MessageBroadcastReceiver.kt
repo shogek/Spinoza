@@ -52,15 +52,15 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
             var ownerConversation = allConversations?.find { it.phone == message.senderPhone }
             if (ownerConversation == null) {
                 ownerConversation = Conversation(null, message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
-                runBlocking { ownerConversation.conversationId = conversationDao.insert(ownerConversation) }
+                runBlocking { ownerConversation.id = conversationDao.insert(ownerConversation) }
             } else {
                 // TODO: Test this
                 val openedConversationId = CommonState.getCurrentOpenConversationId()
-                val wasMessageRead = openedConversationId == ownerConversation.conversationId
-                runBlocking { conversationDao.update(ownerConversation.conversationId, message.messageText, message.timestamp, false, wasMessageRead) }
+                val wasMessageRead = openedConversationId == ownerConversation.id
+                runBlocking { conversationDao.update(ownerConversation.id, message.messageText, message.timestamp, false, wasMessageRead) }
             }
 
-            return ownerConversation.conversationId
+            return ownerConversation.id
         }
     }
 

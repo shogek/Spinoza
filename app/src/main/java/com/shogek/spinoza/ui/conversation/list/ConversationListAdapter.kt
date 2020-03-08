@@ -182,8 +182,8 @@ class ConversationListAdapter(
 
         override fun bind(conversation: Conversation?) {
             // TODO: Why can 'conversation' be null?
-            conversationId = conversation!!.conversationId
-            sender.text = conversation.contact?.getDisplayName() ?: conversation.phone
+            conversationId = conversation!!.id
+            sender.text = conversation.contact?.getDisplayTitle() ?: conversation.phone
 
             this.lastMessage.text =
                 if (conversation.snippetIsOurs)

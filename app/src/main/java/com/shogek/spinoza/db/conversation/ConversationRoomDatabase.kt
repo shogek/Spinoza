@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.shogek.spinoza.db.contact.ContactRoomDatabase
 import com.shogek.spinoza.db.state.CommonDatabaseState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -29,9 +30,11 @@ abstract class ConversationRoomDatabase : RoomDatabase() {
             super.onCreate(db)
             this.cameFromOnCreate = true
 
-            INSTANCE?.let { database ->
-                CommonDatabaseState.importConversationsFromPhone(context, scope, database.conversationDao())
-            }
+            INSTANCE?.let { database -> scope.launch {
+                val conversationDao = database.conversationDao()
+                val contactDao = ContactRoomDatabase.getDatabase(context, scope).contactDao()
+                CommonDatabaseState.importConversationsFromPhone(context, scope, contactDao, conversationDao)
+            }}
         }
 
         override fun onOpen(db: SupportSQLiteDatabase) {

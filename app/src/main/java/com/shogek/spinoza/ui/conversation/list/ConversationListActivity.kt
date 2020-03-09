@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
+import com.shogek.spinoza.db.contact.ContactDatabaseHelper
 import com.shogek.spinoza.ui.contacts.list.ContactListActivity
 import com.shogek.spinoza.ui.messages.list.MessageListActivity
 import com.shogek.spinoza.utils.UnitUtils

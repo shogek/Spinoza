@@ -4,8 +4,8 @@ import android.content.Context
 import android.telephony.PhoneNumberUtils
 import androidx.lifecycle.Observer
 import com.shogek.spinoza.db.contact.Contact
+import com.shogek.spinoza.db.contact.ContactDao
 import com.shogek.spinoza.db.contact.ContactDatabaseHelper
-import com.shogek.spinoza.db.contact.ContactRoomDatabase
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.conversation.ConversationDatabaseHelper
@@ -18,6 +18,7 @@ object CommonDatabaseState {
     fun importConversationsFromPhone(
         context: Context,
         scope: CoroutineScope,
+        contactDao: ContactDao,
         conversationDao: ConversationDao
     ) {
         val phoneConversations = ConversationDatabaseHelper.retrieveAllPhoneConversations(context.contentResolver)
@@ -25,15 +26,23 @@ object CommonDatabaseState {
             return
         }
 
-        // TODO: Use ContactDao + get number of contacts to escape endless observing
-        val phoneContacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
-        if (phoneContacts.isEmpty()) {
+        val contactCount = ContactDatabaseHelper.retrievePhoneContactCount(context.contentResolver)
+        if (contactCount == null || contactCount < 1) {
             scope.launch { conversationDao.insertAll(phoneConversations) }
             return
         }
 
-        val matched = matchByPhone(phoneConversations, phoneContacts, onlyMatches = false)
-        scope.launch { conversationDao.insertAll(matched) }
+        val contactData = contactDao.getAll()
+        contactData.observeForever(object : Observer<List<Contact>> { override fun onChanged(ourContacts: List<Contact>?) {
+            if (ourContacts == null || ourContacts.isEmpty()) {
+                // DO NOT REMOVE OBSERVER HERE - we already know there are contacts to be imported - we only need to wait
+                return
+            }
+
+            val matched = matchByPhone(phoneConversations, ourContacts, onlyMatches = false)
+            scope.launch { conversationDao.insertAll(matched) }
+            contactData.removeObserver(this)
+        }})
     }
 
     /** Insert contacts if we found matching conversations for it. */

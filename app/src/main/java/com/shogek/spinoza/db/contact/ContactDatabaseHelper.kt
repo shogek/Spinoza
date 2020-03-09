@@ -27,6 +27,24 @@ object ContactDatabaseHelper {
         }
     }
 
+    /** Retrieves the number of contacts in the phone. */
+    fun retrievePhoneContactCount(resolver: ContentResolver): Int? {
+        val cursor = resolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            arrayOf(ContactsContract.CommonDataKinds.Phone._COUNT),
+            null,
+            null,
+            null
+        )
+            ?: return null
+
+        cursor.moveToFirst()
+        val result = cursor.getInt(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._COUNT))
+        cursor.close()
+
+        return result
+    }
+
     /** Retrieve contacts saved in phone. */
     fun retrieveAllPhoneContacts(resolver: ContentResolver): List<Contact> {
         val projection = arrayOf(

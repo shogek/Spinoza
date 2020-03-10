@@ -6,11 +6,10 @@ import android.content.Intent
 import android.telephony.SmsMessage
 import android.util.Log
 import androidx.lifecycle.Observer
+import com.shogek.spinoza.db.ApplicationRoomDatabase
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationDao
-import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
 import com.shogek.spinoza.db.message.Message
-import com.shogek.spinoza.db.message.MessageRoomDatabase
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
@@ -81,9 +80,9 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
         context: Context,
         basicMessage: BasicMessage
     ): Deferred<Unit> = async {
-        val conversationDao = ConversationRoomDatabase.getDatabase(context, this).conversationDao()
-        val messageDao = MessageRoomDatabase.getDatabase(context).messageDao()
-        val conversationData = conversationDao.getAll()
+        val conversationDao = ApplicationRoomDatabase.getDatabase(context, this).conversationDao()
+        val messageDao = ApplicationRoomDatabase.getDatabase(context, this).messageDao()
+        val conversationData = conversationDao.getAllObservable()
         conversationData.observeForever(object : Observer<List<Conversation>> {
             override fun onChanged(allConversations: List<Conversation>?) {
                 val id = upsertConversation(allConversations, conversationDao, basicMessage)

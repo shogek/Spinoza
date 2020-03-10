@@ -8,16 +8,17 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.Extra
+import com.shogek.spinoza.db.ApplicationRoomDatabase
 import com.shogek.spinoza.db.contact.Contact
-import com.shogek.spinoza.db.contact.ContactRoomDatabase
+
 
 class ContactListViewModel(application: Application) : AndroidViewModel(application) {
 
     val contacts: LiveData<List<Contact>>
 
     init {
-        val contactDao = ContactRoomDatabase.getDatabase(application, viewModelScope).contactDao()
-        this.contacts = contactDao.getAll()
+        val contactDao = ApplicationRoomDatabase.getDatabase(application, viewModelScope).contactDao()
+        this.contacts = contactDao.getAllObservable()
     }
 
     /** Return chosen contact's ID to the calling activity. */

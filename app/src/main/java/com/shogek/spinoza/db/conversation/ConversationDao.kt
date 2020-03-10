@@ -8,14 +8,12 @@ import androidx.room.Update
 import androidx.room.Delete
 import androidx.room.OnConflictStrategy
 
+
 @Dao
 interface ConversationDao {
 
     @Delete
     suspend fun delete(conversation: Conversation)
-
-    @Query("DELETE FROM conversation_table")
-    suspend fun deleteAll()
 
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     fun getObservable(id: Long): LiveData<Conversation>
@@ -24,7 +22,10 @@ interface ConversationDao {
     suspend fun get(id: Long): Conversation
 
     @Query("SELECT * FROM conversation_table")
-    fun getAll(): LiveData<List<Conversation>>
+    suspend fun getAll(): List<Conversation>
+
+    @Query("SELECT * FROM conversation_table")
+    fun getAllObservable(): LiveData<List<Conversation>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(conversation: Conversation): Long

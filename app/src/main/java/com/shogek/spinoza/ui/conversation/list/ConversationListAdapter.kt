@@ -85,7 +85,7 @@ class ConversationListAdapter(
             return TYPE_HEADER
 
         val conversation = this.originalConversations[position - 1] // -1 for header
-        return if  (conversation.snippetIsOurs)
+        return if (conversation.snippetWasRead)
             TYPE_CONVERSATION_READ
         else
             TYPE_CONVERSATION_UNREAD

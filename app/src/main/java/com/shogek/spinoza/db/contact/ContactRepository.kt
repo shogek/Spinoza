@@ -1,30 +1,46 @@
 package com.shogek.spinoza.db.contact
 
+import android.content.Context
 import androidx.lifecycle.LiveData
+import com.shogek.spinoza.db.ApplicationRoomDatabase
+import kotlinx.coroutines.CoroutineScope
 
-class ContactRepository(private val contactDao: ContactDao) {
+class ContactRepository(
+    context: Context,
+    scope: CoroutineScope
+) {
 
-    fun getAll(): LiveData<List<Contact>> {
-        return contactDao.getAll()
+    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).contactDao()
+
+    fun getAllObservable(): LiveData<List<Contact>> {
+        return dao.getAllObservable()
+    }
+
+    suspend fun getAll(): List<Contact> {
+        return dao.getAll()
     }
 
     suspend fun update(contact: Contact) {
-        contactDao.update(contact)
+        dao.update(contact)
+    }
+
+    suspend fun updateAll(contacts: List<Contact>) {
+        dao.updateAll(contacts)
     }
 
     suspend fun insert(contact: Contact): Long {
-        return contactDao.insert(contact)
+        return dao.insert(contact)
     }
 
     suspend fun insertAll(contacts: List<Contact>): List<Long> {
-        return contactDao.insertAll(contacts)
+        return dao.insertAll(contacts)
     }
 
-    suspend fun deleteAll() {
-        contactDao.deleteAll()
+    suspend fun deleteAll(contacts: List<Contact>) {
+        dao.deleteAll(contacts)
     }
 
     suspend fun delete(contact: Contact) {
-        contactDao.delete(contact)
+        dao.delete(contact)
     }
 }

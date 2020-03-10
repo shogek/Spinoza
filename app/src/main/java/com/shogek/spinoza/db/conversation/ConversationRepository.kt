@@ -1,39 +1,48 @@
 package com.shogek.spinoza.db.conversation
 
+import android.content.Context
 import androidx.lifecycle.LiveData
+import com.shogek.spinoza.db.ApplicationRoomDatabase
+import kotlinx.coroutines.CoroutineScope
 
-class ConversationRepository(private val conversationDao: ConversationDao) {
+
+class ConversationRepository(
+    context: Context,
+    scope: CoroutineScope
+) {
+
+    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).conversationDao()
 
     suspend fun delete(conversation: Conversation) {
-        conversationDao.delete(conversation)
+        dao.delete(conversation)
     }
 
-    suspend fun deleteAll() {
-        conversationDao.deleteAll()
+    suspend fun getAll(): List<Conversation> {
+        return dao.getAll()
     }
 
-    fun getAll(): LiveData<List<Conversation>> {
-        return conversationDao.getAll()
+    fun getAllObservable(): LiveData<List<Conversation>> {
+        return dao.getAllObservable()
     }
 
     suspend fun get(id: Long): Conversation {
-        return conversationDao.get(id)
+        return dao.get(id)
     }
 
     suspend fun insert(conversation: Conversation): Long {
-        return conversationDao.insert(conversation)
+        return dao.insert(conversation)
     }
 
     suspend fun insertAll(conversations: List<Conversation>): List<Long> {
-        return conversationDao.insertAll(conversations)
+        return dao.insertAll(conversations)
     }
 
     suspend fun update(conversation: Conversation) {
-        conversationDao.update(conversation)
+        dao.update(conversation)
     }
 
     suspend fun updateAll(conversations: List<Conversation>) {
-        conversationDao.updateAll(conversations)
+        dao.updateAll(conversations)
     }
 
     suspend fun update(
@@ -43,6 +52,6 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
         snippetIsOurs: Boolean,
         snippetWasRead: Boolean
     ) {
-        conversationDao.update(id, snippet, snippetTimestamp, snippetIsOurs, snippetWasRead)
+        dao.update(id, snippet, snippetTimestamp, snippetIsOurs, snippetWasRead)
     }
 }

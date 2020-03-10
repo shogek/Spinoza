@@ -8,19 +8,23 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.db.contact.Contact
-import com.shogek.spinoza.db.contact.ContactRoomDatabase
+import com.shogek.spinoza.db.contact.ContactRepository
 import com.shogek.spinoza.db.conversation.Conversation
-import com.shogek.spinoza.db.conversation.ConversationRoomDatabase
+import com.shogek.spinoza.db.conversation.ConversationRepository
 import kotlinx.coroutines.launch
 
 class ConversationListViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context: Context = application.applicationContext
-    private val contactDao = ContactRoomDatabase.getDatabase(application, viewModelScope).contactDao()
-    private val conversationDao = ConversationRoomDatabase.getDatabase(application, viewModelScope).conversationDao()
+    private val contactRepository: ContactRepository = ContactRepository(application, viewModelScope)
+    private val conversationRepository: ConversationRepository = ConversationRepository(application, viewModelScope)
 
-    var conversations: LiveData<List<Conversation>> = conversationDao.getAll().combineWith(contactDao.getAll()) {
-            conversations, contacts -> matchByContactId(conversations, contacts)
+    var conversations: LiveData<List<Conversation>>
+
+    init {
+        this.conversations = conversationRepository.getAllObservable().combineWith(contactRepository.getAllObservable()) {
+                conversations, contacts -> matchByContactId(conversations, contacts)
+        }
     }
 
     private fun matchByContactId(
@@ -57,7 +61,7 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
     }
 
     fun insert(conversation: Conversation) = viewModelScope.launch {
-        conversationDao.insert(conversation)
+        conversationRepository.insert(conversation)
     }
 
     fun archiveConversation(id: Long) {
@@ -66,11 +70,11 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
     }
 
     fun deleteConversation(id: Long) = viewModelScope.launch {
-        val conversation = conversationDao.get(id)
+        val conversation = conversationRepository.get(id)
         if (conversation.contact != null) {
-            contactDao.delete(conversation.contact!!)
+            contactRepository.delete(conversation.contact!!)
         }
-        conversationDao.delete(conversation)
+        conversationRepository.delete(conversation)
         Toast.makeText(context, "Conversation deleted", Toast.LENGTH_SHORT).show()
     }
 

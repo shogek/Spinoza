@@ -6,36 +6,36 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.shogek.spinoza.db.applicationDatabaseState.ApplicationDatabaseState
-import com.shogek.spinoza.db.applicationDatabaseState.ApplicationDatabaseStateDao
-import com.shogek.spinoza.db.applicationDatabaseState.ApplicationDatabaseStateRepository
+import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.contact.Contact
+import com.shogek.spinoza.db.conversation.Conversation
+import com.shogek.spinoza.db.databaseInformation.DatabaseInformationRepository
+import com.shogek.spinoza.db.message.MessageDao
 import com.shogek.spinoza.db.contact.ContactDao
+import com.shogek.spinoza.db.conversation.ConversationDao
+import com.shogek.spinoza.db.databaseInformation.DatabaseInformationDao
 import com.shogek.spinoza.db.contact.ContactDatabaseHelper
 import com.shogek.spinoza.db.contact.ContactRepository
-import com.shogek.spinoza.db.conversation.Conversation
-import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.conversation.ConversationDatabaseHelper
 import com.shogek.spinoza.db.conversation.ConversationRepository
-import com.shogek.spinoza.db.message.Message
-import com.shogek.spinoza.db.message.MessageDao
+import com.shogek.spinoza.db.databaseInformation.DatabaseInformation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
 @Database(
     entities = [
-        ApplicationDatabaseState::class,
+        DatabaseInformation::class,
         Conversation::class,
         Contact::class,
         Message::class
     ],
-    version = 3,
+    version = 1,
     exportSchema = false
 )
 abstract class ApplicationRoomDatabase : RoomDatabase() {
 
-    abstract fun applicationDatabaseStateDao(): ApplicationDatabaseStateDao
+    abstract fun applicationDatabaseStateDao(): DatabaseInformationDao
     abstract fun conversationDao(): ConversationDao
     abstract fun contactDao(): ContactDao
     abstract fun messageDao(): MessageDao
@@ -101,15 +101,15 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
             val ourContacts = contactRepository.getAll()
             cleanupDeletedPhoneContacts(ourContacts, contactRepository)
 
-            val stateRepository = ApplicationDatabaseStateRepository(context, scope)
-            val state = stateRepository.getSingleton()
-            val upsertedPhoneContacts = ContactDatabaseHelper.retrieveUpsertedPhoneContacts(context.contentResolver, state.contactTableLastUpdatedTimestamp)
+            val databaseInformationRepository = DatabaseInformationRepository(context, scope)
+            val information = databaseInformationRepository.getSingleton()
+            val upsertedPhoneContacts = ContactDatabaseHelper.retrieveUpsertedPhoneContacts(context.contentResolver, information.contactTableLastUpdatedTimestamp)
             if (upsertedPhoneContacts.isEmpty()) {
                 return@launch
             }
 
-            state.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
-            stateRepository.updateSingleton(state)
+            information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
+            databaseInformationRepository.updateSingleton(information)
 
             // Separate upserted phone contacts - to newly added ones and updated old ones
             val ourContactTable = ourContacts.associateBy({it.id}, {it})
@@ -132,15 +132,19 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
             conversationRepository.updateAll(matched)
         }
 
-        private fun importConversationsAndContactsFromPhone() {
+        private fun importConversationsAndContactsFromPhone() = scope.launch {
+            val databaseInformationRepository = DatabaseInformationRepository(context, scope)
+            val information = databaseInformationRepository.getSingleton()
+
             val conversations = ConversationDatabaseHelper.retrieveAllPhoneConversations(context.contentResolver)
-            val conversationsLastUpdated = System.currentTimeMillis()
+            information.conversationTableLastUpdatedTimestamp = System.currentTimeMillis()
+
             val contacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
-            val contactsLastUpdated = System.currentTimeMillis()
+            information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
 
             val conversationsWithContacts = matchByPhone(conversations, contacts, onlyMatches = false)
             scope.launch {
-                ApplicationDatabaseStateRepository(context, scope).createSingleton(conversationsLastUpdated, contactsLastUpdated)
+                DatabaseInformationRepository(context, scope).updateSingleton(information)
                 ConversationRepository(context, scope).insertAll(conversationsWithContacts)
                 ContactRepository(context, scope).insertAll(contacts)
             }

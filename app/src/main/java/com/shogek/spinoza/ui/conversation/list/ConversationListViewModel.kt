@@ -5,12 +5,12 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.db.contact.Contact
 import com.shogek.spinoza.db.contact.ContactRepository
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
+import com.shogek.spinoza.helpers.LiveDataHelpers.combineWith
 import kotlinx.coroutines.launch
 
 class ConversationListViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,20 +44,6 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
         }
 
         return conversations
-    }
-
-    private fun <T, K, R> LiveData<T>.combineWith(
-        liveData: LiveData<K>,
-        block: (T?, K?) -> R
-    ): LiveData<R> {
-        val result = MediatorLiveData<R>()
-        result.addSource(this) {
-            result.value = block.invoke(this.value, liveData.value)
-        }
-        result.addSource(liveData) {
-            result.value = block.invoke(this.value, liveData.value)
-        }
-        return result
     }
 
     fun insert(conversation: Conversation) = viewModelScope.launch {

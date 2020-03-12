@@ -15,6 +15,9 @@ interface ConversationDao {
     @Delete
     suspend fun delete(conversation: Conversation)
 
+    @Delete
+    suspend fun deleteAll(conversations: List<Conversation>)
+
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     fun getObservable(id: Long): LiveData<Conversation>
 
@@ -23,6 +26,9 @@ interface ConversationDao {
 
     @Query("SELECT * FROM conversation_table")
     suspend fun getAll(): List<Conversation>
+
+    @Query("SELECT * FROM conversation_table WHERE id IN (:ids)")
+    suspend fun getAll(ids: List<Long>): List<Conversation>
 
     @Query("SELECT * FROM conversation_table")
     fun getAllObservable(): LiveData<List<Conversation>>
@@ -54,4 +60,8 @@ interface ConversationDao {
         snippetIsOurs: Boolean,
         snippetWasRead: Boolean
     )
+
+    @Query("DELETE FROM conversation_table")
+    /* FOR DEVELOPMENT USE ONLY */
+    suspend fun nuke()
 }

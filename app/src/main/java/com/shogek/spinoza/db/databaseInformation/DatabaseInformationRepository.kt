@@ -20,7 +20,7 @@ class DatabaseInformationRepository(
             return singleton
         }
 
-        val information = DatabaseInformation(this.singletonId, 0, 0)
+        val information = DatabaseInformation(this.singletonId, 0)
         dao.insert(information)
         return dao.get(this.singletonId)!!
     }

@@ -17,4 +17,8 @@ interface DatabaseInformationDao {
 
     @Update
     suspend fun update(state: DatabaseInformation)
+
+    @Query("DELETE FROM database_information_table")
+    /* FOR DEVELOPMENT USE ONLY */
+    suspend fun nuke()
 }

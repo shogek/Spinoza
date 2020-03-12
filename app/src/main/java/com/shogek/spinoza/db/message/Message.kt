@@ -1,20 +1,16 @@
 package com.shogek.spinoza.db.message
 
 import androidx.room.*
-import com.shogek.spinoza.db.conversation.Conversation
 
-@Entity(
-    tableName = "message_table",
-    foreignKeys = [ForeignKey(
-        entity = Conversation::class,
-        parentColumns = ["id"],
-        childColumns = ["conversation_id"],
-        onUpdate = ForeignKey.NO_ACTION,
-        onDelete = ForeignKey.CASCADE
-    )],
-    indices = [Index("conversation_id")]
-)
+@Entity(tableName = "message_table")
 data class Message(
+
+    @ColumnInfo(name = "android_id")
+    /**
+     * The ID of the message as it is stored in the phone (Telephony.Sms._ID)
+     * (indicates that the record was not created by our application, but imported from the phone)
+     */
+    val androidId: Long?,
 
     @ColumnInfo(name = "conversation_id")
     /** The 'Conversation' to which the SMS belongs to. */

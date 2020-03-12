@@ -41,26 +41,27 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
         }
 
         /** Create a new conversation or update an existing one with the latest message. */
-        fun upsertConversation(
-            allConversations: List<Conversation>?,
-            conversationDao: ConversationDao,
-            message: BasicMessage
-        ): Long {
-            // TODO: [Refactor] Use async
-            // TODO: [Bug] Look for an existing contact first
-            var ownerConversation = allConversations?.find { it.phone == message.senderPhone }
-            if (ownerConversation == null) {
-                ownerConversation = Conversation(null, message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
-                runBlocking { ownerConversation.id = conversationDao.insert(ownerConversation) }
-            } else {
-                // TODO: Test this
-                val openedConversationId = CommonState.getCurrentOpenConversationId()
-                val wasMessageRead = openedConversationId == ownerConversation.id
-                runBlocking { conversationDao.update(ownerConversation.id, message.messageText, message.timestamp, false, wasMessageRead) }
-            }
-
-            return ownerConversation.id
-        }
+//        fun upsertConversation(
+//            allConversations: List<Conversation>?,
+//            conversationDao: ConversationDao,
+//            message: BasicMessage
+//        ): Long {
+//            // TODO: [Refactor] Use async
+//            // TODO: [Bug] Look for an existing contact first
+//            // TODO: Fix
+//            var ownerConversation = allConversations?.find { it.phone == message.senderPhone }
+//            if (ownerConversation == null) {
+//                ownerConversation = Conversation(null, message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
+//                runBlocking { ownerConversation.id = conversationDao.insert(ownerConversation) }
+//            } else {
+//                // TODO: Test this
+//                val openedConversationId = CommonState.getCurrentOpenConversationId()
+//                val wasMessageRead = openedConversationId == ownerConversation.id
+//                runBlocking { conversationDao.update(ownerConversation.id, message.messageText, message.timestamp, false, wasMessageRead) }
+//            }
+//
+//            return ownerConversation.id
+//        }
     }
 
     /** Called when a new SMS is received. */
@@ -73,27 +74,27 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
         val basicMessage = parseReceivedMessage(intent)
             ?: return
 
-        handleReceivedMessageAsync(context, basicMessage)
+//        handleReceivedMessageAsync(context, basicMessage)
     }
 
-    private fun handleReceivedMessageAsync(
-        context: Context,
-        basicMessage: BasicMessage
-    ): Deferred<Unit> = async {
-        val conversationDao = ApplicationRoomDatabase.getDatabase(context, this).conversationDao()
-        val messageDao = ApplicationRoomDatabase.getDatabase(context, this).messageDao()
-        val conversationData = conversationDao.getAllObservable()
-        conversationData.observeForever(object : Observer<List<Conversation>> {
-            override fun onChanged(allConversations: List<Conversation>?) {
-                val id = upsertConversation(allConversations, conversationDao, basicMessage)
-                val message = Message(id, basicMessage.messageText, basicMessage.timestamp, isOurs = false)
-                launch { messageDao.insert(message) }
-
-                conversationData.removeObserver(this)
-            }
-
-        })
-    }
+//    private fun handleReceivedMessageAsync(
+//        context: Context,
+//        basicMessage: BasicMessage
+//    ): Deferred<Unit> = async {
+//        val conversationDao = ApplicationRoomDatabase.getDatabase(context, this).conversationDao()
+//        val messageDao = ApplicationRoomDatabase.getDatabase(context, this).messageDao()
+//        val conversationData = conversationDao.getAllObservable()
+//        conversationData.observeForever(object : Observer<List<Conversation>> {
+//            override fun onChanged(allConversations: List<Conversation>?) {
+//                val id = upsertConversation(allConversations, conversationDao, basicMessage)
+//                val message = Message(id, basicMessage.messageText, basicMessage.timestamp, isOurs = false)
+//                launch { messageDao.insert(message) }
+//
+//                conversationData.removeObserver(this)
+//            }
+//
+//        })
+//    }
 }
 
 data class BasicMessage(

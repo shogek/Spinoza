@@ -17,8 +17,16 @@ class ConversationRepository(
         dao.delete(conversation)
     }
 
+    suspend fun deleteAll(conversations: List<Conversation>) {
+        dao.deleteAll(conversations)
+    }
+
     suspend fun getAll(): List<Conversation> {
         return dao.getAll()
+    }
+
+    suspend fun getAll(ids: List<Long>): List<Conversation> {
+        return dao.getAll(ids)
     }
 
     fun getAllObservable(): LiveData<List<Conversation>> {
@@ -27,6 +35,10 @@ class ConversationRepository(
 
     suspend fun get(id: Long): Conversation {
         return dao.get(id)
+    }
+
+    fun getObservable(id: Long): LiveData<Conversation> {
+        return dao.getObservable(id)
     }
 
     suspend fun insert(conversation: Conversation): Long {

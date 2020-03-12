@@ -20,6 +20,10 @@ class ContactRepository(
         return dao.getAll()
     }
 
+    suspend fun getAll(contactIds: List<Long>): List<Contact> {
+        return dao.getAll(contactIds)
+    }
+
     suspend fun update(contact: Contact) {
         dao.update(contact)
     }

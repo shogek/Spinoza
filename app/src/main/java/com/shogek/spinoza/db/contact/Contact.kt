@@ -8,13 +8,12 @@ import androidx.room.Entity
 @Entity(tableName = "contact_table")
 data class Contact(
 
-    @PrimaryKey
-    @ColumnInfo(name = "id")
+    @ColumnInfo(name = "android_id")
     /**
      * The ID of the contact as it is stored in the phone (ContactsContract.CommonDataKinds.Phone._ID)
-     * (This app does not create new contacts - it only mirrors the ones already on the phone)
+     * (indicates that the record was not created by our application, but imported from the phone)
      */
-    val id: Long,
+    val androidId: Long,
 
     @ColumnInfo(name = "name")
     /** The person's name. */
@@ -28,5 +27,10 @@ data class Contact(
     /** The person's profile picture. */
     var photoUri: String?
 ) {
+
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
+    var id: Long = 0
+
     fun getDisplayTitle(): String = this.name ?: this.phone
 }

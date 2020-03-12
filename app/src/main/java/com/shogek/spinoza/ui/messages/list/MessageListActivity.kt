@@ -95,19 +95,36 @@ class MessageListActivity : AppCompatActivity() {
                 contact?.photoUri
             )
 
-        this.vm.messages.observe(this, Observer { messages ->
-            adapter.setMessages(messages)
-            rv_messageList.scrollToPosition(messages.size - 1)
-            this.initScrollDownWhenKeyboardAppears(messages.size)
+        this.vm.conversation.observe(this, Observer { conversation ->
+            if (conversation != null) {
+                // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
+                this.initButtonSendMessage(conversation.phone, conversation.id)
+                // TODO: [Style] Add elevation to message box when not at bottom.
+                val title = conversation.contact?.getDisplayTitle() ?: conversation.phone
+                this.setToolbarInformation(title, conversation.contact?.photoUri)
+
+                if (conversation.messages != null) {
+                    val messages = conversation.messages!!
+                    adapter.setMessages(messages)
+                    rv_messageList.scrollToPosition(messages.size - 1)
+                    this.initScrollDownWhenKeyboardAppears(messages.size)
+                }
+            }
         })
 
-        this.vm.conversation.observe(this, Observer {
-            // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
-            this.initButtonSendMessage(it.phone, it.id)
-            // TODO: [Style] Add elevation to message box when not at bottom.
-            val title = it.contact?.getDisplayTitle() ?: it.phone
-            this.setToolbarInformation(title, it.contact?.photoUri)
-        })
+//        this.vm.messages.observe(this, Observer { messages ->
+//            adapter.setMessages(messages)
+//            rv_messageList.scrollToPosition(messages.size - 1)
+//            this.initScrollDownWhenKeyboardAppears(messages.size)
+//        })
+//
+//        this.vm.conversation.observe(this, Observer {
+//            // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
+//            this.initButtonSendMessage(it.phone, it.id)
+//            // TODO: [Style] Add elevation to message box when not at bottom.
+//            val title = it.contact?.getDisplayTitle() ?: it.phone
+//            this.setToolbarInformation(title, it.contact?.photoUri)
+//        })
 
         rv_messageList.adapter = this.adapter
         rv_messageList.layoutManager = LinearLayoutManager(this)
@@ -136,7 +153,9 @@ class MessageListActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         this.vm.conversation.observe(this, Observer { conversation ->
-            CommonState.setCurrentOpenConversationId(conversation.id)
+            if (conversation != null) {
+                CommonState.setCurrentOpenConversationId(conversation.id)
+            }
         })
         registerReceiver(this.messageReceiver, IntentFilter(PENDING_MESSAGE_INTENT))
     }

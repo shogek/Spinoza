@@ -18,8 +18,11 @@ interface ContactDao {
     @Query("SELECT * FROM contact_table")
     suspend fun getAll(): List<Contact>
 
-    @Query("SELECT * FROM contact_table WHERE id = :contactId")
-    fun get(contactId: Long): Contact
+    @Query("SELECT * FROM contact_table WHERE id IN (:ids)")
+    suspend fun getAll(ids: List<Long>): List<Contact>
+
+    @Query("SELECT * FROM contact_table WHERE id = :id")
+    fun get(id: Long): Contact
 
     @Update
     suspend fun update(contact: Contact)
@@ -38,4 +41,8 @@ interface ContactDao {
 
     @Delete
     suspend fun delete(contact: Contact)
+
+    @Query("DELETE FROM contact_table")
+    /* FOR DEVELOPMENT USE ONLY */
+    suspend fun nuke()
 }

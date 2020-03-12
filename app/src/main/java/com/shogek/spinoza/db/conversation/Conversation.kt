@@ -5,9 +5,17 @@ import androidx.room.PrimaryKey
 import androidx.room.Entity
 import androidx.room.Ignore
 import com.shogek.spinoza.db.contact.Contact
+import com.shogek.spinoza.db.message.Message
 
 @Entity(tableName = "conversation_table")
 class Conversation(
+
+    @ColumnInfo(name = "android_id")
+    /**
+     * The ID of the conversation as it is stored in the phone (Telephony.Sms.Conversations.THREAD_ID)
+     * (indicates that the record was not created by our application, but imported from the phone)
+     */
+    val androidId: Long?,
 
     @ColumnInfo(name = "contact_id")
     /** The contact with which the conversation is happening. */
@@ -40,4 +48,7 @@ class Conversation(
 
     @Ignore
     var contact: Contact? = null
+
+    @Ignore
+    var messages: List<Message>? = null
 }

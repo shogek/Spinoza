@@ -7,7 +7,7 @@ import android.util.Log
 
 object ContactDatabaseHelper {
 
-    private val LOG: String = ContactDatabaseHelper::class.java.simpleName
+    private val TAG: String = ContactDatabaseHelper::class.java.simpleName
 
     /** Return passed in contacts that were not found in the phone. */
     fun retrieveDeletedPhoneContacts(
@@ -15,7 +15,7 @@ object ContactDatabaseHelper {
         contacts: List<Contact>
     ): List<Contact> {
         val projection = arrayOf(ContactsContract.CommonDataKinds.Phone._ID)
-        val contactIds = contacts.map { it.id }
+        val contactIds = contacts.map { it.androidId }
 
         // Get all contacts by ID. If an ID was not returned - it was removed
         val selection = ContactsContract.CommonDataKinds.Phone._ID + " IN " + "(" + contactIds.joinToString(",") + ")"
@@ -29,7 +29,7 @@ object ContactDatabaseHelper {
         )
 
         if (cursor == null) {
-            Log.e(LOG, "Cursor is null")
+            Log.e(TAG, "Cursor is null")
             return listOf()
         }
 
@@ -41,7 +41,7 @@ object ContactDatabaseHelper {
         }
         cursor.close()
 
-        return contacts.filter { !foundIds.contains(it.id) }
+        return contacts.filter { !foundIds.contains(it.androidId) }
     }
 
     /** Retrieves all phone's contacts that were created or updated after the specified date. */
@@ -100,7 +100,7 @@ object ContactDatabaseHelper {
             null
         )
         if (cursor == null) {
-            Log.e(LOG, "Cursor is null")
+            Log.e(TAG, "Cursor is null")
             return listOf()
         }
 

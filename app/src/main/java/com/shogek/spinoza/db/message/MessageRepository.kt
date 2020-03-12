@@ -1,14 +1,28 @@
 package com.shogek.spinoza.db.message
 
+import android.content.Context
 import androidx.lifecycle.LiveData
+import com.shogek.spinoza.db.ApplicationRoomDatabase
+import kotlinx.coroutines.CoroutineScope
 
-class MessageRepository(private val messageDao: MessageDao) {
 
-    fun getAll(conversationId: Long): LiveData<List<Message>> {
-        return messageDao.getAllMessages(conversationId)
+class MessageRepository(
+    context: Context,
+    scope: CoroutineScope
+) {
+
+    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).messageDao()
+
+
+    fun getAllObservable(conversationId: Long): LiveData<List<Message>> {
+        return dao.getAllObservable(conversationId)
     }
 
     suspend fun insert(message: Message) {
-        messageDao.insert(message)
+        dao.insert(message)
+    }
+
+    suspend fun insertAll(messages: List<Message>) {
+        dao.insertAll(messages)
     }
 }

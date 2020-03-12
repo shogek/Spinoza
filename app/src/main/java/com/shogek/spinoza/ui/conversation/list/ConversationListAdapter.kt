@@ -187,7 +187,7 @@ class ConversationListAdapter(
 
             this.lastMessage.text =
                 if (conversation.snippetIsOurs)
-                    "You: ${conversation.snippetIsOurs}"
+                    "You: ${conversation.snippet}"
                 else
                     conversation.snippet
 

@@ -12,9 +12,6 @@ data class DatabaseInformation(
     @ColumnInfo(name = "id")
     val id: Long = 0,
 
-    @ColumnInfo(name = "conversation_table_last_updated_timestamp")
-    var conversationTableLastUpdatedTimestamp: Long,
-
     @ColumnInfo(name = "contact_table_last_updated_timestamp")
     var contactTableLastUpdatedTimestamp: Long
 )

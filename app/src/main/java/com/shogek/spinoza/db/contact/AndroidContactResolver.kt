@@ -5,9 +5,9 @@ import android.provider.ContactsContract
 import android.util.Log
 
 
-object AndroidContactHelper {
+object AndroidContactResolver {
 
-    private val TAG: String = AndroidContactHelper::class.java.simpleName
+    private val TAG: String = AndroidContactResolver::class.java.simpleName
 
 
     /** Return passed in contacts that were not found in the phone. */

@@ -6,9 +6,9 @@ import android.util.Log
 import com.shogek.spinoza.db.conversation.Conversation
 
 
-object AndroidMessageHelper {
+object AndroidMessageResolver {
 
-    private val TAG: String = AndroidMessageHelper::class.java.simpleName
+    private val TAG: String = AndroidMessageResolver::class.java.simpleName
 
 
     /** Retrieves messages form the phone that are not in our database. */

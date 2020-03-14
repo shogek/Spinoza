@@ -13,12 +13,12 @@ import com.shogek.spinoza.db.message.MessageDao
 import com.shogek.spinoza.db.contact.ContactDao
 import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.databaseInformation.DatabaseInformationDao
-import com.shogek.spinoza.db.contact.AndroidContactHelper
+import com.shogek.spinoza.db.contact.AndroidContactResolver
 import com.shogek.spinoza.db.contact.ContactRepository
-import com.shogek.spinoza.db.conversation.AndroidConversationHelper
+import com.shogek.spinoza.db.conversation.AndroidConversationResolver
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.databaseInformation.DatabaseInformation
-import com.shogek.spinoza.db.message.AndroidMessageHelper
+import com.shogek.spinoza.db.message.AndroidMessageResolver
 import com.shogek.spinoza.db.message.MessageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -132,13 +132,13 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
             val ourMessages = messageRepository.getAllAndroid()
 
             // Delete removed messages
-            val removedMessages = AndroidMessageHelper.retrieveDeletedAndroidMessages(context.contentResolver, ourMessages)
+            val removedMessages = AndroidMessageResolver.retrieveDeletedAndroidMessages(context.contentResolver, ourMessages)
             messageRepository.deleteAll(removedMessages)
 
             // Retrieve new messages
             val ourConversations = conversationRepository.getAllAndroid()
             val ourUpdatedMessages = ourMessages.filter { !removedMessages.contains(it) }
-            val newAndroidMessages = AndroidMessageHelper.retrieveNewAndroidMessages(context.contentResolver, ourUpdatedMessages, ourConversations)
+            val newAndroidMessages = AndroidMessageResolver.retrieveNewAndroidMessages(context.contentResolver, ourUpdatedMessages, ourConversations)
             messageRepository.insertAll(newAndroidMessages)
         }
 
@@ -146,11 +146,11 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
         private suspend fun synchronizeAndroidConversations(
             conversationRepository: ConversationRepository
         ) {
-            val androidConversations = AndroidConversationHelper.retrieveAllAndroidConversations(context.contentResolver)
+            val androidConversations = AndroidConversationResolver.retrieveAllAndroidConversations(context.contentResolver)
             val ourConversations = conversationRepository.getAll()
 
             // Delete removed conversations
-            val deletedConversations = AndroidConversationHelper.retrieveDeletedAndroidConversations(context.contentResolver, ourConversations)
+            val deletedConversations = AndroidConversationResolver.retrieveDeletedAndroidConversations(context.contentResolver, ourConversations)
             conversationRepository.deleteAll(deletedConversations)
 
             // Separate contacts to newly added ones and updated old ones
@@ -184,11 +184,11 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
             val ourContacts = contactRepository.getAll()
 
             // Delete removed contacts
-            val deleted = AndroidContactHelper.retrieveDeletedAndroidContacts(context.contentResolver, ourContacts)
+            val deleted = AndroidContactResolver.retrieveDeletedAndroidContacts(context.contentResolver, ourContacts)
             contactRepository.deleteAll(deleted)
 
             // Check if any contacts were updated
-            val upsertedContacts = AndroidContactHelper.retrieveUpsertedAndroidContacts(context.contentResolver, information.contactTableLastUpdatedTimestamp)
+            val upsertedContacts = AndroidContactResolver.retrieveUpsertedAndroidContacts(context.contentResolver, information.contactTableLastUpdatedTimestamp)
             information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
             databaseInformationRepository.updateSingleton(information)
             if (upsertedContacts.isEmpty()) {
@@ -219,7 +219,7 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
         ) {
             val information = databaseInformationRepository.getSingleton()
 
-            val androidContacts = AndroidContactHelper.retrieveAllAndroidContacts(context.contentResolver)
+            val androidContacts = AndroidContactResolver.retrieveAllAndroidContacts(context.contentResolver)
             information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
             contactRepository.insertAll(androidContacts)
             databaseInformationRepository.updateSingleton(information)
@@ -229,7 +229,7 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
         private suspend fun importAndroidConversations(
             conversationRepository: ConversationRepository
         ) {
-            val androidConversations = AndroidConversationHelper.retrieveAllAndroidConversations(context.contentResolver)
+            val androidConversations = AndroidConversationResolver.retrieveAllAndroidConversations(context.contentResolver)
             conversationRepository.insertAll(androidConversations)
         }
 
@@ -239,7 +239,7 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
             messageRepository: MessageRepository
         ) {
             val ourAndroidConversations = conversationRepository.getAllAndroid()
-            val androidMessages = AndroidMessageHelper.retrieveAllAndroidMessages(context.contentResolver, ourAndroidConversations)
+            val androidMessages = AndroidMessageResolver.retrieveAllAndroidMessages(context.contentResolver, ourAndroidConversations)
             messageRepository.insertAll(androidMessages)
         }
 

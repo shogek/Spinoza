@@ -6,9 +6,9 @@ import android.util.Log
 import androidx.core.database.getStringOrNull
 
 
-object AndroidConversationHelper {
+object AndroidConversationResolver {
 
-    private val TAG: String = AndroidConversationHelper::class.java.simpleName
+    private val TAG: String = AndroidConversationResolver::class.java.simpleName
 
 
     /** Return passed in conversations that were not found in the phone. */

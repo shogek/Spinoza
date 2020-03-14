@@ -31,8 +31,12 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
         conversations: List<Conversation>?,
         contacts: List<Contact>?
     ): List<Conversation> {
-        if (conversations == null || conversations.isEmpty() || contacts == null || contacts.isEmpty()) {
+        if (conversations.isNullOrEmpty()) {
             return listOf()
+        }
+
+        if (contacts.isNullOrEmpty()) {
+            return conversations
         }
 
         val contactTable = contacts.associateBy({it.id}, {it})

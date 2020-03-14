@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
         Contact::class,
         Message::class
     ],
-    version = 22,
+    version = 1,
     exportSchema = false
 )
 abstract class ApplicationRoomDatabase : RoomDatabase() {

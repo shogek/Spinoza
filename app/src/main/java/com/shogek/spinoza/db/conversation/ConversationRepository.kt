@@ -2,8 +2,9 @@ package com.shogek.spinoza.db.conversation
 
 import android.content.Context
 import androidx.lifecycle.LiveData
-import com.shogek.spinoza.db.ApplicationRoomDatabase
 import kotlinx.coroutines.CoroutineScope
+import com.shogek.spinoza.db.ApplicationRoomDatabase
+import com.shogek.spinoza.db.ModelHelpers
 
 
 class ConversationRepository(
@@ -11,50 +12,90 @@ class ConversationRepository(
     scope: CoroutineScope
 ) {
 
-    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).conversationDao()
+    private val conversationDao = ApplicationRoomDatabase.getDatabase(context, scope).conversationDao()
+    private val contactDao = ApplicationRoomDatabase.getDatabase(context, scope).contactDao()
+    private val messageDao = ApplicationRoomDatabase.getDatabase(context, scope).messageDao()
 
-    suspend fun delete(conversation: Conversation) {
-        dao.delete(conversation)
+    /** SIDE EFFECT - deletes associated messages */
+    suspend fun deleteAll(conversations: List<Conversation>) {
+        if (conversations.isEmpty()) {
+            return
+        }
+
+        // TODO: Move to common reusable func
+        val conversationIds = conversations.map { it.id }
+        messageDao.deleteAllByConversationIds(conversationIds)
+        conversationDao.deleteAll(conversations)
     }
 
-    suspend fun deleteAll(conversations: List<Conversation>) {
-        dao.deleteAll(conversations)
+    suspend fun deleteAllByIds(conversationIds: List<Long>) {
+        if (conversationIds.isEmpty()) {
+            return
+        }
+
+        // TODO: Move to common reusable func
+        messageDao.deleteAllByConversationIds(conversationIds)
+        conversationDao.deleteAllByIds(conversationIds)
+    }
+
+    suspend fun getByContactIds(contactIds: List<Long>): List<Conversation> {
+        if (contactIds.isEmpty()) {
+            return listOf()
+        }
+        return conversationDao.getByContactIds(contactIds)
+    }
+
+    suspend fun getAllAndroid(): List<Conversation> {
+        return conversationDao.getAllAndroid()
     }
 
     suspend fun getAll(): List<Conversation> {
-        return dao.getAll()
+        return conversationDao.getAll()
     }
 
     suspend fun getAll(ids: List<Long>): List<Conversation> {
-        return dao.getAll(ids)
+        if (ids.isEmpty()) {
+            return listOf()
+        }
+        return conversationDao.getAll(ids)
     }
 
     fun getAllObservable(): LiveData<List<Conversation>> {
-        return dao.getAllObservable()
+        return conversationDao.getAllObservable()
     }
 
     suspend fun get(id: Long): Conversation {
-        return dao.get(id)
+        return conversationDao.get(id)
     }
 
     fun getObservable(id: Long): LiveData<Conversation> {
-        return dao.getObservable(id)
+        return conversationDao.getObservable(id)
     }
 
-    suspend fun insert(conversation: Conversation): Long {
-        return dao.insert(conversation)
-    }
-
+    /** SIDE EFFECT - updates foreign key for associated contact */
     suspend fun insertAll(conversations: List<Conversation>): List<Long> {
-        return dao.insertAll(conversations)
+        if (conversations.isEmpty()) {
+            return listOf()
+        }
+
+        val contactless = conversations.filter { it.contactId == null }
+        if (contactless.isEmpty()) {
+            return conversationDao.insertAll(conversations)
+        }
+
+        val contacts = contactDao.getAll()
+        val matched = ModelHelpers.matchByPhone(conversations, contacts, onlyMatches = false)
+        return conversationDao.insertAll(matched)
     }
 
     suspend fun update(conversation: Conversation) {
-        dao.update(conversation)
+        conversationDao.update(conversation)
     }
 
     suspend fun updateAll(conversations: List<Conversation>) {
-        dao.updateAll(conversations)
+        if (conversations.isNotEmpty()) {
+            conversationDao.updateAll(conversations)
+        }
     }
 
     suspend fun update(
@@ -64,6 +105,6 @@ class ConversationRepository(
         snippetIsOurs: Boolean,
         snippetWasRead: Boolean
     ) {
-        dao.update(id, snippet, snippetTimestamp, snippetIsOurs, snippetWasRead)
+        conversationDao.update(id, snippet, snippetTimestamp, snippetIsOurs, snippetWasRead)
     }
 }

@@ -2,49 +2,83 @@ package com.shogek.spinoza.db.contact
 
 import android.content.Context
 import androidx.lifecycle.LiveData
-import com.shogek.spinoza.db.ApplicationRoomDatabase
 import kotlinx.coroutines.CoroutineScope
+import com.shogek.spinoza.db.ApplicationRoomDatabase
+import com.shogek.spinoza.db.ModelHelpers
 
 class ContactRepository(
     context: Context,
     scope: CoroutineScope
 ) {
 
-    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).contactDao()
+    private val contactDao = ApplicationRoomDatabase.getDatabase(context, scope).contactDao()
+    private val conversationDao = ApplicationRoomDatabase.getDatabase(context, scope).conversationDao()
+
 
     fun getAllObservable(): LiveData<List<Contact>> {
-        return dao.getAllObservable()
+        return contactDao.getAllObservable()
     }
 
     suspend fun getAll(): List<Contact> {
-        return dao.getAll()
+        return contactDao.getAll()
     }
 
     suspend fun getAll(contactIds: List<Long>): List<Contact> {
-        return dao.getAll(contactIds)
+        if (contactIds.isEmpty()) {
+            return listOf()
+        }
+        return contactDao.getAll(contactIds)
     }
 
     suspend fun update(contact: Contact) {
-        dao.update(contact)
+        contactDao.update(contact)
     }
 
     suspend fun updateAll(contacts: List<Contact>) {
-        dao.updateAll(contacts)
+        if (contacts.isNotEmpty()) {
+            contactDao.updateAll(contacts)
+        }
     }
 
     suspend fun insert(contact: Contact): Long {
-        return dao.insert(contact)
+        return contactDao.insert(contact)
     }
 
+    /** SIDE EFFECT - updates foreign key for associated conversations */
     suspend fun insertAll(contacts: List<Contact>): List<Long> {
-        return dao.insertAll(contacts)
+        if (contacts.isEmpty()) {
+            return listOf()
+        }
+
+        val conversations = conversationDao.getContactless()
+        if (conversations.isEmpty()) {
+            return contactDao.insertAll(contacts)
+        }
+
+        // Assign contacts to conversations if the phones match
+        val insertedIds = contactDao.insertAll(contacts)
+        val insertedContacts = contactDao.getAll(insertedIds)
+        val matched = ModelHelpers.matchByPhone(conversations, insertedContacts, onlyMatches = true)
+        if (matched.isNotEmpty()) {
+            conversationDao.updateAll(matched)
+        }
+
+        return insertedIds
     }
 
+    /** SIDE EFFECT - nulls foreign contact key for associated conversations */
     suspend fun deleteAll(contacts: List<Contact>) {
-        dao.deleteAll(contacts)
-    }
+        if (contacts.isEmpty()) {
+            return
+        }
 
-    suspend fun delete(contact: Contact) {
-        dao.delete(contact)
+        // Remove contacts from conversations
+        val contactIds = contacts.map { it.id }
+        val conversations = conversationDao.getByContactIds(contactIds)
+        if (conversations.isNotEmpty()) {
+            conversations.forEach { it.contactId = null }
+            conversationDao.updateAll(conversations)
+        }
+        contactDao.deleteAll(contacts)
     }
 }

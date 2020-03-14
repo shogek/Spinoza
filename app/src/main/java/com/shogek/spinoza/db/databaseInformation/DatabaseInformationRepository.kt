@@ -10,7 +10,7 @@ class DatabaseInformationRepository(
     scope: CoroutineScope
 ) {
 
-    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).applicationDatabaseStateDao()
+    private val dao = ApplicationRoomDatabase.getDatabase(context, scope).databaseInformationDao()
     private val singletonId: Long = 666L
 
 

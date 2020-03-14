@@ -1,7 +1,6 @@
 package com.shogek.spinoza.db
 
 import android.content.Context
-import android.telephony.PhoneNumberUtils
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -14,12 +13,12 @@ import com.shogek.spinoza.db.message.MessageDao
 import com.shogek.spinoza.db.contact.ContactDao
 import com.shogek.spinoza.db.conversation.ConversationDao
 import com.shogek.spinoza.db.databaseInformation.DatabaseInformationDao
-import com.shogek.spinoza.db.contact.ContactDatabaseHelper
+import com.shogek.spinoza.db.contact.AndroidContactHelper
 import com.shogek.spinoza.db.contact.ContactRepository
-import com.shogek.spinoza.db.conversation.ConversationDatabaseHelper
+import com.shogek.spinoza.db.conversation.AndroidConversationHelper
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.databaseInformation.DatabaseInformation
-import com.shogek.spinoza.db.message.MessageDatabaseHelper
+import com.shogek.spinoza.db.message.AndroidMessageHelper
 import com.shogek.spinoza.db.message.MessageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -32,12 +31,12 @@ import kotlinx.coroutines.launch
         Contact::class,
         Message::class
     ],
-    version = 12,
+    version = 22,
     exportSchema = false
 )
 abstract class ApplicationRoomDatabase : RoomDatabase() {
 
-    abstract fun applicationDatabaseStateDao(): DatabaseInformationDao
+    abstract fun databaseInformationDao(): DatabaseInformationDao
     abstract fun conversationDao(): ConversationDao
     abstract fun contactDao(): ContactDao
     abstract fun messageDao(): MessageDao
@@ -76,11 +75,12 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
 
         private var cameFromOnCreate = false
 
-        // TODO: [Doc] Explain
+
+        /** Destroy the database before recreating it again. */
         override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
             super.onDestructiveMigration(db)
             INSTANCE?.let { database -> scope.launch {
-                database.applicationDatabaseStateDao().nuke()
+                database.databaseInformationDao().nuke()
                 database.conversationDao().nuke()
                 database.contactDao().nuke()
                 database.messageDao().nuke()
@@ -93,9 +93,16 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
             super.onCreate(db)
             this.cameFromOnCreate = true
 
-            INSTANCE?.let {
-                this.importConversationsAndContactsFromPhone()
-            }
+            INSTANCE?.let { scope.launch {
+                val contactRepository = ContactRepository(context, scope)
+                val messageRepository = MessageRepository(context, scope)
+                val conversationRepository = ConversationRepository(context, scope)
+                val databaseInformationRepository = DatabaseInformationRepository(context, scope)
+
+                importAndroidContacts(databaseInformationRepository, contactRepository)
+                importAndroidConversations(conversationRepository)
+                importAndroidMessages(conversationRepository, messageRepository)
+            }}
         }
 
         override fun onOpen(db: SupportSQLiteDatabase) {
@@ -105,190 +112,180 @@ abstract class ApplicationRoomDatabase : RoomDatabase() {
                 return
             }
 
-            INSTANCE?.let {
-                syncConversationsAndContactsWithPhone()
-            }
+            INSTANCE?.let { scope.launch {
+                val contactRepository = ContactRepository(context, scope)
+                val messageRepository = MessageRepository(context, scope)
+                val conversationRepository = ConversationRepository(context, scope)
+                val databaseInformationRepository = DatabaseInformationRepository(context, scope)
+
+                synchronizeAndroidContacts(databaseInformationRepository, contactRepository)
+                synchronizeAndroidConversations(conversationRepository)
+                synchronizeAndroidMessages(messageRepository, conversationRepository)
+            }}
         }
 
-        /** Delete or update our contacts if they were deleted or updated in the phone. */
-        // TODO: Sync messages
-        // TODO: Refactor this shit show
-        private fun syncConversationsAndContactsWithPhone() = scope.launch {
-            val conversationRepository = ConversationRepository(context, scope)
-            val contactRepository = ContactRepository(context, scope)
-            val ourContacts = contactRepository.getAll()
-            cleanupDeletedPhoneContacts(ourContacts, contactRepository)
+        /** Import new messages or delete removed ones in case we're not the default messaging application. */
+        private suspend fun synchronizeAndroidMessages(
+            messageRepository: MessageRepository,
+            conversationRepository: ConversationRepository
+        ) {
+            val ourMessages = messageRepository.getAllAndroid()
 
-            val databaseInformationRepository = DatabaseInformationRepository(context, scope)
-            val information = databaseInformationRepository.getSingleton()
-            val upsertedPhoneContacts = ContactDatabaseHelper.retrieveUpsertedPhoneContacts(context.contentResolver, information.contactTableLastUpdatedTimestamp)
-            if (upsertedPhoneContacts.isEmpty()) {
-                syncPhoneConversations(conversationRepository, contactRepository)
-                return@launch
-            }
+            // Delete removed messages
+            val removedMessages = AndroidMessageHelper.retrieveDeletedAndroidMessages(context.contentResolver, ourMessages)
+            messageRepository.deleteAll(removedMessages)
 
-            information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
-            databaseInformationRepository.updateSingleton(information)
-
-            // Separate upserted phone contacts - to newly added ones and updated old ones
-            val ourContactTable = ourContacts.associateBy({it.androidId}, {it})
-            val newPhoneContacts = mutableListOf<Contact>()
-            val updatedPhoneContacts = mutableListOf<Contact>()
-            for (upserted in upsertedPhoneContacts) {
-                if (ourContactTable.containsKey(upserted.androidId)) {
-                    updatedPhoneContacts.add(upserted)
-                } else {
-                    newPhoneContacts.add(upserted)
-                }
-            }
-
-            contactRepository.insertAll(newPhoneContacts)
-            updateOurContacts(ourContacts, updatedPhoneContacts, contactRepository)
-
-
-            val contactless = conversationRepository.getAll().filter { it.contactId == null }
-            val matched = matchByPhone(contactless, newPhoneContacts, onlyMatches = true)
-            conversationRepository.updateAll(matched)
-
-            syncPhoneConversations(conversationRepository, contactRepository)
+            // Retrieve new messages
+            val ourConversations = conversationRepository.getAllAndroid()
+            val ourUpdatedMessages = ourMessages.filter { !removedMessages.contains(it) }
+            val newAndroidMessages = AndroidMessageHelper.retrieveNewAndroidMessages(context.contentResolver, ourUpdatedMessages, ourConversations)
+            messageRepository.insertAll(newAndroidMessages)
         }
 
-        // TODO: [Doc] Explain
-        private fun syncPhoneConversations(
-            conversationRepository: ConversationRepository,
-            contactRepository: ContactRepository
-        ) = scope.launch {
-            val phoneConversations = ConversationDatabaseHelper.retrieveAllPhoneConversations(context.contentResolver)
+        /** Import upserted conversations or delete removed ones in case we're not the default messaging application. */
+        private suspend fun synchronizeAndroidConversations(
+            conversationRepository: ConversationRepository
+        ) {
+            val androidConversations = AndroidConversationHelper.retrieveAllAndroidConversations(context.contentResolver)
             val ourConversations = conversationRepository.getAll()
-            cleanupDeletedPhoneConversations(ourConversations, conversationRepository)
+
+            // Delete removed conversations
+            val deletedConversations = AndroidConversationHelper.retrieveDeletedAndroidConversations(context.contentResolver, ourConversations)
+            conversationRepository.deleteAll(deletedConversations)
+
+            // Separate contacts to newly added ones and updated old ones
+            val newConversations = mutableListOf<Conversation>()
+            val updatedConversations = mutableListOf<Conversation>()
 
             val ourTable = ourConversations
                 .filter { it.androidId != null } // our conversations that were imported from phone
                 .associateBy({it.androidId}, {it})
 
-            val new = mutableListOf<Conversation>()
-            val updated = mutableListOf<Conversation>()
-            for (phoneConversation in phoneConversations) {
-                val ourConversation = ourTable[phoneConversation.androidId]
+            for (androidConversation in androidConversations) {
+                val ourConversation = ourTable[androidConversation.androidId]
                 if (ourConversation == null) {
-                    // New conversation was created
-                    new.add(phoneConversation)
-                    continue
+                    newConversations.add(androidConversation)
+                } else if (androidConversation.snippetTimestamp != ourConversation.snippetTimestamp || // new message
+                           androidConversation.snippetWasRead != ourConversation.snippetWasRead) { // current message was seen
+                    updatedConversations.add(androidConversation)
                 }
+            }
 
-                if (phoneConversation.snippetTimestamp == ourConversation.snippetTimestamp
-                    && phoneConversation.snippetWasRead == ourConversation.snippetWasRead) {
-                    continue
+            conversationRepository.insertAll(newConversations)
+            conversationRepository.updateAll(copyOverConversationValues(ourConversations, updatedConversations))
+        }
+
+        /** Update our contact database if any contacts were deleted or upserted in the phone. */
+        private suspend fun synchronizeAndroidContacts(
+            databaseInformationRepository: DatabaseInformationRepository,
+            contactRepository: ContactRepository
+        ) {
+            val information = databaseInformationRepository.getSingleton()
+            val ourContacts = contactRepository.getAll()
+
+            // Delete removed contacts
+            val deleted = AndroidContactHelper.retrieveDeletedAndroidContacts(context.contentResolver, ourContacts)
+            contactRepository.deleteAll(deleted)
+
+            // Check if any contacts were updated
+            val upsertedContacts = AndroidContactHelper.retrieveUpsertedAndroidContacts(context.contentResolver, information.contactTableLastUpdatedTimestamp)
+            information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
+            databaseInformationRepository.updateSingleton(information)
+            if (upsertedContacts.isEmpty()) {
+                return
+            }
+
+            // Separate contacts to newly added ones and updated old ones
+            val ourContactTable = ourContacts.associateBy({it.androidId}, {it})
+            val newContacts = mutableListOf<Contact>()
+            val updatedContacts = mutableListOf<Contact>()
+
+            for (upserted in upsertedContacts) {
+                if (ourContactTable.containsKey(upserted.androidId)) {
+                    updatedContacts.add(upserted)
+                } else {
+                    newContacts.add(upserted)
                 }
+            }
 
-                // A phone conversation was updated
-                ourConversation.snippet = phoneConversation.snippet
-                ourConversation.snippetIsOurs = phoneConversation.snippetIsOurs
-                ourConversation.snippetWasRead = phoneConversation.snippetWasRead
-                ourConversation.snippetTimestamp = phoneConversation.snippetTimestamp
+            contactRepository.insertAll(newContacts)
+            contactRepository.updateAll(copyOverContactValues(ourContacts, updatedContacts))
+        }
+
+        /** Populate our contact database with the phone's contacts. */
+        private suspend fun importAndroidContacts(
+            databaseInformationRepository: DatabaseInformationRepository,
+            contactRepository: ContactRepository
+        ) {
+            val information = databaseInformationRepository.getSingleton()
+
+            val androidContacts = AndroidContactHelper.retrieveAllAndroidContacts(context.contentResolver)
+            information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
+            contactRepository.insertAll(androidContacts)
+            databaseInformationRepository.updateSingleton(information)
+        }
+
+        /** Populate our conversation database by importing already existing ones in the phone. */
+        private suspend fun importAndroidConversations(
+            conversationRepository: ConversationRepository
+        ) {
+            val androidConversations = AndroidConversationHelper.retrieveAllAndroidConversations(context.contentResolver)
+            conversationRepository.insertAll(androidConversations)
+        }
+
+        /** Populate our message database by importing already existing ones in the phone. */
+        private suspend fun importAndroidMessages(
+            conversationRepository: ConversationRepository,
+            messageRepository: MessageRepository
+        ) {
+            val ourAndroidConversations = conversationRepository.getAllAndroid()
+            val androidMessages = AndroidMessageHelper.retrieveAllAndroidMessages(context.contentResolver, ourAndroidConversations)
+            messageRepository.insertAll(androidMessages)
+        }
+
+        private fun copyOverContactValues(
+            ourContacts: List<Contact>,
+            androidContacts: List<Contact>
+        ): List<Contact> {
+            if (ourContacts.isEmpty() || androidContacts.isEmpty()) {
+                return listOf()
+            }
+
+            val updated = mutableListOf<Contact>()
+
+            val ourContactTable = ourContacts.associateBy({it.androidId}, {it})
+            for (androidContact in androidContacts) {
+                val ourContact = ourContactTable.getValue(androidContact.androidId)
+                ourContact.name = androidContact.name
+                ourContact.phone = androidContact.phone
+                ourContact.photoUri = androidContact.photoUri
+                updated.add(ourContact)
+            }
+
+            return updated
+        }
+
+        private fun copyOverConversationValues(
+            ourConversations: List<Conversation>,
+            androidConversations: List<Conversation>
+        ): List<Conversation> {
+            if (ourConversations.isEmpty() || androidConversations.isEmpty()) {
+                return listOf()
+            }
+
+            val updated = mutableListOf<Conversation>()
+
+            val ourTable = ourConversations.associateBy({it.androidId}, {it})
+            for (androidConversation in androidConversations) {
+                val ourConversation = ourTable.getValue(androidConversation.androidId)
+                ourConversation.snippet = androidConversation.snippet
+                ourConversation.snippetIsOurs = androidConversation.snippetIsOurs
+                ourConversation.snippetWasRead = androidConversation.snippetWasRead
+                ourConversation.snippetTimestamp = androidConversation.snippetTimestamp
                 updated.add(ourConversation)
             }
 
-            conversationRepository.updateAll(updated)
-            val ourContacts = contactRepository.getAll()
-            val matched = matchByPhone(new, ourContacts, onlyMatches = false)
-            conversationRepository.insertAll(matched)
-            // TODO: Take these created/updated conversations and do the same for their messages
-        }
-
-        private fun importConversationsAndContactsFromPhone() = scope.launch {
-            val databaseInformationRepository = DatabaseInformationRepository(context, scope)
-            val information = databaseInformationRepository.getSingleton()
-
-            val phoneConversations = ConversationDatabaseHelper.retrieveAllPhoneConversations(context.contentResolver)
-            val conversationRepository = ConversationRepository(context, scope)
-            val ourConversationsIds = conversationRepository.insertAll(phoneConversations)
-            val ourConversations = conversationRepository.getAll(ourConversationsIds)
-
-            val messages = MessageDatabaseHelper.retrieveMessagesForPhoneConversations(context.contentResolver, ourConversations)
-            val contacts = ContactDatabaseHelper.retrieveAllPhoneContacts(context.contentResolver)
-            val contactRepository = ContactRepository(context, scope)
-            val ourContactIds = contactRepository.insertAll(contacts)
-            val ourContacts = contactRepository.getAll(ourContactIds)
-            information.contactTableLastUpdatedTimestamp = System.currentTimeMillis()
-
-            val conversationsWithContacts = matchByPhone(ourConversations, ourContacts, onlyMatches = false)
-            DatabaseInformationRepository(context, scope).updateSingleton(information)
-            conversationRepository.updateAll(conversationsWithContacts)
-            MessageRepository(context, scope).insertAll(messages)
-        }
-
-        private fun updateOurContacts(
-            ourContacts: List<Contact>,
-            phoneContacts: List<Contact>,
-            contactRepository: ContactRepository
-        ) {
-            val toUpdate = mutableListOf<Contact>()
-
-            val ourContactTable = ourContacts.associateBy({it.androidId}, {it})
-            for (phoneContact in phoneContacts) {
-                val ourContact = ourContactTable.getValue(phoneContact.androidId)
-                ourContact.name = phoneContact.name
-                ourContact.phone = phoneContact.phone
-                ourContact.photoUri = phoneContact.photoUri
-                toUpdate.add(ourContact)
-            }
-
-            scope.launch { contactRepository.updateAll(toUpdate) }
-        }
-
-        /**
-         * Assign a contact to a conversation if their phone numbers match.
-         * @param onlyMatches true: return only matches (contacless conversations discarded), else: return same list
-         */
-        private fun matchByPhone(
-            conversations: List<Conversation>,
-            contacts: List<Contact>,
-            onlyMatches: Boolean
-        ): List<Conversation> {
-            val result = mutableListOf<Conversation>()
-
-            for (conversation in conversations) {
-                var match: Contact? = null
-
-                for (contact in contacts) {
-                    if (PhoneNumberUtils.compare(conversation.phone, contact.phone)) {
-                        match = contact
-                        break
-                    }
-                }
-
-                if (match != null) {
-                    conversation.contactId = match.id
-                    result.add(conversation)
-                } else {
-                    if (!onlyMatches) {
-                        result.add(conversation)
-                    }
-                }
-            }
-
-            return result
-        }
-
-        private fun cleanupDeletedPhoneConversations(
-            ourConversations: List<Conversation>,
-            conversationRepository: ConversationRepository
-        ) {
-            val deleted = ConversationDatabaseHelper.retrieveDeletedPhoneConversations(context.contentResolver, ourConversations)
-            if (deleted.isNotEmpty()) {
-                scope.launch { conversationRepository.deleteAll(deleted) }
-            }
-        }
-
-        private fun cleanupDeletedPhoneContacts(
-            ourContacts: List<Contact>,
-            contactRepository: ContactRepository
-        ) {
-            val deleted = ContactDatabaseHelper.retrieveDeletedPhoneContacts(context.contentResolver, ourContacts)
-            if (deleted.isNotEmpty()) {
-                scope.launch { contactRepository.deleteAll(deleted) }
-            }
+            return updated
         }
     }
 }

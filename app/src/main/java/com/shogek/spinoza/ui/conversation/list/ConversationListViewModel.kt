@@ -46,21 +46,13 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
         return conversations
     }
 
-    fun insert(conversation: Conversation) = viewModelScope.launch {
-        conversationRepository.insert(conversation)
-    }
-
     fun archiveConversation(id: Long) {
         // TODO: [Feature] Implement archive conversation functionality
         Toast.makeText(this.context, "Archive: $id", Toast.LENGTH_SHORT).show()
     }
 
     fun deleteConversation(id: Long) = viewModelScope.launch {
-        val conversation = conversationRepository.get(id)
-        if (conversation.contact != null) {
-            contactRepository.delete(conversation.contact!!)
-        }
-        conversationRepository.delete(conversation)
+        conversationRepository.deleteAllByIds(listOf(id))
         Toast.makeText(context, "Conversation deleted", Toast.LENGTH_SHORT).show()
     }
 

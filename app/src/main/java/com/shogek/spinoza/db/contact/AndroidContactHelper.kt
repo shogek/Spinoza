@@ -5,17 +5,22 @@ import android.provider.ContactsContract
 import android.util.Log
 
 
-object ContactDatabaseHelper {
+object AndroidContactHelper {
 
-    private val TAG: String = ContactDatabaseHelper::class.java.simpleName
+    private val TAG: String = AndroidContactHelper::class.java.simpleName
+
 
     /** Return passed in contacts that were not found in the phone. */
-    fun retrieveDeletedPhoneContacts(
+    fun retrieveDeletedAndroidContacts(
         resolver: ContentResolver,
-        contacts: List<Contact>
+        androidContacts: List<Contact>
     ): List<Contact> {
+        if (androidContacts.isEmpty()) {
+            return listOf()
+        }
+
         val projection = arrayOf(ContactsContract.CommonDataKinds.Phone._ID)
-        val contactIds = contacts.map { it.androidId }
+        val contactIds = androidContacts.map { it.androidId }
 
         // Get all contacts by ID. If an ID was not returned - it was removed
         val selection = ContactsContract.CommonDataKinds.Phone._ID + " IN " + "(" + contactIds.joinToString(",") + ")"
@@ -41,11 +46,11 @@ object ContactDatabaseHelper {
         }
         cursor.close()
 
-        return contacts.filter { !foundIds.contains(it.androidId) }
+        return androidContacts.filter { !foundIds.contains(it.androidId) }
     }
 
     /** Retrieves all phone's contacts that were created or updated after the specified date. */
-    fun retrieveUpsertedPhoneContacts(
+    fun retrieveUpsertedAndroidContacts(
         resolver: ContentResolver,
         dateAfterTimestamp: Long
     ): List<Contact> {
@@ -83,8 +88,8 @@ object ContactDatabaseHelper {
         return contacts
     }
 
-    /** Retrieve contacts saved in phone. */
-    fun retrieveAllPhoneContacts(resolver: ContentResolver): List<Contact> {
+    /** Retrieve contacts saved in the phone. */
+    fun retrieveAllAndroidContacts(resolver: ContentResolver): List<Contact> {
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone._ID,
             ContactsContract.CommonDataKinds.Phone.NUMBER,

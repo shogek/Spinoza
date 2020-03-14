@@ -18,17 +18,29 @@ interface ConversationDao {
     @Delete
     suspend fun deleteAll(conversations: List<Conversation>)
 
+    @Query("DELETE FROM conversation_table WHERE id IN (:conversationIds)")
+    suspend fun deleteAllByIds(conversationIds: List<Long>)
+
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     fun getObservable(id: Long): LiveData<Conversation>
 
+    @Query("SELECT * FROM conversation_table WHERE contact_id IN (:contactIds)")
+    suspend fun getByContactIds(contactIds: List<Long>): List<Conversation>
+
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     suspend fun get(id: Long): Conversation
+
+    @Query("SELECT * FROM conversation_table WHERE android_id NOT NULL")
+    suspend fun getAllAndroid(): List<Conversation>
 
     @Query("SELECT * FROM conversation_table")
     suspend fun getAll(): List<Conversation>
 
     @Query("SELECT * FROM conversation_table WHERE id IN (:ids)")
     suspend fun getAll(ids: List<Long>): List<Conversation>
+
+    @Query("SELECT * FROM conversation_table WHERE contact_id IS NULL")
+    suspend fun getContactless(): List<Conversation>
 
     @Query("SELECT * FROM conversation_table")
     fun getAllObservable(): LiveData<List<Conversation>>

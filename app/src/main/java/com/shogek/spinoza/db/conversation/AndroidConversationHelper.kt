@@ -6,22 +6,21 @@ import android.util.Log
 import androidx.core.database.getStringOrNull
 
 
-object ConversationDatabaseHelper {
+object AndroidConversationHelper {
 
-    private val TAG: String = ConversationDatabaseHelper::class.java.simpleName
+    private val TAG: String = AndroidConversationHelper::class.java.simpleName
 
 
-    // TODO: [Doc] Explain
-    fun retrieveDeletedPhoneConversations(
+    /** Return passed in conversations that were not found in the phone. */
+    fun retrieveDeletedAndroidConversations(
         resolver: ContentResolver,
         ourConversations: List<Conversation>
     ): List<Conversation> {
-        val column = Telephony.Sms.Conversations.THREAD_ID
-        val projection = arrayOf(column)
+        val projection = arrayOf(Telephony.Sms.Conversations.THREAD_ID)
         val conversationIds = ourConversations.map { it.androidId }
 
-        // Get all contacts by ID. If an ID was not returned - it was removed
-        val selection = column + " IN " + "(" + conversationIds.joinToString(",") + ")"
+        // If the passed in conversation ID was not returned - it was removed
+        val selection = Telephony.Sms.Conversations.THREAD_ID + " IN " + "(" + conversationIds.joinToString(",") + ")"
 
         val cursor = resolver.query(
             Telephony.Sms.Conversations.CONTENT_URI,
@@ -39,7 +38,7 @@ object ConversationDatabaseHelper {
         val foundIds = mutableListOf<Long>()
 
         while (cursor.moveToNext()) {
-            val id = cursor.getLong(cursor.getColumnIndex(column))
+            val id = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Conversations.THREAD_ID))
             foundIds.add(id)
         }
         cursor.close()
@@ -47,15 +46,15 @@ object ConversationDatabaseHelper {
         return ourConversations.filter { !foundIds.contains(it.androidId) }
     }
 
-    /** Retrieve conversations saved in phone. */
-    fun retrieveAllPhoneConversations(resolver: ContentResolver): List<Conversation> {
+    /** Retrieve conversations saved in phone by other messaging applications. */
+    fun retrieveAllAndroidConversations(resolver: ContentResolver): List<Conversation> {
         val projection = arrayOf(
             Telephony.Sms.Conversations.THREAD_ID + " as " + Telephony.Sms.Conversations.THREAD_ID,
-            Telephony.Sms.Conversations.ADDRESS + " as " + Telephony.Sms.Conversations.ADDRESS,
-            Telephony.Sms.Conversations.BODY    + " as " + Telephony.Sms.Conversations.BODY,
-            Telephony.Sms.Conversations.DATE    + " as " + Telephony.Sms.Conversations.DATE,
-            Telephony.Sms.Conversations.TYPE    + " as " + Telephony.Sms.Conversations.TYPE,
-            Telephony.Sms.Conversations.READ    + " as " + Telephony.Sms.Conversations.READ
+            Telephony.Sms.Conversations.ADDRESS   + " as " + Telephony.Sms.Conversations.ADDRESS,
+            Telephony.Sms.Conversations.BODY      + " as " + Telephony.Sms.Conversations.BODY,
+            Telephony.Sms.Conversations.DATE      + " as " + Telephony.Sms.Conversations.DATE,
+            Telephony.Sms.Conversations.TYPE      + " as " + Telephony.Sms.Conversations.TYPE,
+            Telephony.Sms.Conversations.READ      + " as " + Telephony.Sms.Conversations.READ
         )
 
         val cursor = resolver.query(
@@ -70,7 +69,7 @@ object ConversationDatabaseHelper {
             return listOf()
         }
 
-        val conversations = mutableListOf<Conversation>()
+        val androidConversations = mutableListOf<Conversation>()
 
         while (cursor.moveToNext()) {
             val androidId = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Conversations.THREAD_ID))
@@ -84,10 +83,10 @@ object ConversationDatabaseHelper {
             val wasRead = read == 1
 
             val conversation = Conversation(androidId, null, phone, snippet, timestamp, isOurs, wasRead)
-            conversations.add(conversation)
+            androidConversations.add(conversation)
         }
 
         cursor.close()
-        return conversations
+        return androidConversations
     }
 }

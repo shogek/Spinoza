@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Insert
 import androidx.room.Update
 import androidx.room.Delete
+import androidx.room.Transaction
 import androidx.room.OnConflictStrategy
 
 
@@ -30,11 +31,19 @@ interface ConversationDao {
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     suspend fun get(id: Long): Conversation
 
+    @Query("SELECT * FROM conversation_table WHERE id = :id")
+    @Transaction
+    fun getWithContactAndMessagesObservable(id: Long): LiveData<ConversationAndContactAndMessages>
+
     @Query("SELECT * FROM conversation_table WHERE android_id NOT NULL")
     suspend fun getAllAndroid(): List<Conversation>
 
     @Query("SELECT * FROM conversation_table")
     suspend fun getAll(): List<Conversation>
+
+    @Query("SELECT * FROM conversation_table")
+    @Transaction
+    fun getAllWithContactsObservable(): LiveData<List<ConversationAndContact>>
 
     @Query("SELECT * FROM conversation_table WHERE id IN (:ids)")
     suspend fun getAll(ids: List<Long>): List<Conversation>

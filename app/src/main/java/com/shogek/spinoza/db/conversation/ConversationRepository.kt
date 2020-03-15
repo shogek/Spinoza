@@ -2,6 +2,7 @@ package com.shogek.spinoza.db.conversation
 
 import android.content.Context
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
 import kotlinx.coroutines.CoroutineScope
 import com.shogek.spinoza.db.ApplicationRoomDatabase
 import com.shogek.spinoza.db.ModelHelpers
@@ -38,11 +39,8 @@ class ConversationRepository(
         conversationDao.deleteAllByIds(conversationIds)
     }
 
-    suspend fun getByContactIds(contactIds: List<Long>): List<Conversation> {
-        if (contactIds.isEmpty()) {
-            return listOf()
-        }
-        return conversationDao.getByContactIds(contactIds)
+    fun getWithContactAndMessagesObservable(conversationId: Long): LiveData<Conversation> {
+        return Transformations.map(conversationDao.getWithContactAndMessagesObservable(conversationId), ::combineContactAndMessages)
     }
 
     suspend fun getAllAndroid(): List<Conversation> {
@@ -62,6 +60,10 @@ class ConversationRepository(
 
     fun getAllObservable(): LiveData<List<Conversation>> {
         return conversationDao.getAllObservable()
+    }
+
+    fun getAllWithContactsObservable(): LiveData<List<Conversation>> {
+        return Transformations.map(conversationDao.getAllWithContactsObservable(), ::combineContact)
     }
 
     suspend fun get(id: Long): Conversation {
@@ -106,5 +108,22 @@ class ConversationRepository(
         snippetWasRead: Boolean
     ) {
         conversationDao.update(id, snippet, snippetTimestamp, snippetIsOurs, snippetWasRead)
+    }
+
+    private fun combineContact(pairs: List<ConversationAndContact>): List<Conversation> {
+        val conversations = mutableListOf<Conversation>()
+
+        for (pair in pairs) {
+            pair.conversation.contact = pair.contact
+            conversations.add(pair.conversation)
+        }
+
+        return conversations
+    }
+
+    private fun combineContactAndMessages(item: ConversationAndContactAndMessages): Conversation {
+        item.conversation.contact = item.contact
+        item.conversation.messages = item.messages.sortedBy { it.timestamp }
+        return item.conversation
     }
 }

@@ -1,4 +1,4 @@
-package com.shogek.spinoza.adapters
+package com.shogek.spinoza.ui.contacts.forward
 
 import android.net.Uri
 import android.view.LayoutInflater
@@ -9,13 +9,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.shogek.spinoza.R
-import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.viewModels.ContactListForwardViewModel
+import com.shogek.spinoza.db.contact.Contact
 
-class ContactListForwardRecyclerAdapter(
-    private val context: AppCompatActivity,
-    val viewModel: ContactListForwardViewModel
-) : RecyclerView.Adapter<ContactListForwardRecyclerAdapter.ViewHolder>() {
+class ContactListForwardAdapter(
+    private val context: AppCompatActivity
+//    val viewModel: ContactListForwardViewModel
+) : RecyclerView.Adapter<ContactListForwardAdapter.ViewHolder>() {
 
     private var originalContacts: List<Contact> = emptyList()
     private var filteredContacts: MutableList<Contact> = this.originalContacts.toMutableList()
@@ -29,8 +28,8 @@ class ContactListForwardRecyclerAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val contact = this.filteredContacts[position]
-        holder.contactId = contact.id
-        holder.contactName.text = contact.displayName
+//        holder.contactId = contact.id
+//        holder.contactName.text = contact.displayName
 
         if (contact.photoUri != null)
             holder.contactPhoto.setImageURI(Uri.parse(contact.photoUri))
@@ -55,8 +54,8 @@ class ContactListForwardRecyclerAdapter(
         } else {
             // Apply filter
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.originalContacts.filter { c -> c.displayName.toLowerCase().contains(lowerCasePhrase) }
-            this.filteredContacts.addAll(filtered)
+//            val filtered = this.originalContacts.filter { c -> c.displayName.toLowerCase().contains(lowerCasePhrase) }
+//            this.filteredContacts.addAll(filtered)
         }
 
         notifyDataSetChanged()
@@ -71,7 +70,7 @@ class ContactListForwardRecyclerAdapter(
         init {
             forwardButton.setOnClickListener {
                 // TODO: [Bug] Change button only after confirming message was sent
-                viewModel.forwardMessage(this.contactId)
+//                viewModel.forwardMessage(this.contactId)
                 it.setBackgroundResource(R.color.colorWhite)
                 it.findViewById<TextView>(R.id.btn_forwardMessage).text = "SENT"
             }

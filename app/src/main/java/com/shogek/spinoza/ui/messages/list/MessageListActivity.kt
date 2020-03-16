@@ -15,16 +15,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.shogek.spinoza.*
-import com.shogek.spinoza.activities.ContactListForwardActivity
+import com.shogek.spinoza.db.contact.Contact
+import com.shogek.spinoza.ui.contacts.forward.ContactListForwardActivity
 import com.shogek.spinoza.db.conversation.Conversation
-import com.shogek.spinoza.models.Message
-import com.shogek.spinoza.events.messages.MessageReceivedEvent
-import com.shogek.spinoza.events.messages.*
-import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.repositories.ContactRepository
-import com.shogek.spinoza.repositories.ConversationRepository
-import com.shogek.spinoza.repositories.MessageRepository
-import com.shogek.spinoza.services.MessageService
+import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
@@ -134,8 +128,8 @@ class MessageListActivity : AppCompatActivity() {
         threadId: Number,
         messageText: String
     ) {
-        val sentMessage = MessageRepository(this).messageSent(threadId, messageText)
-        ConversationRepository(this).messageSent(threadId, sentMessage)
+//        val sentMessage = MessageRepository(this).messageSent(threadId, messageText)
+//        ConversationRepository(this).messageSent(threadId, sentMessage)
     }
 
     override fun onResume() {
@@ -156,24 +150,24 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun cameFromOpenConversation() {
         val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-        val repository = ConversationRepository(this)
-        val conversation = repository.get(conversationId)!!
+//        val repository = ConversationRepository(this)
+//        val conversation = repository.get(conversationId)!!
 //        this.conversation = conversation
 
-        if (!conversation.latestMessageWasRead) {
+//        if (!conversation.latestMessageWasRead) {
 //            this.viewModel.markConversationAsRead()
-        }
+//        }
 
-        this.contact = ContactRepository(this)
-            .getAll().value!!
-            .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
+//        this.contact = ContactRepository(this)
+//            .getAll().value!!
+//            .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
     }
 
     private fun cameFromWriteNewMessage() {
         val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
         val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)!!
 
-        this.contact = ContactRepository(this).get(contactId)
+//        this.contact = ContactRepository(this).get(contactId)
 
         if (conversationId != NO_CONVERSATION_ID) {
 //            this.conversation = ConversationRepository(this).get(conversationId)
@@ -261,46 +255,46 @@ class MessageListActivity : AppCompatActivity() {
         this.messageActionButtons.visibility = View.GONE
     }
 
-    @Subscribe
-    fun onMessageReceivedEvent(event: MessageReceivedEvent) {
+//    @Subscribe
+//    fun onMessageReceivedEvent(event: MessageReceivedEvent) {
 //        if (event.conversationId == this.conversation?.threadId) {
 //            this.messages.add(event.message)
 //            this.adapter.notifyDataSetChanged()
 //            rv_messageList.scrollToPosition(messages.size - 1)
 //        }
-    }
+//    }
 
-    @Subscribe
-    fun onMessageLongClicked(event: MessageLongClickedEvent) {
-        this.showMessageActionButtons()
-    }
+//    @Subscribe
+//    fun onMessageLongClicked(event: MessageLongClickedEvent) {
+//        this.showMessageActionButtons()
+//    }
 
-    @Subscribe
-    fun onMessageClicked(event: MessageClickedEvent) {
-        this.hideMessageActionButtons()
-    }
+//    @Subscribe
+//    fun onMessageClicked(event: MessageClickedEvent) {
+//        this.hideMessageActionButtons()
+//    }
 
-    @Subscribe
-    fun onMessageForwarded(event: MessageForwardedEvent) {
-        this.hideMessageActionButtons()
-        val intent = Intent(this, ContactListForwardActivity::class.java)
-        intent.putExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE, event.text)
-        this.startActivity(intent)
-    }
+//    @Subscribe
+//    fun onMessageForwarded(event: MessageForwardedEvent) {
+//        this.hideMessageActionButtons()
+//        val intent = Intent(this, ContactListForwardActivity::class.java)
+//        intent.putExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE, event.text)
+//        this.startActivity(intent)
+//    }
 
-    @Subscribe
-    fun onMessageCopied(event: MessageCopiedEvent) {
-        this.hideMessageActionButtons()
-        // TODO: [Task] Create a new toast background
-        val clipData = ClipData.newPlainText("", event.text) // 'label' is for developers only
-        val clipManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipManager.setPrimaryClip(clipData)
-        Toast.makeText(this, "Copied", Toast.LENGTH_LONG).show()
-    }
+//    @Subscribe
+//    fun onMessageCopied(event: MessageCopiedEvent) {
+//        this.hideMessageActionButtons()
+//         TODO: [Task] Create a new toast background
+//        val clipData = ClipData.newPlainText("", event.text) // 'label' is for developers only
+//        val clipManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+//        clipManager.setPrimaryClip(clipData)
+//        Toast.makeText(this, "Copied", Toast.LENGTH_LONG).show()
+//    }
 
-    @Subscribe
-    fun onMessageDeleted(event: MessageDeletedEvent) {
-        this.hideMessageActionButtons()
-        MessageService.delete(this.contentResolver, event.messageId)
-    }
+//    @Subscribe
+//    fun onMessageDeleted(event: MessageDeletedEvent) {
+//        this.hideMessageActionButtons()
+//        MessageService.delete(this.contentResolver, event.messageId)
+//    }
 }

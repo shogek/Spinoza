@@ -19,10 +19,6 @@ import androidx.core.content.ContextCompat
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
 import com.shogek.spinoza.ui.messages.list.MessageListActivity
-import com.shogek.spinoza.models.Contact
-import com.shogek.spinoza.repositories.ContactRepository
-import com.shogek.spinoza.repositories.ConversationRepository
-import com.shogek.spinoza.repositories.MessageRepository
 
 
 // More information can be found at:
@@ -53,11 +49,13 @@ object MessageNotificationHelper {
         this.registerNotificationChannel(context)
         this.propagateMessage(context, threadId, message)
 
-        val contact = this.tryGetContact(threadId, strippedPhone, context)
-        val notificationTitle = contact?.displayName ?: strippedPhone
+//        val contact = this.tryGetContact(threadId, strippedPhone, context)
+//        val notificationTitle = contact?.displayName ?: strippedPhone
+        val notificationTitle = strippedPhone
 
         // This image is used as the notification's large icon (thumbnail)
-        val picture = this.getContactPhotoAsBitmap(context.contentResolver, contact?.photoUri)
+//        val picture = this.getContactPhotoAsBitmap(context.contentResolver, contact?.photoUri)
+        val picture = this.getContactPhotoAsBitmap(context.contentResolver, null)
 
         val builder = Builder(context, CHANNEL_NEW_MESSAGES)
             // Set appropriate default for the notification light, sound and vibration
@@ -99,8 +97,8 @@ object MessageNotificationHelper {
         conversationId: Number,
         text: String
     ) {
-        val realMessage = MessageRepository(context).messageReceived(conversationId, text)
-        ConversationRepository(context).messageReceived(conversationId, realMessage)
+//        val realMessage = MessageRepository(context).messageReceived(conversationId, text)
+//        ConversationRepository(context).messageReceived(conversationId, realMessage)
 //        val realMessage = MessageCache.notifyMessageReceived(context.contentResolver, conversationId, message)
 //        ConversationRepository(context).messageReceived(conversationId, realMessage)
 //        EventBus.getDefault().postSticky(MessageReceivedEvent(conversationId, realMessage))
@@ -169,23 +167,23 @@ object MessageNotificationHelper {
             .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    private fun tryGetContact(
-        threadId: Number,
-        strippedPhone: String,
-        context: Context
-    ): Contact? {
-        val contact = ConversationRepository(context).get(threadId)?.contact
-        if (contact != null)
-            return contact
-
-        // Maybe a new 'Contact' record was created while our app was opened (cached)?
-        val newContact = ContactRepository(context)
-            .getAll().value!!
-            .find { it.strippedPhone ==  strippedPhone }
-        if (newContact == null ) {
-            Log.i(this.TAG, "'Contact' record not found.")
-        }
-
-        return newContact
-    }
+//    private fun tryGetContact(
+//        threadId: Number,
+//        strippedPhone: String,
+//        context: Context
+//    ): Contact? {
+//        val contact = ConversationRepository(context).get(threadId)?.contact
+//        if (contact != null)
+//            return contact
+//
+//        // Maybe a new 'Contact' record was created while our app was opened (cached)?
+//        val newContact = ContactRepository(context)
+//            .getAll().value!!
+//            .find { it.strippedPhone ==  strippedPhone }
+//        if (newContact == null ) {
+//            Log.i(this.TAG, "'Contact' record not found.")
+//        }
+//
+//        return newContact
+//    }
 }

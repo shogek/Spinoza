@@ -1,4 +1,4 @@
-package com.shogek.spinoza.activities
+package com.shogek.spinoza.ui.contacts.forward
 
 import android.app.Activity
 import androidx.appcompat.app.AppCompatActivity
@@ -10,37 +10,40 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
-import com.shogek.spinoza.adapters.ContactListForwardRecyclerAdapter
-import com.shogek.spinoza.viewModels.ContactListForwardViewModel
 import kotlinx.android.synthetic.main.activity_contact_list.*
 
 class ContactListForwardActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: ContactListForwardViewModel
+//    private lateinit var viewModel: ContactListForwardViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list_forward)
 
-        this.viewModel = ViewModelProviders.of(this).get(ContactListForwardViewModel::class.java)
+        // TODO: [Refactor]
+//        this.viewModel = ViewModelProviders.of(this).get(ContactListForwardViewModel::class.java)
 
-        val textToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE)!!
-        this.viewModel.setTextToForward(textToForward)
+//        val textToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE)!!
+//        this.viewModel.setTextToForward(textToForward)
 
-        val adapter = ContactListForwardRecyclerAdapter(this, this.viewModel)
-        this.viewModel.contacts.observe(this, Observer { contacts ->
-            val sorted = contacts.sortedBy { it.displayName }
-            adapter.setContacts(sorted)
-        })
+//        val adapter =
+//            ContactListForwardAdapter(
+//                this,
+//                this.viewModel
+//            )
+//        this.viewModel.contacts.observe(this, Observer { contacts ->
+//            val sorted = contacts.sortedBy { it.displayName }
+//            adapter.setContacts(sorted)
+//        })
 
-        rv_contactList.adapter = adapter
-        rv_contactList.layoutManager = LinearLayoutManager(this)
-
-        this.initButtonReturn()
-        this.initContactFilter(adapter)
+//        rv_contactList.adapter = adapter
+//        rv_contactList.layoutManager = LinearLayoutManager(this)
+//
+//        this.initButtonReturn()
+//        this.initContactFilter(adapter)
     }
 
-    private fun initContactFilter(recyclerAdapter: ContactListForwardRecyclerAdapter) {
+    private fun initContactFilter(recyclerAdapter: ContactListForwardAdapter) {
         et_filterContacts.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

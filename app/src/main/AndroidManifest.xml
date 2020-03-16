@@ -24,7 +24,7 @@
     >
 
         <activity
-            android:name=".activities.ContactListForwardActivity"
+            android:name=".ui.contacts.forward.ContactListForwardActivity"
             android:theme="@style/MessengerStyleActionBarTheme"
         ></activity>
 

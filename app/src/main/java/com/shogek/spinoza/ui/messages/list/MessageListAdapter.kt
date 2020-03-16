@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
-import com.shogek.spinoza.events.messages.*
 import com.shogek.spinoza.db.message.Message
 import org.greenrobot.eventbus.EventBus
 import java.lang.IllegalArgumentException
@@ -41,9 +40,9 @@ class MessageListAdapter(
 
     init {
         val bus = EventBus.getDefault()
-        buttonCopyMessage.setOnClickListener    { bus.post(MessageCopiedEvent(selectedMessage!!.body)) }
+        buttonCopyMessage.setOnClickListener    { /*bus.post(MessageCopiedEvent(selectedMessage!!.body))*/ }
         buttonRemoveMessage.setOnClickListener  { /*bus.post(MessageDeletedEvent(selectedMessage!!.id))*/ }
-        buttonForwardMessage.setOnClickListener { bus.post(MessageForwardedEvent(selectedMessage!!.body)) }
+        buttonForwardMessage.setOnClickListener { /*bus.post(MessageForwardedEvent(selectedMessage!!.body))*/ }
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -96,12 +95,12 @@ class MessageListAdapter(
 
     private fun messageLongClicked(message: Message) {
         this.selectedMessage = message
-        EventBus.getDefault().post(MessageLongClickedEvent(null))
+//        EventBus.getDefault().post(MessageLongClickedEvent(null))
     }
 
     private fun messageClicked() {
         this.selectedMessage = null
-        EventBus.getDefault().post(MessageClickedEvent(null))
+//        EventBus.getDefault().post(MessageClickedEvent(null))
     }
 
     fun setContactImage(photoUri: String?) {

@@ -9,7 +9,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.R
-import com.shogek.spinoza.repositories.ContactRepository
 import kotlinx.android.synthetic.main.activity_contact_list.*
 
 class ContactListActivity : AppCompatActivity() {

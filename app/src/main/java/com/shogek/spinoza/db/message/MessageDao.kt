@@ -29,6 +29,8 @@ interface MessageDao {
     @Delete
     suspend fun deleteAll(messages: List<Message>)
 
+    @Delete
+    suspend fun delete(message: Message)
 
 
     @Query("DELETE FROM message_table")

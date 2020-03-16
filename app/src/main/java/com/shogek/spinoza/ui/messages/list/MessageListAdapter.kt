@@ -7,20 +7,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
 import com.shogek.spinoza.db.message.Message
-import org.greenrobot.eventbus.EventBus
 import java.lang.IllegalArgumentException
 
 class MessageListAdapter(
     context: Context,
-    buttonCopyMessage: ConstraintLayout,
-    buttonRemoveMessage: ConstraintLayout,
-    buttonForwardMessage: ConstraintLayout
+    private val onClickMessage: () -> Unit,
+    private val onLongClickMessage: (message: Message) -> Unit
 ): RecyclerView.Adapter<MessageListAdapter.BaseViewHolder>() {
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -30,7 +27,7 @@ class MessageListAdapter(
     private var senderPhotoUri: String? = null
     private var messages = listOf<Message>()
     private val layoutInflater = LayoutInflater.from(context)
-    private var selectedMessage: Message? = null
+
 
     private companion object {
         const val TYPE_MESSAGE_OUR = R.layout.message_list_item_ours
@@ -38,12 +35,6 @@ class MessageListAdapter(
         const val TYPE_MESSAGE_THEIRS_NO_IMAGE = R.layout.message_list_item_theirs_no_image
     }
 
-    init {
-        val bus = EventBus.getDefault()
-        buttonCopyMessage.setOnClickListener    { /*bus.post(MessageCopiedEvent(selectedMessage!!.body))*/ }
-        buttonRemoveMessage.setOnClickListener  { /*bus.post(MessageDeletedEvent(selectedMessage!!.id))*/ }
-        buttonForwardMessage.setOnClickListener { /*bus.post(MessageForwardedEvent(selectedMessage!!.body))*/ }
-    }
 
     override fun getItemViewType(position: Int): Int {
         val message = this.messages[position]
@@ -94,13 +85,11 @@ class MessageListAdapter(
     }
 
     private fun messageLongClicked(message: Message) {
-        this.selectedMessage = message
-//        EventBus.getDefault().post(MessageLongClickedEvent(null))
+        this.onLongClickMessage(message)
     }
 
     private fun messageClicked() {
-        this.selectedMessage = null
-//        EventBus.getDefault().post(MessageClickedEvent(null))
+        this.onClickMessage()
     }
 
     fun setContactImage(photoUri: String?) {
@@ -111,6 +100,7 @@ class MessageListAdapter(
         this.messages = messages
         notifyDataSetChanged()
     }
+
 
     inner class OurMessageViewHolder(itemView: View) : BaseViewHolder(itemView) {
         lateinit var message: Message
@@ -123,7 +113,7 @@ class MessageListAdapter(
 
         init {
             itemView.setOnLongClickListener { messageLongClicked(this.message); true }
-            itemView.setOnClickListener     { messageClicked() }
+            itemView.setOnClickListener { messageClicked() }
         }
     }
 
@@ -144,7 +134,7 @@ class MessageListAdapter(
 
         init {
             itemView.setOnLongClickListener { messageLongClicked(this.message); true }
-            itemView.setOnClickListener     { messageClicked() }
+            itemView.setOnClickListener { messageClicked() }
         }
     }
 

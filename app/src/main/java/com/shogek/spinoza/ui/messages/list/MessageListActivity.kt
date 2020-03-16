@@ -16,19 +16,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.shogek.spinoza.*
 import com.shogek.spinoza.db.contact.Contact
-import com.shogek.spinoza.ui.contacts.forward.ContactListForwardActivity
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.android.synthetic.main.activity_message_list.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
 
 class MessageListActivity : AppCompatActivity() {
 
-//    private lateinit var viewModel: MessageListViewModel
-    private lateinit var vm: MessageListViewModel
+    private lateinit var viewModel: MessageListViewModel
 
     companion object {
         const val NO_CONVERSATION_ID = -1L
@@ -61,7 +57,7 @@ class MessageListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_message_list)
 
         val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-        this.vm = ViewModelProvider(this)
+        this.viewModel = ViewModelProvider(this)
             .get(MessageListViewModel::class.java)
             .init(conversationId)
 
@@ -73,27 +69,21 @@ class MessageListActivity : AppCompatActivity() {
             Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
         }
 
-        val buttonCopyMessage     = findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn)
-        val buttonRemoveMessage   = findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn)
-        val buttonForwardMessage  = findViewById<ConstraintLayout>(R.id.cl_forwardMessageColumn)
+        findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn).setOnClickListener { this.onClickCopyMessage() }
+        findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn).setOnClickListener { this.onClickRemoveMessage() }
+        findViewById<ConstraintLayout>(R.id.cl_forwardMessageColumn).setOnClickListener { this.onClickForwardMessage() }
         this.messageActionButtons = findViewById(R.id.cl_messageActionsRow)
 
-        this.adapter =
-            MessageListAdapter(
-                this,
-                buttonCopyMessage,
-                buttonRemoveMessage,
-                buttonForwardMessage
-            )
+        this.adapter = MessageListAdapter(this, ::onMessageClick, ::onMessageLongClick)
 
-        this.vm.conversation.observe(this, Observer { conversation ->
+        this.viewModel.conversation.observe(this, Observer { conversation ->
             // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
             this.initButtonSendMessage(conversation.phone, conversation.id)
             // TODO: [Style] Add elevation to message box when not at bottom.
             val title = conversation.contact?.getDisplayTitle() ?: conversation.phone
             this.setToolbarInformation(title, conversation.contact?.photoUri)
 
-            this.vm.markConversationAsRead(conversation)
+            this.viewModel.markConversationAsRead(conversation)
 
             if (conversation.contact != null) {
                 val contact = conversation.contact!!
@@ -114,6 +104,39 @@ class MessageListActivity : AppCompatActivity() {
         this.initButtonReturn()
     }
 
+    private fun onMessageClick() {
+        this.viewModel.onMessageClick()
+        this.hideMessageActionButtons()
+    }
+
+    private fun onMessageLongClick(message: Message) {
+        this.viewModel.onMessageLongClick(message)
+        this.showMessageActionButtons()
+    }
+
+    private fun onClickCopyMessage() {
+        this.hideMessageActionButtons()
+        this.viewModel.copyMessage()
+    }
+
+    private fun onClickRemoveMessage() {
+        this.hideMessageActionButtons()
+        this.viewModel.removeMessage()
+    }
+
+    private fun onClickForwardMessage() {
+        this.hideMessageActionButtons()
+        this.viewModel.forwardMessage()
+    }
+
+    private fun showMessageActionButtons() {
+        this.messageActionButtons.visibility = View.VISIBLE
+    }
+
+    private fun hideMessageActionButtons() {
+        this.messageActionButtons.visibility = View.GONE
+    }
+
     private fun onMessageSentSuccess(
         threadId: Number,
         messageText: String
@@ -124,7 +147,7 @@ class MessageListActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        this.vm.conversation.observe(this, Observer { conversation ->
+        this.viewModel.conversation.observe(this, Observer { conversation ->
             if (conversation != null) {
                 CommonState.setCurrentOpenConversationId(conversation.id)
             }
@@ -236,55 +259,4 @@ class MessageListActivity : AppCompatActivity() {
         this.messageIndex++
         return number
     }
-
-    private fun showMessageActionButtons() {
-        this.messageActionButtons.visibility = View.VISIBLE
-    }
-
-    private fun hideMessageActionButtons() {
-        this.messageActionButtons.visibility = View.GONE
-    }
-
-//    @Subscribe
-//    fun onMessageReceivedEvent(event: MessageReceivedEvent) {
-//        if (event.conversationId == this.conversation?.threadId) {
-//            this.messages.add(event.message)
-//            this.adapter.notifyDataSetChanged()
-//            rv_messageList.scrollToPosition(messages.size - 1)
-//        }
-//    }
-
-//    @Subscribe
-//    fun onMessageLongClicked(event: MessageLongClickedEvent) {
-//        this.showMessageActionButtons()
-//    }
-
-//    @Subscribe
-//    fun onMessageClicked(event: MessageClickedEvent) {
-//        this.hideMessageActionButtons()
-//    }
-
-//    @Subscribe
-//    fun onMessageForwarded(event: MessageForwardedEvent) {
-//        this.hideMessageActionButtons()
-//        val intent = Intent(this, ContactListForwardActivity::class.java)
-//        intent.putExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE, event.text)
-//        this.startActivity(intent)
-//    }
-
-//    @Subscribe
-//    fun onMessageCopied(event: MessageCopiedEvent) {
-//        this.hideMessageActionButtons()
-//         TODO: [Task] Create a new toast background
-//        val clipData = ClipData.newPlainText("", event.text) // 'label' is for developers only
-//        val clipManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-//        clipManager.setPrimaryClip(clipData)
-//        Toast.makeText(this, "Copied", Toast.LENGTH_LONG).show()
-//    }
-
-//    @Subscribe
-//    fun onMessageDeleted(event: MessageDeletedEvent) {
-//        this.hideMessageActionButtons()
-//        MessageService.delete(this.contentResolver, event.messageId)
-//    }
 }

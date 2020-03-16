@@ -32,6 +32,10 @@ class MessageRepository(
         }
     }
 
+    suspend fun delete(message: Message) {
+        messageDao.delete(message)
+    }
+
     suspend fun deleteAll(messages: List<Message>) {
         if (messages.isNotEmpty()) {
             messageDao.deleteAll(messages)

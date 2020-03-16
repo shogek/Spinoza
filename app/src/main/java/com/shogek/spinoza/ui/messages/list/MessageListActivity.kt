@@ -116,12 +116,12 @@ class MessageListActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        EventBus.getDefault().register(this)
+//        EventBus.getDefault().register(this)
     }
 
     override fun onStop() {
         super.onStop()
-        EventBus.getDefault().unregister(this)
+//        EventBus.getDefault().unregister(this)
     }
 
     private fun onMessageSentSuccess(

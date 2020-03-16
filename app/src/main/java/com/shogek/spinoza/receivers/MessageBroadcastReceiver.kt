@@ -5,16 +5,14 @@ import android.content.Context
 import android.content.Intent
 import android.telephony.SmsMessage
 import android.util.Log
-import androidx.lifecycle.Observer
-import com.shogek.spinoza.db.ApplicationRoomDatabase
 import com.shogek.spinoza.db.conversation.Conversation
-import com.shogek.spinoza.db.conversation.ConversationDao
+import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
+import com.shogek.spinoza.db.message.MessageRepository
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.coroutines.*
-import kotlin.coroutines.CoroutineContext
 
-class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) : BroadcastReceiver(), CoroutineScope {
+class MessageBroadcastReceiver : BroadcastReceiver() {
 
     private companion object {
         val LOG = MessageBroadcastReceiver::class.java.simpleName
@@ -39,62 +37,85 @@ class MessageBroadcastReceiver(override val coroutineContext: CoroutineContext) 
 
             return BasicMessage(senderPhone, messageText, timestamp)
         }
-
-        /** Create a new conversation or update an existing one with the latest message. */
-//        fun upsertConversation(
-//            allConversations: List<Conversation>?,
-//            conversationDao: ConversationDao,
-//            message: BasicMessage
-//        ): Long {
-//            // TODO: [Refactor] Use async
-//            // TODO: [Bug] Look for an existing contact first
-//            // TODO: Fix
-//            var ownerConversation = allConversations?.find { it.phone == message.senderPhone }
-//            if (ownerConversation == null) {
-//                ownerConversation = Conversation(null, message.senderPhone, message.messageText, message.timestamp, snippetIsOurs = false, snippetWasRead = false)
-//                runBlocking { ownerConversation.id = conversationDao.insert(ownerConversation) }
-//            } else {
-//                // TODO: Test this
-//                val openedConversationId = CommonState.getCurrentOpenConversationId()
-//                val wasMessageRead = openedConversationId == ownerConversation.id
-//                runBlocking { conversationDao.update(ownerConversation.id, message.messageText, message.timestamp, false, wasMessageRead) }
-//            }
-//
-//            return ownerConversation.id
-//        }
     }
 
     /** Called when a new SMS is received. */
-    override fun onReceive(context: Context?, intent: Intent?) {
+    override fun onReceive(context: Context?, intent: Intent?) = runBlocking {
         if (context == null || intent == null) {
             Log.e(LOG, "'context' or 'intent' is null")
-            return
+            return@runBlocking
         }
 
         val basicMessage = parseReceivedMessage(intent)
-            ?: return
+            ?: return@runBlocking
 
-//        handleReceivedMessageAsync(context, basicMessage)
+        val messageRepository = MessageRepository(context, this)
+        val conversationRepository = ConversationRepository(context, this)
+
+        val existingConversation = conversationRepository.getByPhone(basicMessage.senderPhone)
+        if (existingConversation == null) {
+            createNewConversation(conversationRepository, messageRepository, basicMessage)
+        } else {
+            updateExistingConversation(conversationRepository, messageRepository, existingConversation, basicMessage)
+        }
     }
 
-//    private fun handleReceivedMessageAsync(
-//        context: Context,
-//        basicMessage: BasicMessage
-//    ): Deferred<Unit> = async {
-//        val conversationDao = ApplicationRoomDatabase.getDatabase(context, this).conversationDao()
-//        val messageDao = ApplicationRoomDatabase.getDatabase(context, this).messageDao()
-//        val conversationData = conversationDao.getAllObservable()
-//        conversationData.observeForever(object : Observer<List<Conversation>> {
-//            override fun onChanged(allConversations: List<Conversation>?) {
-//                val id = upsertConversation(allConversations, conversationDao, basicMessage)
-//                val message = Message(id, basicMessage.messageText, basicMessage.timestamp, isOurs = false)
-//                launch { messageDao.insert(message) }
-//
-//                conversationData.removeObserver(this)
-//            }
-//
-//        })
-//    }
+    private suspend fun createNewConversation(
+        conversationRepository: ConversationRepository,
+        messageRepository: MessageRepository,
+        basicMessage: BasicMessage
+    ) {
+        // A conversation doesn't exist with the person
+        val newConversation = Conversation(
+            null, // conversation not imported from phone
+            null, // contact will be assigned (if found) when inserting to DB
+            basicMessage.senderPhone,
+            basicMessage.messageText,
+            basicMessage.timestamp,
+            snippetIsOurs = false,
+            snippetWasRead = false
+        )
+        val conversationId = conversationRepository.insertAll(listOf(newConversation)).first()
+        val message = Message(
+            null, // message not imported from phone
+            conversationId,
+            basicMessage.messageText,
+            basicMessage.timestamp,
+            isOurs = false
+        )
+
+        messageRepository.insert(message)
+    }
+
+    private suspend fun updateExistingConversation(
+        conversationRepository: ConversationRepository,
+        messageRepository: MessageRepository,
+        existingConversation: Conversation,
+        basicMessage: BasicMessage
+    ) {
+        var snippetWasRead = false
+
+        val currentOpenConversationId = CommonState.getCurrentOpenConversationId()
+        if (currentOpenConversationId != null && existingConversation.id == currentOpenConversationId) {
+            snippetWasRead = true
+        }
+
+        existingConversation.snippetIsOurs = false
+        existingConversation.snippetWasRead = snippetWasRead
+        existingConversation.snippet = basicMessage.messageText
+        existingConversation.snippetTimestamp = basicMessage.timestamp
+        conversationRepository.update(existingConversation)
+
+        val message = Message(
+            null, // message not imported from phone
+            existingConversation.id,
+            basicMessage.messageText,
+            basicMessage.timestamp,
+            isOurs = false
+        )
+
+        messageRepository.insert(message)
+    }
 }
 
 data class BasicMessage(

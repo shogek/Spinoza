@@ -28,6 +28,9 @@ interface ConversationDao {
     @Query("SELECT * FROM conversation_table WHERE contact_id IN (:contactIds)")
     suspend fun getByContactIds(contactIds: List<Long>): List<Conversation>
 
+    @Query("SELECT * FROM conversation_table WHERE phone = :phone")
+    suspend fun getByPhone(phone: String): Conversation?
+
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     suspend fun get(id: Long): Conversation
 

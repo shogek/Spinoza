@@ -49,28 +49,28 @@
             </intent-filter>
         </activity>
 
-<!--        <receiver-->
-<!--            android:name=".receivers.MessageBroadcastReceiver"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.provider.Telephony.SMS_RECEIVED" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
+        <receiver
+            android:name=".receivers.MessageBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
         <!--    UNCOMMENT IF WANT TO ALLOW TO SET APP AS DEFAULT MESSAGING APP -->
 
 
         <!-- BroadcastReceiver that listens for incoming SMS messages -->
-        <receiver
-            android:name=".receivers.MessageBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_DELIVER" />
-            </intent-filter>
-        </receiver>
+<!--        <receiver-->
+<!--            android:name=".receivers.MessageBroadcastReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true"-->
+<!--            android:permission="android.permission.BROADCAST_SMS">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.provider.Telephony.SMS_DELIVER" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
 
         <!-- BroadcastReceiver that listens for incoming MMS messages -->
         <receiver android:name=".MmsReceiver"

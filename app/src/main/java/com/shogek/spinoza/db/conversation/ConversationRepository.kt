@@ -66,12 +66,12 @@ class ConversationRepository(
         return Transformations.map(conversationDao.getAllWithContactsObservable(), ::combineContact)
     }
 
-    suspend fun get(id: Long): Conversation {
-        return conversationDao.get(id)
+    suspend fun getByPhone(phone: String): Conversation? {
+        return conversationDao.getByPhone(phone)
     }
 
-    fun getObservable(id: Long): LiveData<Conversation> {
-        return conversationDao.getObservable(id)
+    suspend fun get(id: Long): Conversation {
+        return conversationDao.get(id)
     }
 
     /** SIDE EFFECT - updates foreign key for associated contact */

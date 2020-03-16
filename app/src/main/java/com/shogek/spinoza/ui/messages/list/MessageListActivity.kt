@@ -73,8 +73,6 @@ class MessageListActivity : AppCompatActivity() {
             Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
         }
 
-//        EventBus.getDefault().postSticky(ConversationOpenedEvent(this.conversation?.threadId))
-
         val buttonCopyMessage     = findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn)
         val buttonRemoveMessage   = findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn)
         val buttonForwardMessage  = findViewById<ConstraintLayout>(R.id.cl_forwardMessageColumn)
@@ -95,6 +93,8 @@ class MessageListActivity : AppCompatActivity() {
             val title = conversation.contact?.getDisplayTitle() ?: conversation.phone
             this.setToolbarInformation(title, conversation.contact?.photoUri)
 
+            this.vm.markConversationAsRead(conversation)
+
             if (conversation.contact != null) {
                 val contact = conversation.contact!!
                 adapter.setContactImage(contact.photoUri)
@@ -112,16 +112,6 @@ class MessageListActivity : AppCompatActivity() {
         rv_messageList.layoutManager = LinearLayoutManager(this)
 
         this.initButtonReturn()
-    }
-
-    override fun onStart() {
-        super.onStart()
-//        EventBus.getDefault().register(this)
-    }
-
-    override fun onStop() {
-        super.onStop()
-//        EventBus.getDefault().unregister(this)
     }
 
     private fun onMessageSentSuccess(

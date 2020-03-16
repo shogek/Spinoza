@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
+import kotlinx.coroutines.launch
 
 
 class MessageListViewModel(application: Application) : AndroidViewModel(application) {
@@ -17,5 +18,16 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
     fun init(conversationId: Long): MessageListViewModel {
         this.conversation = conversationRepository.getWithContactAndMessagesObservable(conversationId)
         return this
+    }
+
+    fun markConversationAsRead(conversation: Conversation) {
+        if (conversation.snippetWasRead) {
+            return
+        }
+
+        conversation.snippetWasRead = true
+        viewModelScope.launch {
+            conversationRepository.update(conversation)
+        }
     }
 }

@@ -12,12 +12,16 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.list.listItems
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
+import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.ui.contacts.list.ContactListActivity
 import com.shogek.spinoza.ui.messages.list.MessageListActivity
 import com.shogek.spinoza.utils.UnitUtils
 import kotlinx.android.synthetic.main.activity_conversation_list.*
+import java.security.InvalidParameterException
 
 
 class ConversationListActivity : AppCompatActivity() {
@@ -76,7 +80,7 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
-        val adapter = ConversationListAdapter(this, this.viewModel)
+        val adapter = ConversationListAdapter(this, ::onClickConversation, ::onLongClickConversation)
 
         this.viewModel.conversations.observe(this, Observer { conversations ->
             val sorted = conversations.sortedByDescending { it.snippetTimestamp }
@@ -110,6 +114,39 @@ class ConversationListActivity : AppCompatActivity() {
         createNewMessage.setOnClickListener {
             val intent = Intent(this, ContactListActivity::class.java)
             startActivityForResult(intent, REQUEST_PICK_CONTACT)
+        }
+    }
+
+    private fun onClickConversation(conversation: Conversation) {
+        this.viewModel.onConversationClick(conversation)
+    }
+
+    private fun onLongClickConversation(conversation: Conversation) {
+        this.openConversationActionsModal(conversation)
+    }
+
+    private fun openConversationActionsModal(conversation: Conversation) {
+        MaterialDialog(this).show {
+            title(R.string.conversation_list_item_options_title)
+
+            val archive = context.getString(R.string.conversation_list_item_option_archive)
+            val delete  = context.getString(R.string.conversation_list_item_option_delete)
+            val mute    = context.getString(R.string.conversation_list_item_option_mute)
+            val unread  = context.getString(R.string.conversation_list_item_option_unread)
+            val ignore  = context.getString(R.string.conversation_list_item_option_ignore)
+            val block   = context.getString(R.string.conversation_list_item_option_block)
+
+            listItems(items = listOf(archive, delete, mute, unread, ignore, block)) { _, _, text ->
+                when (text) {
+                    archive -> viewModel.archiveConversation(conversation)
+                    delete  -> viewModel.deleteConversation(conversation)
+                    mute    -> viewModel.muteConversation(conversation)
+                    unread  -> viewModel.markAsUnreadConversation(conversation)
+                    ignore  -> viewModel.ignoreConversation(conversation)
+                    block   -> viewModel.blockConversation(conversation)
+                    else -> throw InvalidParameterException("Unknown conversation action!")
+                }
+            }
         }
     }
 

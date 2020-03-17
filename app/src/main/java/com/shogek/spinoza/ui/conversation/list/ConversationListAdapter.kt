@@ -8,16 +8,11 @@ import android.text.TextWatcher
 import android.view.*
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
-import com.afollestad.materialdialogs.MaterialDialog
-import com.afollestad.materialdialogs.list.listItems
 import com.bumptech.glide.Glide
-import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
-import com.shogek.spinoza.ui.messages.list.MessageListActivity
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.utils.DateUtils
 import java.lang.IllegalArgumentException
-import java.security.InvalidParameterException
 import java.time.format.DateTimeFormatter
 import java.time.*
 import java.time.format.TextStyle
@@ -25,7 +20,8 @@ import java.util.*
 
 class ConversationListAdapter(
     private val context: Context,
-    private val viewModel: ConversationListViewModel
+    private val onClickConversation: (conversation: Conversation) -> Unit,
+    private val onLongClickConversation: (conversation: Conversation) -> Unit
 ) : RecyclerView.Adapter<ConversationListAdapter.BaseViewHolder>() {
 
     private val layoutInflater = LayoutInflater.from(context)
@@ -136,54 +132,22 @@ class ConversationListAdapter(
         notifyDataSetChanged()
     }
 
-    fun openConversationOptionsDialog(conversationId: Long) {
-        MaterialDialog(context).show {
-            title(R.string.conversation_list_item_options_title)
-
-            val textArchive = context.getString(R.string.conversation_list_item_option_archive)
-            val textDelete  = context.getString(R.string.conversation_list_item_option_delete)
-            val textMute    = context.getString(R.string.conversation_list_item_option_mute)
-            val textUnread  = context.getString(R.string.conversation_list_item_option_unread)
-            val textIgnore  = context.getString(R.string.conversation_list_item_option_ignore)
-            val textBlock   = context.getString(R.string.conversation_list_item_option_block)
-
-            listItems(items = listOf(textArchive, textDelete, textMute, textUnread, textIgnore, textBlock)) { _, _, text ->
-                when (text) {
-                    textArchive -> viewModel.archiveConversation(conversationId)
-                    textDelete  -> viewModel.deleteConversation(conversationId)
-                    textMute    -> viewModel.muteConversation(conversationId)
-                    textUnread  -> viewModel.markAsUnreadConversation(conversationId)
-                    textIgnore  -> viewModel.ignoreConversation(conversationId)
-                    textBlock   -> viewModel.blockConversation(conversationId)
-                    else -> throw InvalidParameterException("Unknown conversation action!")
-                }
-            }
-        }
-    }
-
     inner class ConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val sender: TextView = itemView.findViewById(R.id.tv_sender)
         private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
         private val senderImage: ImageView = itemView.findViewById(R.id.iv_sender)
         private val date: TextView = itemView.findViewById(R.id.tv_messageDate)
-        private var conversationId: Long = -1
+        private lateinit var conversation: Conversation
 
         init {
-            itemView.setOnClickListener {
-                val intent = Intent(context, MessageListActivity::class.java)
-                intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
-                intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, this.conversationId)
-                context.startActivity(intent)
-                // TODO: [Bug] Find a simple way to clear search after exiting activity
-            }
-
-            itemView.setOnLongClickListener { openConversationOptionsDialog(conversationId); true }
+            itemView.setOnClickListener { onClickConversation(conversation)}
+            itemView.setOnLongClickListener { onLongClickConversation(conversation); true }
         }
 
         override fun bind(conversation: Conversation?) {
             // TODO: Why can 'conversation' be null?
-            conversationId = conversation!!.id
-            sender.text = conversation.contact?.getDisplayTitle() ?: conversation.phone
+            this.conversation = conversation!!
+            this.sender.text = conversation.contact?.getDisplayTitle() ?: conversation.phone
 
             this.lastMessage.text =
                 if (conversation.snippetIsOurs)

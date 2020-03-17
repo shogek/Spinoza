@@ -27,6 +27,7 @@ import java.security.InvalidParameterException
 class ConversationListActivity : AppCompatActivity() {
 
     private lateinit var viewModel: ConversationListViewModel
+    private lateinit var adapter: ConversationListAdapter
 
     companion object {
         const val REQUEST_PICK_CONTACT = 0
@@ -80,7 +81,7 @@ class ConversationListActivity : AppCompatActivity() {
     }
 
     private fun initApp() {
-        val adapter = ConversationListAdapter(this, ::onClickConversation, ::onLongClickConversation)
+        this.adapter = ConversationListAdapter(this, ::onClickConversation, ::onLongClickConversation)
 
         this.viewModel.conversations.observe(this, Observer { conversations ->
             val sorted = conversations.sortedByDescending { it.snippetTimestamp }
@@ -119,6 +120,7 @@ class ConversationListActivity : AppCompatActivity() {
 
     private fun onClickConversation(conversation: Conversation) {
         this.viewModel.onConversationClick(conversation)
+        this.adapter.clearSearchBox()
     }
 
     private fun onLongClickConversation(conversation: Conversation) {

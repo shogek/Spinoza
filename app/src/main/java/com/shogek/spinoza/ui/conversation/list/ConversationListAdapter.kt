@@ -25,6 +25,7 @@ class ConversationListAdapter(
 ) : RecyclerView.Adapter<ConversationListAdapter.BaseViewHolder>() {
 
     private val layoutInflater = LayoutInflater.from(context)
+    private lateinit var searchBox: EditText
     private var originalConversations = listOf<Conversation>()
     private var filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(originalConversations) }
 
@@ -119,11 +120,15 @@ class ConversationListAdapter(
             this.filteredConversations.addAll(this.originalConversations)
         } else {
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.originalConversations.filter { c -> c.phone.toLowerCase().contains(lowerCasePhrase) }
+            val filtered = this.originalConversations.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
             this.filteredConversations.addAll(filtered)
         }
 
         notifyDataSetChanged()
+    }
+
+    fun clearSearchBox() {
+        this.searchBox.text.clear()
     }
 
     fun setConversations(conversations: List<Conversation>) {
@@ -170,6 +175,7 @@ class ConversationListAdapter(
         private val search: EditText = itemView.findViewById(R.id.et_conversationSearch)
 
         init {
+            searchBox = this.search
             this.search.addTextChangedListener(object: TextWatcher {
                 override fun afterTextChanged(s: Editable?) {}
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

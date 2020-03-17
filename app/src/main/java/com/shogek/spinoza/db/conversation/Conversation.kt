@@ -51,4 +51,8 @@ class Conversation(
 
     @Ignore
     var messages: List<Message>? = null
+
+    fun getDisplayName(): String {
+        return contact?.name ?: contact?.phone ?: this.phone
+    }
 }

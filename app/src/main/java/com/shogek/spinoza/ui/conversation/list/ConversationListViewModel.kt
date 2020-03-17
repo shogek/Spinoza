@@ -26,7 +26,6 @@ class ConversationListViewModel(application: Application) : AndroidViewModel(app
         intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.OpenConversation.GOAL)
         intent.putExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, conversation.id)
         context.startActivity(intent)
-        // TODO: [Bug] Find a simple way to clear search after exiting activity
     }
 
     fun archiveConversation(conversation: Conversation) {

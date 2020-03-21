@@ -1,7 +1,6 @@
 package com.shogek.spinoza.ui.conversation.list
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
@@ -20,8 +19,8 @@ import java.util.*
 
 class ConversationListAdapter(
     private val context: Context,
-    private val onClickConversation: (conversation: Conversation) -> Unit,
-    private val onLongClickConversation: (conversation: Conversation) -> Unit
+    private val onClickConversation: (Conversation) -> Unit,
+    private val onLongClickConversation: (Conversation) -> Unit
 ) : RecyclerView.Adapter<ConversationListAdapter.BaseViewHolder>() {
 
     private val layoutInflater = LayoutInflater.from(context)
@@ -120,7 +119,7 @@ class ConversationListAdapter(
             this.filteredConversations.addAll(this.originalConversations)
         } else {
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.originalConversations.filter { c -> c.getDisplayName().toLowerCase().contains(lowerCasePhrase) }
+            val filtered = this.originalConversations.filter { c -> c.getDisplayTitle().toLowerCase().contains(lowerCasePhrase) }
             this.filteredConversations.addAll(filtered)
         }
 

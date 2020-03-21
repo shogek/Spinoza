@@ -33,8 +33,31 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
     }
 
 
-    fun init(conversationId: Long): MessageListViewModel {
+    fun init(intent: Intent): MessageListViewModel {
+        return when (intent.getStringExtra(Extra.GOAL)) {
+            Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage(intent)
+            Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation(intent)
+            Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage(intent)
+            else -> throw IllegalArgumentException("Unknown goal type!")
+        }
+    }
+
+    private fun cameFromOpenConversation(intent: Intent): MessageListViewModel {
+        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, -1)
         this.conversation = conversationRepository.getWithContactAndMessagesObservable(conversationId)
+        return this
+    }
+
+    /** User picked a contact with whom we may OR MAY NOT have a conversation with already. */
+    private fun cameFromWriteNewMessage(intent: Intent): MessageListViewModel {
+        val contactId = intent.getLongExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, -1)
+        this.conversation = conversationRepository.getByContactIdObservable(contactId)
+        return this
+    }
+
+    /** Clicked on a notification when a message was received. */
+    private fun cameFromReceivedMessage(intent: Intent): MessageListViewModel {
+        // TODO: [Feature] Implement this
         return this
     }
 

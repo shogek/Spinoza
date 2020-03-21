@@ -23,7 +23,7 @@ class Conversation(
 
     @ColumnInfo(name = "phone")
     /** The sender's phone number. */
-    val phone: String,
+    var phone: String,
 
     @ColumnInfo(name = "snippet")
     /** The latest message in the conversation. */
@@ -52,7 +52,7 @@ class Conversation(
     @Ignore
     var messages: List<Message>? = null
 
-    fun getDisplayName(): String {
-        return contact?.name ?: contact?.phone ?: this.phone
+    fun getDisplayTitle(): String {
+        return contact?.getDisplayTitle() ?: this.phone
     }
 }

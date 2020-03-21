@@ -17,7 +17,7 @@ import java.lang.IllegalArgumentException
 class MessageListAdapter(
     context: Context,
     private val onClickMessage: () -> Unit,
-    private val onLongClickMessage: (message: Message) -> Unit
+    private val onLongClickMessage: (Message) -> Unit
 ): RecyclerView.Adapter<MessageListAdapter.BaseViewHolder>() {
 
     abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

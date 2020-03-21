@@ -17,49 +17,13 @@ class ConversationRepository(
     private val contactDao = ApplicationRoomDatabase.getDatabase(context, scope).contactDao()
     private val messageDao = ApplicationRoomDatabase.getDatabase(context, scope).messageDao()
 
-    /** SIDE EFFECT - deletes associated messages */
-    suspend fun deleteAll(conversations: List<Conversation>) {
-        if (conversations.isEmpty()) {
-            return
-        }
 
-        // TODO: Move to common reusable func
-        val conversationIds = conversations.map { it.id }
-        messageDao.deleteAllByConversationIds(conversationIds)
-        conversationDao.deleteAll(conversations)
-    }
-
-    suspend fun deleteAllByIds(conversationIds: List<Long>) {
-        if (conversationIds.isEmpty()) {
-            return
-        }
-
-        // TODO: Move to common reusable func
-        messageDao.deleteAllByConversationIds(conversationIds)
-        conversationDao.deleteAllByIds(conversationIds)
+    suspend fun getByContactId(contactId: Long): Conversation {
+        return combineContactAndMessages(conversationDao.getByContactId(contactId))
     }
 
     fun getWithContactAndMessagesObservable(conversationId: Long): LiveData<Conversation> {
         return Transformations.map(conversationDao.getWithContactAndMessagesObservable(conversationId), ::combineContactAndMessages)
-    }
-
-    suspend fun getAllAndroid(): List<Conversation> {
-        return conversationDao.getAllAndroid()
-    }
-
-    suspend fun getAll(): List<Conversation> {
-        return conversationDao.getAll()
-    }
-
-    suspend fun getAll(ids: List<Long>): List<Conversation> {
-        if (ids.isEmpty()) {
-            return listOf()
-        }
-        return conversationDao.getAll(ids)
-    }
-
-    fun getAllObservable(): LiveData<List<Conversation>> {
-        return conversationDao.getAllObservable()
     }
 
     fun getAllWithContactsObservable(): LiveData<List<Conversation>> {
@@ -70,8 +34,10 @@ class ConversationRepository(
         return conversationDao.getByPhone(phone)
     }
 
-    suspend fun get(id: Long): Conversation {
-        return conversationDao.get(id)
+    /** Tries to get a conversation by a contact ID, if it fails - it creates a new conversation. */
+    fun getByContactIdObservable(contactId: Long): LiveData<Conversation> {
+        val conversationData = conversationDao.getByContactIdObservable(contactId)
+        return Transformations.map(conversationData, ::combineContactAndMessages)
     }
 
     /** SIDE EFFECT - updates foreign key for associated contact */
@@ -94,21 +60,17 @@ class ConversationRepository(
         conversationDao.update(conversation)
     }
 
-    suspend fun updateAll(conversations: List<Conversation>) {
-        if (conversations.isNotEmpty()) {
-            conversationDao.updateAll(conversations)
+    /** SIDE EFFECT - deletes associated messages */
+    suspend fun deleteAll(conversations: List<Conversation>) {
+        if (conversations.isEmpty()) {
+            return
         }
+
+        val conversationIds = conversations.map { it.id }
+        messageDao.deleteAllByConversationIds(conversationIds)
+        conversationDao.deleteAll(conversations)
     }
 
-    suspend fun update(
-        id: Long,
-        snippet: String,
-        snippetTimestamp: Long,
-        snippetIsOurs: Boolean,
-        snippetWasRead: Boolean
-    ) {
-        conversationDao.update(id, snippet, snippetTimestamp, snippetIsOurs, snippetWasRead)
-    }
 
     private fun combineContact(pairs: List<ConversationAndContact>): List<Conversation> {
         val conversations = mutableListOf<Conversation>()

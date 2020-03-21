@@ -164,21 +164,10 @@ class ConversationListActivity : AppCompatActivity() {
 
         // User picked a contact - open the corresponding conversation
         val intent = Intent(this, MessageListActivity::class.java)
-
         val contactId = data!!.extras!![Extra.ContactList.ConversationList.PickContact.CONTACT_ID] as Long
-//        val conversationId = ConversationRepository(this)
-//            .getAll().value!!
-//            .find { c -> c.contact?.id == contactId }
-//            ?.threadId
 
         intent.putExtra(Extra.GOAL, Extra.ConversationList.MessageList.NewMessage.GOAL)
         intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, contactId)
-
-//        if (conversationId != null) {
-            // Check if exchanged messages with the contact before
-//            intent.putExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, conversationId)
-//        }
-
         startActivity(intent)
     }
 }

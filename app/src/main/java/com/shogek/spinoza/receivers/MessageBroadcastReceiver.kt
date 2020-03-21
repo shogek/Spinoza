@@ -3,8 +3,11 @@ package com.shogek.spinoza.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.telephony.PhoneNumberUtils
 import android.telephony.SmsMessage
 import android.util.Log
+import com.shogek.spinoza.db.contact.Contact
+import com.shogek.spinoza.db.contact.ContactRepository
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
@@ -49,15 +52,48 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
         val basicMessage = parseReceivedMessage(intent)
             ?: return@runBlocking
 
+        val contactRepository = ContactRepository(context, this)
         val messageRepository = MessageRepository(context, this)
         val conversationRepository = ConversationRepository(context, this)
 
-        val existingConversation = conversationRepository.getByPhone(basicMessage.senderPhone)
-        if (existingConversation == null) {
-            createNewConversation(conversationRepository, messageRepository, basicMessage)
-        } else {
-            updateExistingConversation(conversationRepository, messageRepository, existingConversation, basicMessage)
+        var conversation: Conversation?
+        conversation = conversationRepository.getByPhone(basicMessage.senderPhone)
+        if (conversation != null) {
+            updateExistingConversation(conversationRepository, messageRepository, conversation, basicMessage)
+            return@runBlocking
         }
+
+        conversation = getByContact(conversationRepository, contactRepository, basicMessage.senderPhone)
+        if (conversation != null) {
+            /* We change the phone to the one we received by SMS because this way we get the unformatted variant.
+            * Whereas when a contact is created in android it adds all the '(', ')' and '+' and space symbols.
+            * Reason: faster second lookup times. */
+            conversation.phone = basicMessage.senderPhone
+            updateExistingConversation(conversationRepository, messageRepository, conversation, basicMessage)
+            return@runBlocking
+        }
+
+        createNewConversation(conversationRepository, messageRepository, basicMessage)
+    }
+
+    /** Search by comparing the formatted phone numbers of existing contacts. */
+    private suspend fun getByContact(
+        conversationRepository: ConversationRepository,
+        contactRepository: ContactRepository,
+        senderPhone: String
+    ): Conversation? {
+        var foundContact: Contact? = null
+
+        val contacts = contactRepository.getAll()
+        for (contact in contacts) {
+            if (PhoneNumberUtils.compare(contact.phone, senderPhone)) {
+                foundContact = contact
+                break
+            }
+        }
+
+        return if (foundContact == null) null
+               else conversationRepository.getByContactId(foundContact.id)
     }
 
     private suspend fun createNewConversation(

@@ -9,18 +9,21 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.shogek.spinoza.R
+import com.shogek.spinoza.db.contact.Contact
 import kotlinx.android.synthetic.main.activity_contact_list.*
+
 
 class ContactListActivity : AppCompatActivity() {
 
     private lateinit var viewModel: ContactListViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list)
 
         this.viewModel = ViewModelProvider(this).get(ContactListViewModel::class.java)
-        val adapter = ContactListAdapter(this, this.viewModel)
+        val adapter = ContactListAdapter(this, ::onClickContact)
 
         this.viewModel.contacts.observe(this, Observer {
             val sortedContacts = it.sortedBy { c -> c.getDisplayTitle().toLowerCase() }
@@ -33,6 +36,10 @@ class ContactListActivity : AppCompatActivity() {
         this.enableReturnButton()
         this.enableContactFiltering(adapter)
         this.focusOnSearchBox()
+    }
+
+    private fun onClickContact(contact: Contact) {
+        this.viewModel.onContactClick(this, contact)
     }
 
     private fun focusOnSearchBox() {

@@ -14,7 +14,7 @@ import com.shogek.spinoza.db.contact.Contact
 
 class ContactListAdapter(
     private val context: AppCompatActivity,
-    private val viewModel: ContactListViewModel
+    private val onClickContact: (Contact) -> Unit
 ) : RecyclerView.Adapter<ContactListAdapter.ViewHolder>() {
 
     private var originalContacts = listOf<Contact>()
@@ -29,7 +29,7 @@ class ContactListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val contact = this.filteredContacts[position]
-        holder.contactId = contact.id
+        holder.contact = contact
         holder.contactName.text = contact.getDisplayTitle()
 
         Glide.with(holder.itemView)
@@ -53,7 +53,7 @@ class ContactListAdapter(
         } else {
             // Apply filter
             val lowerCasePhrase = phrase.toLowerCase()
-            val filtered = this.originalContacts.filter { c -> (c.name ?: c.phone).toLowerCase().contains(lowerCasePhrase) }
+            val filtered = this.originalContacts.filter { c -> c.getDisplayTitle().toLowerCase().contains(lowerCasePhrase) }
             this.filteredContacts.addAll(filtered)
         }
 
@@ -63,10 +63,10 @@ class ContactListAdapter(
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val contactName: TextView = itemView.findViewById(R.id.tv_contactName)
         val contactPhoto: ImageView = itemView.findViewById(R.id.iv_contactImage)
-        var contactId: Long = -1
+        lateinit var contact: Contact
 
         init {
-            itemView.setOnClickListener { viewModel.returnPickedContact(context, contactId) }
+            itemView.setOnClickListener { onClickContact(contact) }
         }
     }
 }

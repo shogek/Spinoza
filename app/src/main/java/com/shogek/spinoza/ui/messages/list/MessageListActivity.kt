@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.net.Uri
 import android.telephony.SmsManager
 import android.view.View
-import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -27,7 +26,6 @@ class MessageListActivity : AppCompatActivity() {
     private lateinit var viewModel: MessageListViewModel
 
     companion object {
-        const val NO_CONVERSATION_ID = -1L
         const val PENDING_MESSAGE_INTENT = "PENDING_MESSAGE_INTENT"
         const val PENDING_MESSAGE_THREAD = "PENDING_MESSAGE_THREAD"
         const val PENDING_MESSAGE_BODY   = "PENDING_MESSAGE_BODY"
@@ -56,18 +54,9 @@ class MessageListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_message_list)
 
-        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
         this.viewModel = ViewModelProvider(this)
             .get(MessageListViewModel::class.java)
-            .init(conversationId)
-
-        CommonState.setCurrentOpenConversationId(conversationId)
-
-        when (intent.getStringExtra(Extra.GOAL)) {
-            Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage()
-//            Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation()
-            Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage()
-        }
+            .init(intent)
 
         findViewById<ConstraintLayout>(R.id.cl_copyMessageColumn).setOnClickListener { this.onClickCopyMessage() }
         findViewById<ConstraintLayout>(R.id.cl_removeMessageColumn).setOnClickListener { this.onClickRemoveMessage() }
@@ -77,6 +66,8 @@ class MessageListActivity : AppCompatActivity() {
         this.adapter = MessageListAdapter(this, ::onMessageClick, ::onMessageLongClick)
 
         this.viewModel.conversation.observe(this, Observer { conversation ->
+            CommonState.setCurrentOpenConversationId(conversation.id)
+
             // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
             this.initButtonSendMessage(conversation.phone, conversation.id)
             // TODO: [Style] Add elevation to message box when not at bottom.
@@ -159,46 +150,6 @@ class MessageListActivity : AppCompatActivity() {
         super.onPause()
         CommonState.clearCurrentOpenConversationId()
         unregisterReceiver(this.messageReceiver)
-    }
-
-    private fun cameFromOpenConversation() {
-        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, NO_CONVERSATION_ID)
-//        val repository = ConversationRepository(this)
-//        val conversation = repository.get(conversationId)!!
-//        this.conversation = conversation
-
-//        if (!conversation.latestMessageWasRead) {
-//            this.viewModel.markConversationAsRead()
-//        }
-
-//        this.contact = ContactRepository(this)
-//            .getAll().value!!
-//            .find { c -> c.strippedPhone == conversation.senderPhoneStripped }
-    }
-
-    private fun cameFromWriteNewMessage() {
-        val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.NewMessage.CONVERSATION_ID, NO_CONVERSATION_ID)
-        val contactId = intent.getStringExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID)!!
-
-//        this.contact = ContactRepository(this).get(contactId)
-
-        if (conversationId != NO_CONVERSATION_ID) {
-//            this.conversation = ConversationRepository(this).get(conversationId)
-//            this.messages = MessageCache
-//                .getAll(contentResolver, conversationId)
-//                .toMutableList()
-        } else {
-            // Never exchanged messages with this contact before
-            this.messages = mutableListOf()
-        }
-    }
-
-    private fun cameFromReceivedMessage() {
-//        val conversationId = intent.getLongExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, NO_CONVERSATION_ID)
-//        this.conversation = ConversationRepository(this).get(conversationId)
-//        this.contact = ContactRepository(this)
-//            .getAll().value!!
-//            .find { c -> c.strippedPhone == this.conversation!!.senderPhoneStripped }
     }
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {

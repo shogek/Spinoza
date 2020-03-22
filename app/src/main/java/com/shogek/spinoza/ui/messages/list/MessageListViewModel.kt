@@ -40,24 +40,21 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
     }
 
 
-    private fun cameFromOpenConversation(intent: Intent): MessageListViewModel {
+    private fun cameFromOpenConversation(intent: Intent): LiveData<Conversation> {
         val conversationId = intent.getLongExtra(Extra.ConversationList.MessageList.OpenConversation.CONVERSATION_ID, -1)
-        val conversationData = conversationRepository.getWithContactAndMessagesObservable(conversationId)
-        this.conversation = Transformations.map(conversationData, ::extractActiveConversation)
-        return this
+        return conversationRepository.getWithContactAndMessagesObservable(conversationId)
     }
 
     /** User picked a contact with whom we may OR MAY NOT have a conversation with already. */
-    private fun cameFromWriteNewMessage(intent: Intent): MessageListViewModel {
+    private fun cameFromWriteNewMessage(intent: Intent): LiveData<Conversation> {
         val contactId = intent.getLongExtra(Extra.ConversationList.MessageList.NewMessage.CONTACT_ID, -1)
-        this.conversation = conversationRepository.getByContactIdObservable(contactId)
-        return this
+        return conversationRepository.getByContactIdObservable(contactId)
     }
 
     /** Clicked on a notification when a message was received. */
-    private fun cameFromReceivedMessage(intent: Intent): MessageListViewModel {
-        // TODO: [Feature] Implement this
-        return this
+    private fun cameFromMessageNotification(intent: Intent): LiveData<Conversation> {
+        val conversationId = intent.getLongExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, -1)
+        return conversationRepository.getObservable(conversationId)
     }
 
     private fun extractActiveConversation(conversation: Conversation): Conversation {
@@ -67,12 +64,14 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun init(intent: Intent): MessageListViewModel {
-        return when (intent.getStringExtra(Extra.GOAL)) {
+        val conversationData = when (intent.getStringExtra(Extra.GOAL)) {
             Extra.ConversationList.MessageList.NewMessage.GOAL          -> this.cameFromWriteNewMessage(intent)
             Extra.ConversationList.MessageList.OpenConversation.GOAL    -> this.cameFromOpenConversation(intent)
-            Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromReceivedMessage(intent)
+            Extra.MessageNotification.MessageList.MessageReceived.GOAL  -> this.cameFromMessageNotification(intent)
             else -> throw IllegalArgumentException("Unknown goal type!")
         }
+        this.conversation = Transformations.map(conversationData, ::extractActiveConversation)
+        return this
     }
 
     fun markConversationAsRead(conversation: Conversation) {

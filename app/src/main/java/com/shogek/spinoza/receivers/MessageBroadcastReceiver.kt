@@ -12,6 +12,7 @@ import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRepository
+import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.coroutines.*
 
@@ -58,13 +59,16 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
 
         var conversation: Conversation?
         conversation = conversationRepository.getByPhone(basicMessage.senderPhone)
+        // TODO: [Refactor]
         if (conversation != null) {
+            MessageNotificationHelper.notify(context, conversation, basicMessage.messageText)
             updateExistingConversation(conversationRepository, messageRepository, conversation, basicMessage)
             return@runBlocking
         }
 
         conversation = getByContact(conversationRepository, contactRepository, basicMessage.senderPhone)
         if (conversation != null) {
+            MessageNotificationHelper.notify(context, conversation, basicMessage.messageText)
             /* We change the phone to the one we received by SMS because this way we get the unformatted variant.
             * Whereas when a contact is created in android it adds all the '(', ')' and '+' and space symbols.
             * Reason: faster second lookup times. */
@@ -73,7 +77,8 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
             return@runBlocking
         }
 
-        createNewConversation(conversationRepository, messageRepository, basicMessage)
+        val created = createNewConversation(conversationRepository, messageRepository, basicMessage)
+        MessageNotificationHelper.notify(context, created, basicMessage.messageText)
     }
 
     /** Search by comparing the formatted phone numbers of existing contacts. */
@@ -100,7 +105,7 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
         conversationRepository: ConversationRepository,
         messageRepository: MessageRepository,
         basicMessage: BasicMessage
-    ) {
+    ): Conversation {
         // A conversation doesn't exist with the person
         val newConversation = Conversation(
             null, // conversation not imported from phone
@@ -112,6 +117,7 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
             snippetWasRead = false
         )
         val conversationId = conversationRepository.insertAll(listOf(newConversation)).first()
+        newConversation.id = conversationId
         val message = Message(
             null, // message not imported from phone
             conversationId,
@@ -121,6 +127,7 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
         )
 
         messageRepository.insert(message)
+        return newConversation
     }
 
     private suspend fun updateExistingConversation(

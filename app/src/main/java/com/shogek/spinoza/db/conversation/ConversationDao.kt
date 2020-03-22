@@ -13,17 +13,20 @@ import androidx.room.OnConflictStrategy
 @Dao
 interface ConversationDao {
 
+    @Query("SELECT * FROM conversation_table WHERE id = :conversationId")
+    fun getObservable(conversationId: Long): LiveData<ConversationAndContactAndMessages>
+
     @Query("SELECT * FROM conversation_table WHERE contact_id = :contactId")
     fun getByContactIdObservable(contactId: Long): LiveData<ConversationAndContactAndMessages>
 
     @Query("SELECT * FROM conversation_table WHERE contact_id = :contactId")
-    suspend fun getByContactId(contactId: Long): ConversationAndContactAndMessages
+    suspend fun getByContactId(contactId: Long): ConversationAndContact
 
     @Query("SELECT * FROM conversation_table WHERE contact_id IN (:contactIds)")
     suspend fun getByContactIdsWithMessages(contactIds: List<Long>): List<ConversationAndContactAndMessages>
 
     @Query("SELECT * FROM conversation_table WHERE phone = :phone")
-    suspend fun getByPhone(phone: String): Conversation?
+    suspend fun getByPhone(phone: String): ConversationAndContact?
 
     @Query("SELECT * FROM conversation_table WHERE id = :id")
     @Transaction

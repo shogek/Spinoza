@@ -8,16 +8,17 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.MediaStore.Images.Media.getBitmap
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.Builder
 import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
+import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.ui.messages.list.MessageListActivity
 
 
@@ -33,29 +34,18 @@ object MessageNotificationHelper {
     private const val CHANNEL_NEW_MESSAGES = "CHANNEL_NEW_MESSAGES"
     private var isChannelCreated: Boolean = false
 
-    /**
-     *  Show a notification when a message is received.
-     *
-     * @param threadId The ID of a 'Conversation' for getting the correct 'Contact' and setting intent
-     * @param strippedPhone The phone number which sent the SMS message
-     * @param message The content of the SMS message
-     * */
+
     fun notify(
         context: Context,
-        threadId: Number,
-        strippedPhone: String,
+        conversation: Conversation,
         message: String
     ) {
         this.registerNotificationChannel(context)
-        this.propagateMessage(context, threadId, message)
-
-//        val contact = this.tryGetContact(threadId, strippedPhone, context)
-//        val notificationTitle = contact?.displayName ?: strippedPhone
-        val notificationTitle = strippedPhone
 
         // This image is used as the notification's large icon (thumbnail)
-//        val picture = this.getContactPhotoAsBitmap(context.contentResolver, contact?.photoUri)
-        val picture = this.getContactPhotoAsBitmap(context.contentResolver, null)
+        val picture = this.getContactPhotoAsBitmap(context.contentResolver, conversation.contact?.photoUri)
+            ?: BitmapFactory.decodeResource(context.resources, R.drawable.unknown_contact)
+        val notificationTitle = conversation.contact?.getDisplayTitle() ?: conversation.phone
 
         val builder = Builder(context, CHANNEL_NEW_MESSAGES)
             // Set appropriate default for the notification light, sound and vibration
@@ -77,7 +67,7 @@ object MessageNotificationHelper {
             .setColorized(true)
             .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
             // Set the pending intent to be initiated when the user touches the notification
-            .setContentIntent(this.getPendingIntent(context, threadId))
+            .setContentIntent(this.getPendingIntent(context, conversation.id))
             // Implement a specific style of possible notifications
             .setStyle(NotificationCompat.BigTextStyle()
                 .setBigContentTitle(notificationTitle)
@@ -91,19 +81,6 @@ object MessageNotificationHelper {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.cancel(this.NOTIFICATION_TAG, 0)
     }
-
-    private fun propagateMessage(
-        context: Context,
-        conversationId: Number,
-        text: String
-    ) {
-//        val realMessage = MessageRepository(context).messageReceived(conversationId, text)
-//        ConversationRepository(context).messageReceived(conversationId, realMessage)
-//        val realMessage = MessageCache.notifyMessageReceived(context.contentResolver, conversationId, message)
-//        ConversationRepository(context).messageReceived(conversationId, realMessage)
-//        EventBus.getDefault().postSticky(MessageReceivedEvent(conversationId, realMessage))
-    }
-
 
     private fun createNotification(
         context: Context,
@@ -155,35 +132,15 @@ object MessageNotificationHelper {
 
     private fun getPendingIntent(
         context: Context,
-        threadId: Number
+        conversationId: Number
     ): PendingIntent? {
         val intent = Intent(context, MessageListActivity::class.java)
         intent.putExtra(Extra.GOAL, Extra.MessageNotification.MessageList.MessageReceived.GOAL)
-        intent.putExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, threadId)
+        intent.putExtra(Extra.MessageNotification.MessageList.MessageReceived.CONVERSATION_ID, conversationId)
 
         // Create the back stack (pressing 'back' will navigate to the parent activity, not the home screen)
         return TaskStackBuilder.create(context)
             .addNextIntentWithParentStack(intent)
             .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
     }
-
-//    private fun tryGetContact(
-//        threadId: Number,
-//        strippedPhone: String,
-//        context: Context
-//    ): Contact? {
-//        val contact = ConversationRepository(context).get(threadId)?.contact
-//        if (contact != null)
-//            return contact
-//
-//        // Maybe a new 'Contact' record was created while our app was opened (cached)?
-//        val newContact = ContactRepository(context)
-//            .getAll().value!!
-//            .find { it.strippedPhone ==  strippedPhone }
-//        if (newContact == null ) {
-//            Log.i(this.TAG, "'Contact' record not found.")
-//        }
-//
-//        return newContact
-//    }
 }

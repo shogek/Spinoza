@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorWhite"
-    tools:context=".activities.ContactListActivity">
+    tools:context=".ui.contacts.list.ContactListActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/contact_list_toolbar"

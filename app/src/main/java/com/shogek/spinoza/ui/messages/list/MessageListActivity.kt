@@ -68,7 +68,6 @@ class MessageListActivity : AppCompatActivity() {
         this.viewModel.conversation.observe(this, Observer { conversation ->
             CommonState.setCurrentOpenConversationId(conversation.id)
 
-            // TODO: [Bug] A conversation is not yet created when sending the first message to a new contact
             this.initButtonSendMessage(conversation.phone, conversation.id)
             // TODO: [Style] Add elevation to message box when not at bottom.
             val title = conversation.contact?.getDisplayTitle() ?: conversation.phone
@@ -154,7 +153,6 @@ class MessageListActivity : AppCompatActivity() {
 
     private fun initScrollDownWhenKeyboardAppears(messageCount: Int) {
         KeyboardVisibilityEvent.setEventListener(this) { isVisible ->
-            // TODO: test if it's not called multiple times
             if (isVisible) {
                 rv_messageList.scrollToPosition(messageCount - 1)
             }

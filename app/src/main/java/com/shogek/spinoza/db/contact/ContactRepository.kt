@@ -1,6 +1,7 @@
 package com.shogek.spinoza.db.contact
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import kotlinx.coroutines.CoroutineScope
 import com.shogek.spinoza.db.ApplicationRoomDatabase
 
@@ -14,5 +15,9 @@ class ContactRepository(
 
     suspend fun getAll(): List<Contact> {
         return contactDao.getAll()
+    }
+
+    fun getAllObservable(): LiveData<List<Contact>> {
+        return contactDao.getAllObservable()
     }
 }

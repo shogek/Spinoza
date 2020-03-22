@@ -2,25 +2,19 @@ package com.shogek.spinoza.ui.contacts.list
 
 import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.Extra
-import com.shogek.spinoza.db.ApplicationRoomDatabase
 import com.shogek.spinoza.db.contact.Contact
+import com.shogek.spinoza.db.contact.ContactRepository
 
 
 class ContactListViewModel(application: Application) : AndroidViewModel(application) {
 
-    val contacts: LiveData<List<Contact>>
-
-    init {
-        val contactDao = ApplicationRoomDatabase.getDatabase(application, viewModelScope).contactDao()
-        this.contacts = contactDao.getAllObservable()
-    }
+    private val contactRepository = ContactRepository(application.baseContext, viewModelScope)
+    val contacts = contactRepository.getAllObservable()
 
 
     fun onContactClick(

@@ -47,6 +47,7 @@ class ConversationListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conversation_list)
+        // TODO: [Refactor] Move permissions asking to a separate activity
 //        this.ensurePermissionsGranted(PERMISSIONS_REQUIRED)
 //        return
         this.viewModel = ViewModelProvider(this).get(ConversationListViewModel::class.java)

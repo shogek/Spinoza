@@ -7,7 +7,6 @@ object Extra {
         object ContactListForward {
             object ForwardMessage {
                 const val MESSAGE = "MessageList - ContactListForward - ForwardMessage - MESSAGE"
-                const val CONTACT_ID = "MessageList - ContactListForward - ForwardMessage - CONTACT_ID"
             }
         }
     }
@@ -20,7 +19,6 @@ object Extra {
             }
             object NewMessage {
                 const val GOAL = "ConversationList - MessageList - NewMessage - INTENTION"
-                const val CONVERSATION_ID = "ConversationList - MessageList - NewMessage - CONVERSATION_ID"
                 const val CONTACT_ID = "ConversationList - MessageList - NewMessage - CONTACT_ID"
             }
 

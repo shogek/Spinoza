@@ -6,41 +6,40 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.shogek.spinoza.Extra
 import com.shogek.spinoza.R
+import com.shogek.spinoza.db.contact.Contact
 import kotlinx.android.synthetic.main.activity_contact_list.*
 
 class ContactListForwardActivity : AppCompatActivity() {
 
-//    private lateinit var viewModel: ContactListForwardViewModel
+    private lateinit var viewModel: ContactListForwardViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact_list_forward)
 
-        // TODO: [Refactor]
-//        this.viewModel = ViewModelProviders.of(this).get(ContactListForwardViewModel::class.java)
+        this.viewModel = ViewModelProvider(this)
+            .get(ContactListForwardViewModel::class.java)
+            .init(intent)
+        val adapter = ContactListForwardAdapter(this, ::onClickForward)
 
-//        val textToForward = intent.getStringExtra(Extra.MessageList.ContactListForward.ForwardMessage.MESSAGE)!!
-//        this.viewModel.setTextToForward(textToForward)
+        this.viewModel.contacts.observe(this, Observer { contacts ->
+            val sorted = contacts.sortedBy { it.getDisplayTitle().toLowerCase() }
+            adapter.setContacts(sorted)
+        })
 
-//        val adapter =
-//            ContactListForwardAdapter(
-//                this,
-//                this.viewModel
-//            )
-//        this.viewModel.contacts.observe(this, Observer { contacts ->
-//            val sorted = contacts.sortedBy { it.displayName }
-//            adapter.setContacts(sorted)
-//        })
+        rv_contactList.adapter = adapter
+        rv_contactList.layoutManager = LinearLayoutManager(this)
 
-//        rv_contactList.adapter = adapter
-//        rv_contactList.layoutManager = LinearLayoutManager(this)
-//
-//        this.initButtonReturn()
-//        this.initContactFilter(adapter)
+        this.initButtonReturn()
+        this.initContactFilter(adapter)
+    }
+
+    private fun onClickForward(contact: Contact) {
+        this.viewModel.forwardMessage(contact)
     }
 
     private fun initContactFilter(recyclerAdapter: ContactListForwardAdapter) {

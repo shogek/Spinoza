@@ -18,6 +18,10 @@ class ConversationRepository(
     private val messageDao = ApplicationRoomDatabase.getDatabase(context, scope).messageDao()
 
 
+    suspend fun get(conversationId: Long): Conversation {
+        return conversationDao.get(conversationId)
+    }
+
     fun getObservable(conversationId: Long): LiveData<Conversation> {
         val conversationData = conversationDao.getObservable(conversationId)
         return Transformations.map(conversationData, ::combineContactAndMessages)

@@ -14,6 +14,9 @@ import androidx.room.OnConflictStrategy
 interface ConversationDao {
 
     @Query("SELECT * FROM conversation_table WHERE id = :conversationId")
+    suspend fun get(conversationId: Long): Conversation
+
+    @Query("SELECT * FROM conversation_table WHERE id = :conversationId")
     fun getObservable(conversationId: Long): LiveData<ConversationAndContactAndMessages>
 
     @Query("SELECT * FROM conversation_table WHERE contact_id = :contactId")

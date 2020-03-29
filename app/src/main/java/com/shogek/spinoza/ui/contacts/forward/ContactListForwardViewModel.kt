@@ -2,7 +2,6 @@ package com.shogek.spinoza.ui.contacts.forward
 
 import android.app.Application
 import android.content.Intent
-import android.telephony.SmsManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.shogek.spinoza.Extra
@@ -10,7 +9,7 @@ import com.shogek.spinoza.db.contact.Contact
 import com.shogek.spinoza.db.contact.ContactRepository
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
-import com.shogek.spinoza.db.message.MessageRepository
+import com.shogek.spinoza.helpers.MessageSendingService
 import kotlinx.coroutines.launch
 
 class ContactListForwardViewModel(application: Application) : AndroidViewModel(application) {
@@ -18,7 +17,7 @@ class ContactListForwardViewModel(application: Application) : AndroidViewModel(a
     private val context = application.baseContext
     private val conversationRepository = ConversationRepository(context, viewModelScope)
     private val contactRepository = ContactRepository(context, viewModelScope)
-    private val messageRepository = MessageRepository(context, viewModelScope)
+    private val messageSendingService = MessageSendingService(context, viewModelScope)
 
     val contacts = contactRepository.getAllObservable()
     /** A message that the user wants to forward to other contacts. */
@@ -34,20 +33,17 @@ class ContactListForwardViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun forwardMessage(contact: Contact) = viewModelScope.launch {
-        val timestamp = System.currentTimeMillis()
-
         // TODO: [Refactor] Only update database when we get a confirmation that message was sent.
         // TODO: [Feature] Disable send button to indicate that then message is being sent.
         val conversation = conversationRepository.getByContactId(contact.id)
-        conversation.snippet = textToForward!!
-        conversation.snippetTimestamp = timestamp
-        conversation.snippetWasRead = true
-        conversation.snippetIsOurs = true
-        conversationRepository.update(conversation)
+        messageSendingService.sendMessage(conversation, textToForward!!, ::onMessageSendSuccess, ::onMessageSendError)
+    }
 
-        val message = Message(null, conversation.id, textToForward!!, timestamp, isOurs = true)
-        messageRepository.insert(message)
+    private fun onMessageSendSuccess(message: Message) {
+        // TODO: Implement
+    }
 
-        SmsManager.getDefault().sendTextMessage(conversation.phone, null, textToForward, null, null)
+    private fun onMessageSendError() {
+        // TODO: Implement
     }
 }

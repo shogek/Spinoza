@@ -10,8 +10,11 @@ import androidx.room.OnConflictStrategy
 @Dao
 interface MessageDao {
 
+    @Query("SELECT * FROM message_table WHERE id = :messageId")
+    suspend fun get(messageId: Long): Message
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(message: Message)
+    suspend fun insert(message: Message): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(messages: List<Message>)

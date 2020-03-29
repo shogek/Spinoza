@@ -12,6 +12,8 @@ import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRepository
+import com.shogek.spinoza.db.message.MessageType
+import com.shogek.spinoza.db.message.MessageType.Companion.toInt
 import com.shogek.spinoza.helpers.MessageNotificationHelper
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.coroutines.*
@@ -123,7 +125,8 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
             conversationId,
             basicMessage.messageText,
             basicMessage.timestamp,
-            isOurs = false
+            isOurs = false,
+            type = MessageType.SENT.toInt()
         )
 
         messageRepository.insert(message)
@@ -154,7 +157,8 @@ class MessageBroadcastReceiver : BroadcastReceiver() {
             existingConversation.id,
             basicMessage.messageText,
             basicMessage.timestamp,
-            isOurs = false
+            isOurs = false,
+            type = MessageType.SENT.toInt()
         )
 
         messageRepository.insert(message)

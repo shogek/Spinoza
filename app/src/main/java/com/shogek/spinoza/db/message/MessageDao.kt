@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Insert
 import androidx.room.Delete
+import androidx.room.Update
 import androidx.room.OnConflictStrategy
 
 
@@ -18,6 +19,9 @@ interface MessageDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(messages: List<Message>)
+
+    @Update
+    suspend fun update(message: Message)
 
     @Query("DELETE FROM message_table WHERE conversation_id IN (:conversationIds)")
     suspend fun deleteAllByConversationIds(conversationIds: List<Long>)

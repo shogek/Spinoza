@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.*
+import com.shogek.spinoza.R
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
@@ -130,13 +131,11 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
         this.messageSendingService.sendMessage(conversation, text, ::onMessageSendSuccess, ::onMessageSendFail)
     }
 
-    private fun onMessageSendSuccess(message: Message) {
-        val a = 5
-    }
+    private fun onMessageSendSuccess(message: Message) { }
 
     private fun onMessageSendFail() {
-        val c = 7
-        // TODO: [Bug] Handle failed to send message scenario
+        val text = context.getString(R.string.message_list_text_failed_to_send)
+        Toast.makeText(context, text, Toast.LENGTH_LONG).show()
     }
 
     fun onActivityResume() {

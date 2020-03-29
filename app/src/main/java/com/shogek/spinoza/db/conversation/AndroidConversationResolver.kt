@@ -11,41 +11,6 @@ object AndroidConversationResolver {
     private val TAG: String = AndroidConversationResolver::class.java.simpleName
 
 
-    /** Return passed in conversations that were not found in the phone. */
-    fun retrieveDeletedAndroidConversations(
-        resolver: ContentResolver,
-        ourConversations: List<Conversation>
-    ): List<Conversation> {
-        val projection = arrayOf(Telephony.Sms.Conversations.THREAD_ID)
-        val conversationIds = ourConversations.map { it.androidId }
-
-        // If the passed in conversation ID was not returned - it was removed
-        val selection = Telephony.Sms.Conversations.THREAD_ID + " IN " + "(" + conversationIds.joinToString(",") + ")"
-
-        val cursor = resolver.query(
-            Telephony.Sms.Conversations.CONTENT_URI,
-            projection,
-            selection,
-            null,
-            null
-        )
-
-        if (cursor == null) {
-            Log.e(TAG, "Cursor is null")
-            return listOf()
-        }
-
-        val foundIds = mutableListOf<Long>()
-
-        while (cursor.moveToNext()) {
-            val id = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Conversations.THREAD_ID))
-            foundIds.add(id)
-        }
-        cursor.close()
-
-        return ourConversations.filter { !foundIds.contains(it.androidId) }
-    }
-
     /** Retrieve conversations saved in phone by other messaging applications. */
     fun retrieveAllAndroidConversations(resolver: ContentResolver): List<Conversation> {
         val projection = arrayOf(

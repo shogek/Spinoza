@@ -11,6 +11,8 @@ import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRepository
+import com.shogek.spinoza.db.message.MessageType
+import com.shogek.spinoza.db.message.MessageType.Companion.toInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -66,23 +68,33 @@ class MessageSendingService(
     }
 
     private fun onMessageSendSuccess(pendingMessage: PendingMessage) = scope.launch {
-        val timeMessageSent = System.currentTimeMillis()
+        updateConversation(pendingMessage)
 
-        val conversation = conversationRepository.get(pendingMessage.conversation.id)
-        conversation.snippet = pendingMessage.messageBody
-        conversation.snippetTimestamp = timeMessageSent
-        conversation.snippetWasRead = true
-        conversation.snippetIsOurs = true
-        conversationRepository.update(conversation)
+        pendingMessage.message.type = MessageType.SENT.toInt()
+        messageRepository.update(pendingMessage.message)
 
-        val message = Message(null, pendingMessage.conversation.id, pendingMessage.messageBody, timeMessageSent, isOurs = true)
-        val messageId = messageRepository.insert(message)
-        val createdMessage = messageRepository.get(messageId)
-        pendingMessage.onSuccess(createdMessage)
+        pendingMessage.onSuccess(pendingMessage.message)
     }
 
-    private fun onMessageSendFail(pendingMessage: PendingMessage) {
-        // TODO: [Bug] Handle failed to send message scenario
+    private fun onMessageSendFail(pendingMessage: PendingMessage) = scope.launch {
+        updateConversation(pendingMessage)
+
+        pendingMessage.message.type = MessageType.FAILED_TO_SEND.toInt()
+        messageRepository.update(pendingMessage.message)
+
+        pendingMessage.onError()
+    }
+
+    /** Update conversation to reflect the latest SMS sent. */
+    private fun updateConversation(pendingMessage: PendingMessage) = scope.launch {
+        val conversation = conversationRepository.get(pendingMessage.conversation.id)
+
+        conversation.snippet = pendingMessage.message.body
+        conversation.snippetTimestamp = pendingMessage.message.timestamp
+        conversation.snippetWasRead = true
+        conversation.snippetIsOurs = true
+
+        conversationRepository.update(conversation)
     }
 
     fun sendMessage(
@@ -90,14 +102,17 @@ class MessageSendingService(
         messageBody: String,
         onSuccess: (Message) -> Unit,
         onError: () -> Unit
-    ) {
+    ) = scope.launch {
         if (!wasInit) {
-            this.init()
+            init()
         }
 
+        val messageToSend = Message(null, conversation.id, messageBody, System.currentTimeMillis(), true, MessageType.SENDING.toInt())
+        messageToSend.id = messageRepository.insert(messageToSend)
+
         val code = Random.nextInt() // used to differentiate between other SMS being sent at the moment
-        val pendingMessage = PendingMessage(conversation, messageBody, onSuccess, onError)
-        this.pendingMessageTable[code] = pendingMessage
+        val pendingMessage = PendingMessage(conversation, messageToSend, onSuccess, onError)
+        pendingMessageTable[code] = pendingMessage
 
         val intent = Intent(CONSTANTS.INTENT)
         intent.putExtra(CONSTANTS.REQUEST_CODE, code)
@@ -111,7 +126,7 @@ class MessageSendingService(
 
     private data class PendingMessage(
         val conversation: Conversation,
-        val messageBody: String,
+        val message: Message,
         val onSuccess: (Message) -> Unit,
         val onError: () -> Unit
     )

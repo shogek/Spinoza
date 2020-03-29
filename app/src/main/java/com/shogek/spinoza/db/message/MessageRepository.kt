@@ -21,6 +21,10 @@ class MessageRepository(
         return messageDao.insert(message)
     }
 
+    suspend fun update(message: Message) {
+        return messageDao.update(message)
+    }
+
     suspend fun delete(message: Message) {
         messageDao.delete(message)
     }

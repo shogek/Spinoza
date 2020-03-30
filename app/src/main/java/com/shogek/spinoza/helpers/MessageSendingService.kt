@@ -50,6 +50,7 @@ class MessageSendingService(
 
     protected fun finalize() {
         context.unregisterReceiver(this.messageReceiver)
+        SHARED.wasInit = false
     }
 
     /** Called when the OS sends an SMS. */

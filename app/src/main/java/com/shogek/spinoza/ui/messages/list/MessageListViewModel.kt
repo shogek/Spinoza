@@ -128,10 +128,8 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
 
     fun sendMessage(text: String) {
         val conversation = this.currentConversation!!
-        this.messageSendingService.sendMessage(conversation, text, ::onMessageSendSuccess, ::onMessageSendFail)
+        this.messageSendingService.sendMessage(conversation, text, null, ::onMessageSendFail)
     }
-
-    private fun onMessageSendSuccess(message: Message) { }
 
     private fun onMessageSendFail() {
         val text = context.getString(R.string.message_list_text_failed_to_send)

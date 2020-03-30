@@ -24,25 +24,28 @@ class MessageSendingService(
     private val scope: CoroutineScope
 ) {
 
-    private var wasInit = false
-    private lateinit var messageRepository: MessageRepository
-    private lateinit var conversationRepository: ConversationRepository
-    /** Used to differentiate between messages being sent.
-     * KEY: Unique integer associated with a pending message.
-     * VALUE: The pending message itself. */
-    private val pendingMessageTable = mutableMapOf<Int, PendingMessage>()
+    private var messageRepository: MessageRepository = MessageRepository(context, scope)
+    private var conversationRepository: ConversationRepository = ConversationRepository(context, scope)
 
     private object CONSTANTS {
         const val INTENT = "SMS_SENT"
         const val REQUEST_CODE = "REQUEST_CODE"
     }
 
+    private object SHARED {
+        /** Used to differentiate between messages being sent.
+         * KEY: Unique integer associated with a pending message.
+         * VALUE: The pending message itself. */
+        val pendingMessageTable = mutableMapOf<Int, PendingMessage>()
+
+        /** The reason we initialize this only once is because the receiver is global to the whole application. */
+        var wasInit = false
+    }
+
 
     private fun init() {
         context.registerReceiver(this.messageReceiver, IntentFilter(CONSTANTS.INTENT))
-        this.conversationRepository = ConversationRepository(context, scope)
-        this.messageRepository = MessageRepository(context, scope)
-        this.wasInit = true
+        SHARED.wasInit = true
     }
 
     protected fun finalize() {
@@ -57,7 +60,7 @@ class MessageSendingService(
             }
 
             val code = arg1.extras!!.getInt(CONSTANTS.REQUEST_CODE)
-            val pendingMessage = pendingMessageTable.remove(code)!!
+            val pendingMessage = SHARED.pendingMessageTable.remove(code)!!
 
             if (resultCode == Activity.RESULT_OK) {
                 onMessageSendSuccess(pendingMessage)
@@ -100,10 +103,10 @@ class MessageSendingService(
     fun sendMessage(
         conversation: Conversation,
         messageBody: String,
-        onSuccess: (Message) -> Unit,
-        onError: () -> Unit
+        onSuccess: ((Message) -> Unit)?,
+        onError: (() -> Unit)?
     ) = scope.launch {
-        if (!wasInit) {
+        if (!SHARED.wasInit) {
             init()
         }
 
@@ -111,8 +114,8 @@ class MessageSendingService(
         messageToSend.id = messageRepository.insert(messageToSend)
 
         val code = Random.nextInt() // used to differentiate between other SMS being sent at the moment
-        val pendingMessage = PendingMessage(conversation, messageToSend, onSuccess, onError)
-        pendingMessageTable[code] = pendingMessage
+        val pendingMessage = PendingMessage(conversation, messageToSend, onSuccess ?: { }, onError ?: { })
+        SHARED.pendingMessageTable[code] = pendingMessage
 
         val intent = Intent(CONSTANTS.INTENT)
         intent.putExtra(CONSTANTS.REQUEST_CODE, code)
@@ -127,7 +130,7 @@ class MessageSendingService(
     private data class PendingMessage(
         val conversation: Conversation,
         val message: Message,
-        val onSuccess: (Message) -> Unit,
-        val onError: () -> Unit
+        val onSuccess: ((Message) -> Unit),
+        val onError: (() -> Unit)
     )
 }

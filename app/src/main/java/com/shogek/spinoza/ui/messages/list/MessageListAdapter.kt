@@ -9,9 +9,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
 import com.shogek.spinoza.db.message.Message
+import com.shogek.spinoza.db.message.MessageType
+import com.shogek.spinoza.db.message.MessageType.Companion.toInt
 import java.lang.IllegalArgumentException
 
 class MessageListAdapter(
@@ -31,6 +32,7 @@ class MessageListAdapter(
 
     private companion object {
         const val TYPE_MESSAGE_OUR = R.layout.message_list_item_ours
+        const val TYPE_MESSAGE_OUR_ERROR = R.layout.message_list_item_ours_error
         const val TYPE_MESSAGE_THEIRS = R.layout.message_list_item_theirs
         const val TYPE_MESSAGE_THEIRS_NO_IMAGE = R.layout.message_list_item_theirs_no_image
     }
@@ -38,6 +40,11 @@ class MessageListAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = this.messages[position]
+
+        if (message.type == MessageType.FAILED_TO_SEND.toInt()) {
+            return TYPE_MESSAGE_OUR_ERROR
+        }
+
         if (message.isOurs)
             return TYPE_MESSAGE_OUR
 
@@ -54,6 +61,7 @@ class MessageListAdapter(
 
         return when (viewType) {
             TYPE_MESSAGE_OUR -> OurMessageViewHolder(itemView)
+            TYPE_MESSAGE_OUR_ERROR -> OurMessageErrorViewHolder(itemView)
             TYPE_MESSAGE_THEIRS -> TheirMessageViewHolder(itemView)
             TYPE_MESSAGE_THEIRS_NO_IMAGE -> TheirMessageNoImageViewHolder(itemView)
             else -> throw IllegalArgumentException("Unknown ViewHolder type!")
@@ -61,13 +69,8 @@ class MessageListAdapter(
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        val currentMessage = this.messages[position]
-
-        when (holder) {
-            is OurMessageViewHolder -> holder.bind(currentMessage)
-            is TheirMessageViewHolder -> holder.bind(currentMessage)
-            is TheirMessageNoImageViewHolder -> holder.bind(currentMessage)
-        }
+        val message = this.messages[position]
+        holder.bind(message)
     }
 
     private fun shouldHideSenderImage(position: Int) : Boolean {
@@ -117,6 +120,21 @@ class MessageListAdapter(
         }
     }
 
+    inner class OurMessageErrorViewHolder(itemView: View) : BaseViewHolder(itemView) {
+        lateinit var message: Message
+        private val messageBody: TextView = itemView.findViewById(R.id.tv_ourMessageText)
+
+        override fun bind(message: Message) {
+            this.message = message
+            this.messageBody.text = message.body
+        }
+
+        init {
+            itemView.setOnLongClickListener { messageLongClicked(this.message); true }
+            itemView.setOnClickListener     { messageClicked() }
+        }
+    }
+
     inner class TheirMessageViewHolder(itemView: View) : BaseViewHolder(itemView) {
         lateinit var message: Message
         private val messageBody: TextView = itemView.findViewById(R.id.tv_theirMessageText)
@@ -127,9 +145,9 @@ class MessageListAdapter(
             this.messageBody.text = message.body
 
             Glide.with(itemView)
-                 .load(Uri.parse(senderPhotoUri ?: ""))
-                 .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
-                 .into(this.contactPhoto)
+                .load(Uri.parse(senderPhotoUri ?: ""))
+                .placeholder(R.drawable.unknown_contact)
+                .into(this.contactPhoto)
         }
 
         init {

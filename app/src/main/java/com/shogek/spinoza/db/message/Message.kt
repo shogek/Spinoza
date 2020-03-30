@@ -26,7 +26,12 @@ data class Message(
 
     @ColumnInfo(name = "is_ours")
     /** Indicates whether the SMS was sent by us. */
-    val isOurs: Boolean
+    val isOurs: Boolean,
+
+    // TODO: [Refactor] Fix the fucking mysterious bug that happens when type is changed to an enum
+    @ColumnInfo(name = "message_type")
+    /** Indicates the current status of the SMS. */
+    var type: Int
 ) {
 
     @PrimaryKey(autoGenerate = true)

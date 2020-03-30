@@ -1,19 +1,18 @@
 package com.shogek.spinoza.ui.messages.list
 
-import android.app.Activity
 import android.app.Application
-import android.app.PendingIntent
 import android.content.*
-import android.telephony.SmsManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.*
+import com.shogek.spinoza.R
 import com.shogek.spinoza.Extra
 import com.shogek.spinoza.db.conversation.Conversation
 import com.shogek.spinoza.db.conversation.ConversationRepository
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageRepository
+import com.shogek.spinoza.helpers.MessageSendingService
 import com.shogek.spinoza.ui.contacts.forward.ContactListForwardActivity
 import com.shogek.spinoza.ui.state.CommonState
 import kotlinx.coroutines.launch
@@ -24,19 +23,15 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
     private val context = application.baseContext
     private val messageRepository = MessageRepository(application, viewModelScope)
     private val conversationRepository = ConversationRepository(application, viewModelScope)
+    private val messageSendingService = MessageSendingService(application, viewModelScope)
     /** Stores the currently selected message for a later action (copy/forward/delete). */
     private var selectedMessage: Message? = null
-    private var messageIndex = 0
+    /** Stores the current conversation record which is extracted from the LiveData version. */
     private var currentConversation: Conversation? = null
     lateinit var conversation: LiveData<Conversation>
 
     private companion object {
         private val TAG = MessageListViewModel::class.java.simpleName
-
-        const val PENDING_MESSAGE_INTENT = "PENDING_MESSAGE_INTENT"
-        const val PENDING_MESSAGE_CONVERSATION_ID = "PENDING_MESSAGE_THREAD"
-        const val PENDING_MESSAGE_TIMESTAMP = "PENDING_MESSAGE_TIMESTAMP"
-        const val PENDING_MESSAGE_BODY = "PENDING_MESSAGE_BODY"
     }
 
 
@@ -133,70 +128,21 @@ class MessageListViewModel(application: Application) : AndroidViewModel(applicat
 
     fun sendMessage(text: String) {
         val conversation = this.currentConversation!!
-
-        val intent = Intent(PENDING_MESSAGE_INTENT)
-        intent.putExtra(PENDING_MESSAGE_CONVERSATION_ID, conversation.id)
-        intent.putExtra(PENDING_MESSAGE_TIMESTAMP, System.currentTimeMillis())
-        intent.putExtra(PENDING_MESSAGE_BODY, text)
-
-        val pendingIntent = PendingIntent.getBroadcast(context, this.getMessageCode(), intent, 0)
-        SmsManager
-            .getDefault()
-            .sendTextMessage(conversation.phone, null, text, pendingIntent, null)
-    }
-
-    // TODO: [Refactor] Move to common - message forwarding should use the same thing
-    private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(arg0: Context?, arg1: Intent?) {
-            val extras = arg1!!.extras!!
-            val conversationId = extras.getLong(PENDING_MESSAGE_CONVERSATION_ID)
-            val timestamp = extras.getLong(PENDING_MESSAGE_TIMESTAMP)
-            val text = extras.getString(PENDING_MESSAGE_BODY)!!
-
-            if (resultCode == Activity.RESULT_OK) {
-                onMessageSendSuccess(conversationId, text, timestamp)
-            } else {
-                onMessageSendFail()
-            }
-        }
-    }
-
-    private fun onMessageSendSuccess(
-        conversationId: Long,
-        messageText: String,
-        timestamp: Long
-    ) = viewModelScope.launch {
-        val conversation = currentConversation!!
-        conversation.snippet = messageText
-        conversation.snippetTimestamp = timestamp
-        conversation.snippetWasRead = true
-        conversation.snippetIsOurs = true
-        conversationRepository.update(conversation)
-
-        val message = Message(null, conversationId, messageText, timestamp, isOurs = true)
-        messageRepository.insert(message)
+        this.messageSendingService.sendMessage(conversation, text, null, ::onMessageSendFail)
     }
 
     private fun onMessageSendFail() {
-        // TODO: [Bug] Handle failed to send message scenario
-    }
-
-    /** Simply to differentiate between broadcast's pending intents - otherwise it returns the same one. */
-    private fun getMessageCode(): Int {
-        val number = this.messageIndex
-        this.messageIndex++
-        return number
+        val text = context.getString(R.string.message_list_text_failed_to_send)
+        Toast.makeText(context, text, Toast.LENGTH_LONG).show()
     }
 
     fun onActivityResume() {
         if (currentConversation != null) {
             CommonState.setCurrentOpenConversationId(currentConversation!!.id)
         }
-        context.registerReceiver(this.messageReceiver, IntentFilter(PENDING_MESSAGE_INTENT))
     }
 
     fun onActivityPause() {
         CommonState.clearCurrentOpenConversationId()
-        context.unregisterReceiver(this.messageReceiver)
     }
 }

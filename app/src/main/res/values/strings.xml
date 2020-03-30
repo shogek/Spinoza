@@ -23,6 +23,8 @@
     <string name="message_list_button_forward">Forward</string>
     <string name="message_list_button_remove">Remove</string>
     <string name="message_list_input_send_message_hint">Aa</string>
+    <string name="message_list_text_not_delivered">Not delivered</string>
+    <string name="message_list_text_failed_to_send">Failed to send message</string>
 
 
     <!-- Contact list -->

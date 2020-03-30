@@ -13,8 +13,16 @@ class MessageRepository(
     private val messageDao = ApplicationRoomDatabase.getDatabase(context, scope).messageDao()
 
 
-    suspend fun insert(message: Message) {
-        messageDao.insert(message)
+    suspend fun get(messageId: Long): Message {
+        return messageDao.get(messageId)
+    }
+
+    suspend fun insert(message: Message): Long {
+        return messageDao.insert(message)
+    }
+
+    suspend fun update(message: Message) {
+        return messageDao.update(message)
     }
 
     suspend fun delete(message: Message) {

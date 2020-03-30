@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.shogek.spinoza.R
 import com.shogek.spinoza.db.message.Message
 import com.shogek.spinoza.db.message.MessageType
@@ -70,14 +69,8 @@ class MessageListAdapter(
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        val currentMessage = this.messages[position]
-
-        when (holder) {
-            is OurMessageViewHolder -> holder.bind(currentMessage)
-            is OurMessageErrorViewHolder -> holder.bind(currentMessage)
-            is TheirMessageViewHolder -> holder.bind(currentMessage)
-            is TheirMessageNoImageViewHolder -> holder.bind(currentMessage)
-        }
+        val message = this.messages[position]
+        holder.bind(message)
     }
 
     private fun shouldHideSenderImage(position: Int) : Boolean {
@@ -152,9 +145,9 @@ class MessageListAdapter(
             this.messageBody.text = message.body
 
             Glide.with(itemView)
-                 .load(Uri.parse(senderPhotoUri ?: ""))
-                 .apply(RequestOptions().placeholder(R.drawable.unknown_contact))
-                 .into(this.contactPhoto)
+                .load(Uri.parse(senderPhotoUri ?: ""))
+                .placeholder(R.drawable.unknown_contact)
+                .into(this.contactPhoto)
         }
 
         init {

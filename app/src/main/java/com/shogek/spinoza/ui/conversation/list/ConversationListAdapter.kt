@@ -28,9 +28,6 @@ class ConversationListAdapter(
     private var originalConversations = listOf<Conversation>()
     private var filteredConversations: MutableList<Conversation> = mutableListOf<Conversation>().apply { addAll(originalConversations) }
 
-    abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        abstract fun bind(conversation: Conversation?)
-    }
 
     private companion object {
         const val TYPE_HEADER               = R.layout.conversation_list_item_header
@@ -88,23 +85,18 @@ class ConversationListAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
-        return if (viewType == TYPE_HEADER) {
-            val itemView = this.layoutInflater.inflate(viewType, parent, false)
+        val itemView = this.layoutInflater.inflate(viewType, parent, false)
+
+        return if (viewType == TYPE_HEADER)
             HeaderViewHolder(itemView)
-        } else {
-            val itemView = this.layoutInflater.inflate(viewType, parent, false)
+        else
             ConversationViewHolder(itemView)
-        }
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        when (holder) {
-            is ConversationViewHolder -> {
-                val conversation = this.filteredConversations[position - 1] // -1 for header
-                holder.bind(conversation)
-            }
-            is HeaderViewHolder -> holder.bind(null)
-            else -> throw IllegalArgumentException("Unknown ViewHolder type!")
+        if (holder is ConversationViewHolder) {
+            val conversation = this.filteredConversations[position - 1] // -1 for header
+            holder.bind(conversation)
         }
     }
 
@@ -136,6 +128,11 @@ class ConversationListAdapter(
         notifyDataSetChanged()
     }
 
+
+    abstract class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        abstract fun bind(conversation: Conversation)
+    }
+
     inner class ConversationViewHolder(itemView: View) : BaseViewHolder(itemView) {
         private val sender: TextView = itemView.findViewById(R.id.tv_sender)
         private val lastMessage: TextView = itemView.findViewById(R.id.tv_lastMessage)
@@ -148,9 +145,8 @@ class ConversationListAdapter(
             itemView.setOnLongClickListener { onLongClickConversation(conversation); true }
         }
 
-        override fun bind(conversation: Conversation?) {
-            // TODO: Why can 'conversation' be null?
-            this.conversation = conversation!!
+        override fun bind(conversation: Conversation) {
+            this.conversation = conversation
             this.sender.text = conversation.contact?.getDisplayTitle() ?: conversation.phone
 
             this.lastMessage.text =
@@ -182,6 +178,6 @@ class ConversationListAdapter(
             })
         }
 
-        override fun bind(conversation: Conversation?) { }
+        override fun bind(conversation: Conversation) { }
     }
 }
